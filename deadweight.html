@@ -1,0 +1,3160 @@
+<!DOCTYPE html>
+<!--
+    DEADWEIGHT — a physics-based zombie survival game in a single HTML file.
+    Copyright (c) 2026 Dale D. All rights reserved.
+
+    Written from scratch: no engine, no frameworks, no image or audio assets.
+    Every zombie is a 7-point Verlet ragdoll drawn with canvas paths, and every
+    sound is synthesised at runtime with WebAudio oscillators.
+
+    Inspired by ZombieSmash! (GameDoctors / Zynga, 2012). Not affiliated with,
+    endorsed by, or derived from that game's code or assets.
+
+    You may read this source. You may not redistribute, republish, or sell it,
+    or present it as your own work. See LICENSE.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="author" content="Dale D.">
+<meta name="description" content="Deadweight — grab a zombie, lift it, let go. A physics-based survival game in one HTML file, no engine and no assets.">
+<title>Deadweight — grab. lift. let go.</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Trebuchet MS', 'Arial Black', sans-serif;
+        background: #0d0f0b;
+        overflow: hidden;
+        touch-action: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    #wrap { position: relative; }
+
+    canvas {
+        display: block;
+        cursor: grab;
+        border-radius: 6px;
+        box-shadow: 0 0 40px rgba(0,0,0,0.9);
+    }
+    canvas.grabbing { cursor: grabbing; }
+
+    .overlay {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(8, 10, 6, 0.88);
+        border-radius: 6px;
+    }
+    .overlay.show { display: flex; }
+
+    .panel {
+        background: linear-gradient(#2b3320, #1b2014);
+        border: 4px solid #7fb03a;
+        border-radius: 14px;
+        padding: 22px 26px;
+        text-align: center;
+        color: #eafbd2;
+        max-width: 92%;
+        box-shadow: 0 10px 0 rgba(0,0,0,0.4);
+    }
+
+    .panel h1 {
+        font-size: 34px;
+        color: #b6ff4a;
+        text-shadow: 3px 3px 0 #24310f;
+        margin-bottom: 4px;
+        letter-spacing: 1px;
+    }
+
+    /* The wordmark is letterspaced rather than written with literal spaces so a
+       screen reader still announces one word instead of ten letters. The right
+       padding cancels the trailing gap letter-spacing adds, which would
+       otherwise push the centred title a few pixels left. */
+    .panel h1.brand {
+        letter-spacing: 6px;
+        padding-left: 6px;
+        font-size: 38px;
+    }
+
+    .panel .sub { color: #9db77a; margin-bottom: 4px; font-size: 14px; letter-spacing: 2px; }
+    .panel .byline { color: #6f8154; font-size: 11px; margin-bottom: 14px; letter-spacing: 1px; }
+
+    .shop-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin: 12px 0;
+    }
+
+    .shop-item {
+        background: linear-gradient(#3d4a28, #26301a);
+        border: 3px solid #6d9333;
+        border-radius: 10px;
+        color: #eafbd2;
+        padding: 9px 8px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 12px;
+        text-align: left;
+        transition: transform .08s, filter .08s;
+        line-height: 1.35;
+    }
+    .shop-item:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.18); }
+    .shop-item:active:not(:disabled) { transform: translateY(1px); }
+    .shop-item:disabled { opacity: .42; cursor: not-allowed; }
+    .shop-item .nm { font-weight: bold; font-size: 13px; display: block; color: #d7ff8f; }
+    .shop-item .ds { color: #a9c286; }
+    .shop-item .pr { color: #ffd83d; font-weight: bold; }
+    .shop-item .lv { float: right; color: #7fe3a0; }
+    /* A maxed card reads as "done", not as "you can't afford this". */
+    .shop-item.maxed { border-color: #6d7a52; opacity: .72; }
+    .shop-item.maxed .pr { color: #9db77a; }
+    .shop-item.maxed .lv { color: #ffd83d; }
+
+    .big-btn {
+        background: linear-gradient(#8fd63f, #4f8f1c);
+        border: 3px solid #d3ff8a;
+        border-radius: 12px;
+        color: #16210a;
+        font-family: inherit;
+        font-weight: bold;
+        font-size: 20px;
+        padding: 12px 34px;
+        margin-top: 10px;
+        cursor: pointer;
+        text-shadow: 0 1px 0 rgba(255,255,255,.4);
+    }
+    .big-btn:hover { filter: brightness(1.12); }
+    .big-btn:active { transform: translateY(2px); }
+
+    .gold-line { color: #ffd83d; font-size: 19px; font-weight: bold; margin: 6px 0; }
+    .stat-row { color: #cfe6ad; font-size: 15px; margin: 3px 0; }
+    .how { text-align: left; max-width: 440px; margin: 14px auto; line-height: 1.6; font-size: 14px; }
+
+    /* ---- main menu ---- */
+    /* Panes live in the same panel and swap with .on, so the frame doesn't
+       jump around as you move between play / help / bestiary. */
+    .pane { display: none; }
+    .pane.on { display: block; }
+
+    .menu-btns { display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 6px; }
+
+    .menu-btn {
+        background: linear-gradient(#3d4a28, #26301a);
+        border: 3px solid #6d9333;
+        border-radius: 10px;
+        color: #d7ff8f;
+        font-family: inherit;
+        font-weight: bold;
+        font-size: 15px;
+        padding: 9px 26px;
+        cursor: pointer;
+        min-width: 240px;
+        transition: transform .08s, filter .08s;
+    }
+    .menu-btn:hover { transform: translateY(-2px); filter: brightness(1.18); }
+    .menu-btn:active { transform: translateY(1px); }
+
+    .toggles { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+
+    .tgl {
+        background: #26301a;
+        border: 3px solid #4d642a;
+        border-radius: 999px;
+        color: #7d8f63;
+        font-family: inherit;
+        font-weight: bold;
+        font-size: 13px;
+        padding: 6px 18px;
+        cursor: pointer;
+    }
+    /* Lit = audible. The state has to be legible at a glance, since the only
+       other feedback is sound the player may have muted precisely because
+       they can't hear it. */
+    .tgl.on { border-color: #8fd63f; color: #d7ff8f; background: #35431f; }
+
+    .menu-foot { color: #7d8f63; font-size: 12px; margin-top: 12px; }
+
+    /* ---- bestiary ---- */
+    .bestiary {
+        text-align: left;
+        max-height: 340px;
+        overflow-y: auto;
+        margin: 12px 0;
+        padding-right: 6px;
+    }
+    .best-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        background: rgba(0,0,0,.22);
+        border-left: 4px solid #6d9333;
+        border-radius: 6px;
+        padding: 7px 10px;
+        margin-bottom: 6px;
+    }
+    .best-row .swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #1b2014; flex: 0 0 auto; }
+    .best-row .info { flex: 1; min-width: 0; }
+    .best-row .bn { font-weight: bold; color: #d7ff8f; font-size: 14px; }
+    .best-row .bd { color: #a9c286; font-size: 12px; line-height: 1.35; }
+    .best-row .tags { font-size: 11px; color: #ffd83d; }
+    .best-row.boss { border-left-color: #ff6b5e; }
+    .best-row.boss .bn { color: #ff9d92; }
+</style>
+</head>
+<body>
+<div id="wrap">
+    <canvas id="game"></canvas>
+
+    <div class="overlay" id="shopOverlay">
+        <div class="panel">
+            <h1 id="shopTitle">WAVE CLEARED</h1>
+            <div class="sub">Spend it. They're coming back.</div>
+            <div class="gold-line">Gold: <span id="shopGold">0</span></div>
+            <div class="shop-grid" id="shopGrid"></div>
+            <button class="big-btn" id="nextWaveBtn">SEND NEXT WAVE →</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="overOverlay">
+        <div class="panel">
+            <h1>THE SHACK IS TOAST</h1>
+            <div class="sub">They got in. Rude.</div>
+            <div class="stat-row">Waves survived: <b id="ovWave">0</b></div>
+            <div class="stat-row">Zombies smashed: <b id="ovKills">0</b></div>
+            <div class="stat-row">Best smash: <b id="ovBest">—</b></div>
+            <div class="gold-line">Score: <span id="ovScore">0</span></div>
+            <button class="big-btn" id="againBtn">SMASH AGAIN</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="pauseOverlay">
+        <div class="panel">
+            <h1>PAUSED</h1>
+            <div class="sub">Take your time. They'll wait.</div>
+            <div class="stat-row">Wave: <b id="pzWave">0</b></div>
+            <div class="stat-row">Shack: <b id="pzHp">—</b></div>
+            <div class="gold-line">Gold: <span id="pzGold">0</span></div>
+            <div class="menu-btns">
+                <button class="big-btn" id="resumeBtn">RESUME</button>
+                <button class="menu-btn" id="restartBtn">RESTART RUN</button>
+                <button class="menu-btn" id="quitBtn">MAIN MENU</button>
+            </div>
+            <div class="toggles">
+                <button class="tgl on" id="pMusicTgl">♫ MUSIC</button>
+                <button class="tgl on" id="pSfxTgl">🔊 SOUND</button>
+            </div>
+            <div class="menu-foot">Press <b>ESC</b> to resume</div>
+        </div>
+    </div>
+
+    <div class="overlay show" id="startOverlay">
+        <div class="panel">
+            <h1 class="brand">D&thinsp;E&thinsp;A&thinsp;D&thinsp;W&thinsp;E&thinsp;I&thinsp;G&thinsp;H&thinsp;T</h1>
+            <div class="sub">grab. lift. let go.</div>
+            <div class="byline">by Dale&nbsp;D.</div>
+
+            <div class="pane on" id="paneMain">
+                <div class="menu-btns">
+                    <button class="big-btn" id="startBtn">START SMASHING</button>
+                    <button class="menu-btn" id="howBtn">HOW TO PLAY</button>
+                    <button class="menu-btn" id="bestBtn">BESTIARY</button>
+                </div>
+                <div class="toggles">
+                    <button class="tgl on" id="musicTgl">♫ MUSIC</button>
+                    <button class="tgl on" id="sfxTgl">🔊 SOUND</button>
+                </div>
+                <div class="menu-foot">Best wave: <b id="menuBest">—</b></div>
+            </div>
+
+            <div class="pane" id="paneHow">
+                <div class="how">
+                    🖐 <b>Grab and fling them.</b> Damage comes from the <i>impact</i> —
+                    slam them into the dirt, spike them, or bowl them into each other.<br>
+                    🩹 A zombie that survives a throw will <b>get back up</b>. Finish it.<br>
+                    💪 <b>Big ones fight your grip.</b> Heavies and bosses need a grip
+                    level just to try, and even then you may slip — keep wrestling,
+                    every failed attempt makes the next one likelier.<br>
+                    🛡 <b>Armour only stops gadgets</b>, never your hands. The answer to
+                    an armoured zombie is always a throw.<br>
+                    💣 Pick a gadget off the belt, then tap the field to use it.<br>
+                    🏚 Keep them off the shack. Kills buy upgrades between waves.
+                </div>
+                <button class="menu-btn back-btn">← BACK</button>
+            </div>
+
+            <div class="pane" id="paneBest">
+                <div class="bestiary" id="bestList"></div>
+                <button class="menu-btn back-btn">← BACK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+"use strict";
+
+// ============================================================== WORLD
+const W = 1280, H = 720;
+const GROUND = 610;              // front-lane ground line
+const GRAV = 0.62;
+const DAMP = 0.994;
+const STEP = 1 / 60;
+
+// Three depth lanes keep bodies from stacking in one plane. Each lane has its
+// own ground line and scale, and collision only happens within a lane.
+// Farther lanes sit higher on screen and draw smaller.
+const LANES = [
+    { dy: 0,   scale: 1.00 },
+    { dy: -18, scale: 0.92 },
+    { dy: -34, scale: 0.85 }
+];
+const laneGround = i => GROUND + LANES[i].dy;
+
+const HOUSE = { w: 176, h: 168 };
+HOUSE.cx = W / 2;
+HOUSE.x = HOUSE.cx - HOUSE.w / 2;
+HOUSE.r = HOUSE.x + HOUSE.w;
+HOUSE.y = GROUND - HOUSE.h;
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+// Blood and scorch marks accumulate on their own layer instead of being
+// re-drawn from a list every frame.
+const decal = document.createElement('canvas');
+decal.width = W; decal.height = H;
+const dctx = decal.getContext('2d');
+
+function fit() {
+    const scale = Math.min(window.innerWidth / W, (window.innerHeight - 8) / H);
+    const dpr = window.devicePixelRatio || 1;
+    canvas.style.width = (W * scale) + 'px';
+    canvas.style.height = (H * scale) + 'px';
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', fit);
+fit();
+
+const rand = (a, b) => a + Math.random() * (b - a);
+const irand = (a, b) => (a + Math.random() * (b - a + 1)) | 0;
+const pick = a => a[(Math.random() * a.length) | 0];
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+
+// ============================================================== AUDIO
+// Everything is synthesised at runtime. No asset files, so the game stays a
+// single portable HTML file, and every sound can be parameterised by gameplay
+// (a warden's groan is the same generator as a shambler's, pitched down and
+// stretched out).
+//
+// Browsers refuse to start an AudioContext until a real user gesture, so it is
+// created lazily on the first click and every entry point no-ops until then.
+// That also keeps the headless test harness silent.
+const audio = {
+    ctx: null, master: null, musicBus: null, sfxBus: null,
+    musicOn: true, sfxOn: true,
+    started: false,
+    // scheduler
+    step: 0, nextT: 0, bpm: 92, intensity: 0, boss: false,
+    // voice budget: a wave-20 crowd all groaning at once will crackle
+    voices: 0
+};
+
+function audioInit() {
+    if (audio.ctx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try { audio.ctx = new AC(); } catch (e) { return; }
+    const c = audio.ctx;
+
+    audio.master = c.createGain();
+    audio.master.gain.value = 0.85;
+    // A limiter-ish squash so stacked explosions don't clip into digital fizz.
+    const comp = c.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.knee.value = 22;
+    comp.ratio.value = 7; comp.attack.value = 0.004; comp.release.value = 0.22;
+    audio.master.connect(comp); comp.connect(c.destination);
+
+    audio.musicBus = c.createGain();
+    audio.musicBus.gain.value = audio.musicOn ? 0.42 : 0;
+    audio.musicBus.connect(audio.master);
+
+    audio.sfxBus = c.createGain();
+    audio.sfxBus.gain.value = audio.sfxOn ? 0.9 : 0;
+    audio.sfxBus.connect(audio.master);
+
+    audio.nextT = c.currentTime + 0.1;
+    audio.started = true;
+}
+
+// Shared noise buffer — generating a fresh one per hit was a measurable cost
+// once a dozen zombies were dying per second.
+let noiseBuf = null;
+function getNoise() {
+    if (noiseBuf || !audio.ctx) return noiseBuf;
+    const c = audio.ctx, len = (c.sampleRate * 1.4) | 0;
+    noiseBuf = c.createBuffer(1, len, c.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    return noiseBuf;
+}
+
+// ---- primitive voices ------------------------------------------------------
+function tone(o) {
+    if (!audio.ctx || !audio.sfxOn) return;
+    if (audio.voices > 26) return;                 // budget guard
+    const c = audio.ctx, t = c.currentTime + (o.delay || 0);
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = o.type || 'sine';
+    const f0 = Math.max(20, o.f || 220);
+    const f1 = Math.max(20, o.f1 === undefined ? f0 : o.f1);
+    osc.frequency.setValueAtTime(f0, t);
+    if (f1 !== f0) osc.frequency.exponentialRampToValueAtTime(f1, t + (o.d || 0.2));
+    const vol = (o.v === undefined ? 0.3 : o.v);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + (o.a || 0.008));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + (o.d || 0.2));
+    let node = osc;
+    if (o.filter) {
+        const bq = c.createBiquadFilter();
+        bq.type = o.filter; bq.frequency.value = o.fc || 900;
+        bq.Q.value = o.q === undefined ? 1 : o.q;
+        node.connect(bq); node = bq;
+    }
+    node.connect(g);
+    g.connect(o.bus || audio.sfxBus);
+    audio.voices++;
+    osc.onended = () => { audio.voices--; };
+    osc.start(t); osc.stop(t + (o.d || 0.2) + 0.03);
+}
+
+function noise(o) {
+    if (!audio.ctx || !audio.sfxOn) return;
+    if (audio.voices > 26) return;
+    const buf = getNoise();
+    if (!buf) return;
+    const c = audio.ctx, t = c.currentTime + (o.delay || 0);
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = o.rate || 1;
+    const bq = c.createBiquadFilter();
+    bq.type = o.filter || 'bandpass';
+    const fc0 = Math.max(40, o.fc || 800);
+    bq.frequency.setValueAtTime(fc0, t);
+    if (o.fc1) bq.frequency.exponentialRampToValueAtTime(Math.max(40, o.fc1), t + (o.d || 0.2));
+    bq.Q.value = o.q === undefined ? 1 : o.q;
+    const g = c.createGain();
+    const vol = (o.v === undefined ? 0.3 : o.v);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + (o.a || 0.005));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + (o.d || 0.2));
+    src.connect(bq); bq.connect(g); g.connect(o.bus || audio.sfxBus);
+    audio.voices++;
+    src.onended = () => { audio.voices--; };
+    src.start(t); src.stop(t + (o.d || 0.2) + 0.03);
+}
+
+// ---- named effects ---------------------------------------------------------
+// One switch rather than a dozen exported functions, so call sites read as
+// sfx('death') and the sound design all lives in one place.
+function sfx(name, p) {
+    if (!audio.ctx || !audio.sfxOn) return;
+    const s = p === undefined ? 1 : p;      // generic scalar: size / pitch / force
+    switch (name) {
+        case 'grab':
+            noise({ fc: 1500, fc1: 700, d: 0.11, v: 0.16, q: 0.8, rate: 1.5 });
+            tone({ type: 'triangle', f: 300, f1: 460, d: 0.09, v: 0.1 });
+            break;
+        case 'grabBoss':
+            // Low mechanical clamp — you got hold of something enormous.
+            tone({ type: 'sawtooth', f: 110, f1: 62, d: 0.3, v: 0.2, filter: 'lowpass', fc: 700 });
+            noise({ fc: 500, fc1: 180, d: 0.28, v: 0.2, q: 1.4 });
+            break;
+        case 'slip':
+            // Rubbery failure. Deliberately unsatisfying.
+            noise({ fc: 900, fc1: 260, d: 0.2, v: 0.19, q: 2.2, rate: 0.8 });
+            tone({ type: 'sawtooth', f: 190, f1: 84, d: 0.22, v: 0.13, filter: 'lowpass', fc: 600 });
+            break;
+        case 'throw':
+            noise({ fc: 420, fc1: 1700, d: 0.16, v: 0.13, q: 0.7, rate: 1.2 });
+            break;
+        case 'impact': {
+            // Meaty thud; bigger hits get lower and longer.
+            const k = clamp(s, 0.4, 3);
+            tone({ type: 'sine', f: 150 / k, f1: 42 / k, d: 0.1 + 0.05 * k, v: 0.34 });
+            noise({ fc: 1100, fc1: 200, d: 0.09 + 0.04 * k, v: 0.26, q: 0.9, rate: 0.9 });
+            noise({ filter: 'lowpass', fc: 340, d: 0.13, v: 0.2, rate: 0.6 });
+            break;
+        }
+        case 'crunch':
+            noise({ fc: 2400, fc1: 700, d: 0.13, v: 0.28, q: 1.6, rate: 1.7 });
+            tone({ type: 'square', f: 260, f1: 90, d: 0.1, v: 0.1, filter: 'lowpass', fc: 1400 });
+            break;
+        case 'groan': {
+            // The idle horde vocal. s = body scale, so wardens rumble.
+            const k = clamp(s, 0.6, 2.2);
+            const base = rand(78, 128) / k;
+            tone({ type: 'sawtooth', f: base, f1: base * rand(0.72, 0.9),
+                   d: rand(0.5, 0.95) * k, v: 0.075, a: 0.09,
+                   filter: 'lowpass', fc: 420 * k, q: 3.5 });
+            tone({ type: 'triangle', f: base * 2.02, f1: base * 1.5,
+                   d: rand(0.35, 0.7) * k, v: 0.035, a: 0.12,
+                   filter: 'bandpass', fc: 700, q: 5, delay: 0.04 });
+            break;
+        }
+        case 'death': {
+            // Falling wet gurgle + bone snap.
+            const k = clamp(s, 0.6, 2.2);
+            const base = rand(150, 215) / k;
+            tone({ type: 'sawtooth', f: base, f1: base * 0.32, d: 0.42 * k, v: 0.2,
+                   a: 0.01, filter: 'lowpass', fc: 900, q: 2 });
+            noise({ fc: 1700, fc1: 240, d: 0.3 * k, v: 0.22, q: 1.1, rate: 1.1 });
+            noise({ filter: 'lowpass', fc: 260, d: 0.2, v: 0.18, rate: 0.5, delay: 0.02 });
+            break;
+        }
+        case 'gib':
+            noise({ fc: 700, fc1: 160, d: 0.24, v: 0.3, q: 0.7, rate: 0.7 });
+            tone({ type: 'sine', f: 90, f1: 34, d: 0.24, v: 0.24 });
+            break;
+        case 'explode':
+            tone({ type: 'sine', f: 120, f1: 26, d: 0.65, v: 0.45 });
+            noise({ filter: 'lowpass', fc: 1800, fc1: 120, d: 0.6, v: 0.42, rate: 0.62 });
+            noise({ fc: 3200, fc1: 900, d: 0.16, v: 0.25, q: 0.6, rate: 1.9 });
+            break;
+        case 'bloat':
+            tone({ type: 'sawtooth', f: 200, f1: 40, d: 0.5, v: 0.3, filter: 'lowpass', fc: 800 });
+            noise({ fc: 600, fc1: 130, d: 0.55, v: 0.36, q: 0.8, rate: 0.55 });
+            break;
+        case 'spike':
+            noise({ fc: 2900, fc1: 800, d: 0.1, v: 0.26, q: 2.4, rate: 1.8 });
+            tone({ type: 'triangle', f: 620, f1: 160, d: 0.11, v: 0.14 });
+            break;
+        case 'saw':
+            // Short rip; the blade's drone is handled by 'sawLoop'.
+            noise({ fc: 1900, fc1: 2600, d: 0.07, v: 0.15, q: 3, rate: 2.1 });
+            break;
+        case 'toss':
+            tone({ type: 'square', f: 520, f1: 900, d: 0.08, v: 0.1, filter: 'lowpass', fc: 2000 });
+            break;
+        case 'plate':
+            tone({ type: 'square', f: 900, f1: 380, d: 0.24, v: 0.16, filter: 'bandpass', fc: 1500, q: 4 });
+            noise({ fc: 3000, fc1: 1100, d: 0.2, v: 0.2, q: 2.6, rate: 1.6 });
+            break;
+        case 'helmet':
+            tone({ type: 'square', f: 1250, f1: 620, d: 0.16, v: 0.13, filter: 'bandpass', fc: 1800, q: 6 });
+            break;
+        case 'house':
+            // The shack taking a hit: dry wooden knock, no pitch sweetener.
+            noise({ filter: 'lowpass', fc: 420, d: 0.2, v: 0.34, rate: 0.55 });
+            tone({ type: 'triangle', f: 96, f1: 58, d: 0.22, v: 0.24 });
+            break;
+        case 'wave':
+            // Rally horn, minor third up.
+            tone({ type: 'sawtooth', f: 138, d: 0.85, v: 0.2, a: 0.06, filter: 'lowpass', fc: 1000 });
+            tone({ type: 'sawtooth', f: 164, d: 0.9, v: 0.17, a: 0.08, filter: 'lowpass', fc: 1000, delay: 0.1 });
+            break;
+        case 'bossHorn':
+            // Three descending blasts. Unmistakable.
+            for (let i = 0; i < 3; i++) {
+                tone({ type: 'sawtooth', f: 116 - i * 14, f1: 104 - i * 14,
+                       d: 0.7, v: 0.26, a: 0.05, filter: 'lowpass', fc: 780,
+                       delay: i * 0.36 });
+                tone({ type: 'square', f: 58 - i * 7, d: 0.75, v: 0.15,
+                       a: 0.05, filter: 'lowpass', fc: 400, delay: i * 0.36 });
+            }
+            break;
+        case 'ui':
+            tone({ type: 'square', f: 660, f1: 880, d: 0.07, v: 0.11, filter: 'lowpass', fc: 2600 });
+            break;
+        case 'buy':
+            tone({ type: 'square', f: 720, d: 0.09, v: 0.13, filter: 'lowpass', fc: 3000 });
+            tone({ type: 'square', f: 1080, d: 0.13, v: 0.11, filter: 'lowpass', fc: 3000, delay: 0.08 });
+            break;
+        case 'deny':
+            tone({ type: 'square', f: 200, f1: 120, d: 0.16, v: 0.13, filter: 'lowpass', fc: 900 });
+            break;
+        case 'clear':
+            // Wave cleared: rising major arpeggio.
+            [392, 494, 587, 784].forEach((f, i) =>
+                tone({ type: 'triangle', f, d: 0.3, v: 0.16, delay: i * 0.1,
+                       filter: 'lowpass', fc: 3000 }));
+            break;
+        case 'over':
+            [220, 175, 139, 110].forEach((f, i) =>
+                tone({ type: 'sawtooth', f, d: 0.7, v: 0.2, delay: i * 0.22,
+                       filter: 'lowpass', fc: 700 }));
+            break;
+        case 'combo':
+            tone({ type: 'square', f: 520 * Math.pow(1.12, clamp(s, 0, 12)),
+                   d: 0.09, v: 0.12, filter: 'lowpass', fc: 3400 });
+            break;
+    }
+}
+
+// ---- music -----------------------------------------------------------------
+// A 16-step loop in a natural-minor scale, scheduled a bar ahead of the audio
+// clock rather than off requestAnimationFrame, because a dropped frame during a
+// 40-zombie wave would otherwise be audible as a stutter in the beat.
+const BASS = [0, 0, 7, 0, 5, 0, 7, 3];
+const SCALE = [0, 2, 3, 5, 7, 8, 10];        // A natural minor
+const ROOT = 55;                             // A1
+
+function musicTick() {
+    if (!audio.ctx || !audio.started) return;
+    const c = audio.ctx;
+    if (!audio.musicOn) { audio.nextT = c.currentTime + 0.1; return; }
+
+    const spb = 60 / audio.bpm / 2;          // eighth-notes
+    // Schedule everything that falls inside the next 150ms.
+    while (audio.nextT < c.currentTime + 0.15) {
+        const t = audio.nextT - c.currentTime;
+        const st = audio.step % 16;
+        const inten = audio.intensity;
+        const bus = audio.musicBus;
+
+        // Bass every eighth. Doubles an octave down on boss waves.
+        const bn = BASS[(st >> 1) % BASS.length];
+        const bf = ROOT * Math.pow(2, bn / 12);
+        tone({ type: audio.boss ? 'sawtooth' : 'triangle', f: bf, f1: bf * 0.99,
+               d: spb * 1.5, v: 0.3, a: 0.01, delay: t, bus,
+               filter: 'lowpass', fc: 240 + inten * 300, q: 3 });
+        if (audio.boss)
+            tone({ type: 'square', f: bf / 2, d: spb * 1.7, v: 0.16, a: 0.02,
+                   delay: t, bus, filter: 'lowpass', fc: 180 });
+
+        // Kick on 1 and 3 (of 4/4 counted in eighths), snare-ish on the backbeat.
+        if (st % 8 === 0 || st % 8 === 5)
+            tone({ type: 'sine', f: 130, f1: 44, d: 0.16, v: 0.4, a: 0.004, delay: t, bus });
+        if (st % 8 === 4)
+            noise({ fc: 1500, fc1: 700, d: 0.11, v: 0.16 + inten * 0.06, q: 1.2,
+                    rate: 1.4, delay: t, bus });
+        // Hat: density rises with intensity, so a late wave sounds busier without
+        // any new material.
+        if (st % 2 === 1 && Math.random() < 0.35 + inten * 0.45)
+            noise({ fc: 7000, d: 0.03, v: 0.05 + inten * 0.03, q: 0.7,
+                    rate: 2.4, delay: t, bus });
+
+        // Sparse plucked lead once things heat up.
+        if (inten > 0.28 && st % 4 === 2 && Math.random() < 0.5 + inten * 0.3) {
+            const deg = SCALE[irand(0, 6)];
+            tone({ type: 'triangle', f: ROOT * 4 * Math.pow(2, deg / 12),
+                   d: spb * 1.2, v: 0.075 + inten * 0.05, a: 0.006, delay: t, bus,
+                   filter: 'lowpass', fc: 2400 });
+        }
+        // Boss drone: a held fifth under everything.
+        if (audio.boss && st === 0)
+            tone({ type: 'sawtooth', f: ROOT * Math.pow(2, 7 / 12) / 2,
+                   d: spb * 16, v: 0.1, a: 0.35, delay: t, bus,
+                   filter: 'lowpass', fc: 300, q: 6 });
+
+        audio.step++;
+        audio.nextT += spb;
+    }
+}
+
+function musicSet(waveNo, boss) {
+    audio.intensity = clamp((waveNo - 1) / 16, 0, 1);
+    audio.boss = !!boss;
+    audio.bpm = 88 + Math.round(audio.intensity * 26) + (boss ? 8 : 0);
+}
+
+function musicToggle(on) {
+    audio.musicOn = on === undefined ? !audio.musicOn : !!on;
+    if (audio.musicBus)
+        audio.musicBus.gain.value = audio.musicOn ? 0.42 : 0;
+    return audio.musicOn;
+}
+function sfxToggle(on) {
+    audio.sfxOn = on === undefined ? !audio.sfxOn : !!on;
+    if (audio.sfxBus)
+        audio.sfxBus.gain.value = audio.sfxOn ? 0.9 : 0;
+    return audio.sfxOn;
+}
+
+// ============================================================== STATE
+const game = {
+    mode: 'start',           // start | playing | paused | shop | over
+    wave: 0,
+    score: 0,
+    gold: 0,
+    kills: 0,
+    combo: 0,
+    comboTimer: 0,
+    bestSmash: 0,
+    hp: 240,
+    maxHp: 240,
+    alive: 0,                // zombies still living this wave
+    pending: 0,              // spawns not yet released
+    shake: 0,
+    tool: 'hand'
+};
+
+// max — hard level ceiling. Every one of these used to be buyable forever, which
+// is the single biggest reason a long run stopped being a game: grip alone was
+// unbounded damage AND unbounded lift, so by wave 15 nothing resisted you. With
+// ceilings, gold stops being a win condition and the late waves have to be
+// answered with positioning and target priority instead.
+const upgrades = {
+    grip:    { lvl: 0, max: 10, cost: 70,  step: 1.58, name: '💪 Grip Strength',  desc: '+28% smash dmg, lift heavier' },
+    brittle: { lvl: 0, max: 5,  cost: 90,  step: 1.60, name: '☠ Bone Breaker',    desc: 'They break easier' },
+    shack:   { lvl: 0, max: 10, cost: 80,  step: 1.50, name: '🏚 Reinforce Shack', desc: '+50 max HP, repair' },
+    // The gadget ceilings are stated as COUNTS (6 grenades, 4 spikes, 4 saws), so
+    // their level caps are set so the last purchasable level is the one that
+    // reaches the count. A level that grants no extra gadget would be a trap
+    // purchase. Grenades and spikes come with one for free, saws do not — see capOf.
+    nade:    { lvl: 0, max: 5,  cost: 110, step: 1.55, name: '💣 Grenade Belt',   desc: '+1 grenade (max 6), +4 blast' },
+    spike:   { lvl: 0, max: 3,  cost: 95,  step: 1.50, name: '🔺 Spike Crate',     desc: '+1 trap (max 4), sharper' },
+    saw:     { lvl: 0, max: 4,  cost: 140, step: 1.60, name: '🪚 Saw Shipment',    desc: '+1 blade (max 4), faster teeth' }
+};
+
+const maxed = key => upgrades[key].lvl >= upgrades[key].max;
+
+// Per-wave ammo. Hard ceilings: 6 grenades, 4 spikes, 4 saws at full investment.
+// Gadgets are a budget you spend per wave, not a faucet — running dry mid-wave and
+// having to fall back on your hands is the intended experience, not a failure state.
+// Saws start at zero on purpose: they're the one tool you must choose to bring, and
+// the belt already greys out an empty slot so it reads as locked rather than broken.
+const ammo = { grenade: 0, spike: 0, saw: 0 };
+const capOf = {
+    grenade: () => Math.min(6, 1 + upgrades.nade.lvl),
+    spike:   () => Math.min(4, 1 + upgrades.spike.lvl),
+    saw:     () => Math.min(4, upgrades.saw.lvl)
+};
+
+// Grip is capped at 10, so this tops out at 3.52x rather than running away.
+const gripMul = () => 1 + upgrades.grip.lvl * 0.28;
+// Grip doubles as lift capacity. One stat, so every point spent here visibly
+// unlocks a body you could not pick up before.
+const liftLvl = () => upgrades.grip.lvl;
+
+// ---- LIFT ODDS -------------------------------------------------------------
+// Meeting grabLvl buys you an ATTEMPT, not a lift. The big bodies fight back:
+// you wrestle at them and occasionally get purchase. Trash is unaffected — a
+// shambler is always picked up on the first try, because the core verb of the
+// game has to stay instant for the bodies you spend all game handling.
+//
+// base   — chance at exactly the required grip level, on the FIRST wave you can
+//          meet this class at all
+// perLvl — what each grip level ABOVE the requirement adds
+// waveDk — decay per wave, because a wave-20 warden is a bigger animal than a
+//          wave-5 one; the same grip should not manhandle both
+// since  — the wave decay is measured FROM. Without this the boss is already
+//          floored the first time you ever see one: wardens don't appear until
+//          wave 5, so charging five waves of decay against your debut warden
+//          made the whole base value dead weight and every boss read as the
+//          same flat 5% no matter what you'd spent.
+// floor  — never fully impossible, or a bad RNG streak reads as a broken game
+// cap    — never guaranteed either; a boss you can always pick up is a trash mob
+const LIFT_ODDS = {
+    boss:  { base: 0.20, perLvl: 0.070, waveDk: 0.008, since: 5, floor: 0.08, cap: 0.55 },
+    heavy: { base: 0.40, perLvl: 0.130, waveDk: 0.005, since: 4, floor: 0.18, cap: 0.92 }
+};
+
+function liftChance(z) {
+    const cls = z.t.boss ? 'boss' : (z.t.heavy ? 'heavy' : null);
+    if (!cls) return 1;                       // normal zombies: unchanged
+    const o = LIFT_ODDS[cls];
+    const over = liftLvl() - (z.t.grabLvl || 0);
+    const late = Math.max(0, (z.spawnWave || 1) - o.since);
+    const raw = o.base + over * o.perLvl - late * o.waveDk;
+    return clamp(raw, o.floor, o.cap);
+}
+
+// Failed attempts are not wasted. Each one banks strain on that specific body,
+// which is added to the next roll and cleared on a success. Pure independent
+// rolls at 10% mean a player can genuinely whiff eight times in a row and
+// conclude the boss is unliftable; this guarantees progress while keeping the
+// moment of getting a grip on a warden feel earned.
+function rollLift(z) {
+    const p = liftChance(z);
+    if (p >= 1) return true;
+    z.strain = z.strain || 0;
+    if (Math.random() < clamp(p + z.strain, 0, 0.95)) { z.strain = 0; return true; }
+    z.strain += p * 0.55;
+    return false;
+}
+
+// Gadgets scale with their OWN upgrade, not with grip, and they are deliberately
+// flat-ish: they exist to soften and to crowd-control, not to out-damage your
+// hands. Every one of these used to be unbounded DPS.
+//
+// Deliberately weaker than they were. With a hard ammo cap a gadget is a tool
+// you aim at a problem — a grenade under a titan, a spike where the runners
+// funnel — and if it also killed things outright there'd be no decision to make.
+// Against a late-wave heavy these numbers are chip damage, on purpose.
+const nadeDmg  = () => 34 + upgrades.nade.lvl * 4;
+const spikeDmg = () => 8  + upgrades.spike.lvl * 2;
+const sawDmg   = () => 5  + upgrades.saw.lvl * 1.4;
+
+// Impact speed a body must exceed before it starts taking damage at all.
+const breakPt = () => Math.max(3.4, 8.2 - upgrades.brittle.lvl * 0.6);
+// Impact that knocks a walking zombie off its feet.
+const KNOCK = 6.5;
+
+// How long one throw's landing counts as a single slam. A body touches down over
+// several frames (feet, hips, head), and every one of those frames reports an
+// impact. 0.42s is long enough to swallow a full landing plus its first bounce,
+// short enough that a genuine second throw always reads as a new slam.
+const SLAM_WINDOW = 0.42;
+
+// Ragdoll odds by damage source. Being on the floor is the strongest crowd
+// control in the game — a body down is a body not clawing the shack — so traps
+// only ever get a ROLL at it. Unconditional knockdown is what made a single
+// spike strip lock the whole field down permanently.
+// 'slam' is your own hands: trash always goes down, but a braced heavy or boss
+// can eat a hit and stay standing, so you can't chain-floor them forever.
+const KNOCK_ODDS = {
+    light: { spike: 0.45, saw: 0.30, blast: 1.00, slam: 1.00 },
+    heavy: { spike: 0.12, saw: 0.07, blast: 0.55, slam: 0.55 },
+    boss:  { spike: 0.02, saw: 0.01, blast: 0.38, slam: 0.28 }
+};
+const weightClass = z => z.t.boss ? 'boss' : ((z.t.mass || 1) >= 1.5 ? 'heavy' : 'light');
+
+function tryKnock(z, source, recover) {
+    // Just-got-up grace. Without it, a zombie standing in a spike strip is
+    // re-floored on the first tick after rising and never walks again.
+    if (z.poiseT > 0 && source !== 'blast') return false;
+    if (Math.random() >= KNOCK_ODDS[weightClass(z)][source]) return false;
+    z.knockDown(recover);
+    return true;
+}
+
+const zombies = [];
+const gibs = [];
+const parts = [];
+const nades = [];
+const spikes = [];
+const saws = [];
+const popups = [];
+let spawnTimers = [];
+
+const SPLATS = ['SPLAT!', 'CRUNCH!', 'OOF!', 'SQUISH!', 'YEET!', 'KAPOW!', 'THUD!', 'POP!', 'BONK!'];
+
+// ============================================================== FX
+let bannerT = 0, bannerText = '', bannerColor = '#b6ff4a';
+function banner(text, color) {
+    bannerText = text; bannerColor = color || '#b6ff4a'; bannerT = 2.2;
+}
+
+function popup(x, y, text, color, size) {
+    popups.push({ x, y, text, color: color || '#fff', size: size || 22, life: 1, vy: -1.15 });
+}
+
+function puff(x, y, color, n, spread) {
+    for (let i = 0; i < n; i++) {
+        parts.push({
+            x, y,
+            vx: rand(-spread, spread),
+            vy: rand(-spread, spread * 0.4),
+            life: 1,
+            decay: rand(0.016, 0.04),
+            size: rand(2, 6),
+            color
+        });
+    }
+}
+
+function bloodDecal(x, y, r, color) {
+    dctx.globalAlpha = 0.5;
+    dctx.fillStyle = color;
+    for (let i = 0; i < 4; i++) {
+        dctx.beginPath();
+        dctx.arc(x + rand(-r, r), y + rand(-r * 0.35, r * 0.35), rand(r * 0.28, r * 0.75), 0, 7);
+        dctx.fill();
+    }
+    dctx.globalAlpha = 1;
+}
+
+// Two-bone IK. Only used for drawing elbows/knees, so it never touches physics.
+// sign picks which way the joint bends.
+function ik(ax, ay, bx, by, l1, l2, sign) {
+    let dx = bx - ax, dy = by - ay;
+    let d = Math.hypot(dx, dy) || 0.001;
+    const max = (l1 + l2) * 0.998;
+    if (d > max) { const k = max / d; dx *= k; dy *= k; d = max; }
+    const a = (d * d + l1 * l1 - l2 * l2) / (2 * d);
+    const h = Math.sqrt(Math.max(0, l1 * l1 - a * a));
+    const ux = dx / d, uy = dy / d;
+    return { x: ax + ux * a - uy * h * sign, y: ay + uy * a + ux * h * sign };
+}
+
+// ============================================================== ZOMBIE TYPES
+// Palette in the spirit of the 2012 originals: sickly greens and greys, grubby
+// mismatched clothes, heavy ink outlines. Every colour below is hand-picked —
+// nothing here is sampled from another game.
+const INK = '#20250f';
+
+// grabLvl   — grip level needed to even ATTEMPT a lift. Below it your hand
+//             slides off. This is what makes the shop gate content.
+// mass      — how sluggishly the held point chases the cursor. 1 = weightless.
+// armor     — multiplier on GADGET and BLAST damage only. Impact damage ignores
+//             it entirely, so the answer to an armored zombie is always your
+//             hands, never a saw. That's the whole thesis of the game.
+// capImpact — ceiling on ONE slam's damage, as a fraction of max HP. This is the
+//             only thing standing between a levelled grip and two-shotting a
+//             boss: impact damage scales with your throw speed and with grip,
+//             both unbounded, so without a cap the big bodies evaporate. 0.15
+//             means "at least seven good slams, no matter how hard you throw."
+//             Absent on the trash, which SHOULD burst.
+// bounty    — gold multiplier, so the scary ones are worth the risk.
+const TYPES = {
+    shambler: {
+        hp: 28, hpw: 7, scale: 1.00, speed: 26, gold: 8,  dmg: 9,
+        skin: '#93b35a', skinDark: '#71904a', shirt: '#5c6a8a', pants: '#3f4a5e',
+        headR: 15, torsoW: 20, limb: 7.5, gut: 0,
+        grabLvl: 0, mass: 1.0, armor: 1
+    },
+    runner: {
+        hp: 18, hpw: 4.5, scale: 0.88, speed: 56, gold: 12, dmg: 7,
+        skin: '#a8c464', skinDark: '#85a04c', shirt: '#8f5252', pants: '#4a3b34',
+        headR: 13.5, torsoW: 16, limb: 6, gut: 0,
+        grabLvl: 0, mass: 0.85, armor: 1, fast: true
+    },
+    hardhat: {
+        hp: 38, hpw: 8, scale: 1.02, speed: 23, gold: 16, dmg: 11,
+        skin: '#8fae57', skinDark: '#6d8a45', shirt: '#b8862f', pants: '#4a4438',
+        headR: 15, torsoW: 21, limb: 8, gut: 2, helmet: true,
+        grabLvl: 0, mass: 1.1, armor: 0.9
+    },
+    brute: {
+        hp: 86, hpw: 15, scale: 1.34, speed: 16, gold: 28, dmg: 22,
+        skin: '#7f9d4c', skinDark: '#61793a', shirt: '#4d4436', pants: '#3a3226',
+        headR: 14, torsoW: 27, limb: 9.5, gut: 12,
+        grabLvl: 1, mass: 1.7, armor: 0.85, heavy: true, capImpact: 0.34
+    },
+
+    // ---- wave 5+ : the ones that change how you play -----------------------
+    // Pops on death. Grab it, walk it into a crowd, let go. Chain reactions
+    // are intentional and are the cheapest crowd clear in the game.
+    bloater: {
+        hp: 46, hpw: 9, scale: 1.16, speed: 18, gold: 24, dmg: 14,
+        skin: '#a3b862', skinDark: '#7d9247', shirt: '#6b7a4a', pants: '#454f36',
+        headR: 15.5, torsoW: 26, limb: 8.5, gut: 22,
+        grabLvl: 1, mass: 1.5, armor: 0.8, bloat: true, heavy: true, capImpact: 0.38
+    },
+    // Speeds up everything near it. Kill it first or the wave outruns you.
+    screamer: {
+        hp: 32, hpw: 6.5, scale: 0.94, speed: 42, gold: 30, dmg: 8,
+        skin: '#b9c46e', skinDark: '#8f9a52', shirt: '#6d4a7a', pants: '#40354a',
+        headR: 16, torsoW: 16, limb: 6.2, gut: 0,
+        grabLvl: 1, mass: 0.95, armor: 1, howl: true, fast: true
+    },
+    // ---- wave 8+ : needs a real grip --------------------------------------
+    titan: {
+        hp: 215, hpw: 32, scale: 1.62, speed: 13, gold: 72, dmg: 34,
+        skin: '#6f8c42', skinDark: '#546b31', shirt: '#4a3f30', pants: '#332c22',
+        headR: 14.5, torsoW: 34, limb: 12, gut: 18,
+        grabLvl: 2, mass: 3.2, armor: 0.55, heavy: true, capImpact: 0.27
+    },
+    butcher: {
+        hp: 155, hpw: 24, scale: 1.30, speed: 31, gold: 64, dmg: 26,
+        skin: '#8a9e52', skinDark: '#68793c', shirt: '#7d2f2f', pants: '#3b3128',
+        headR: 14, torsoW: 26, limb: 9, gut: 4, plate: true,
+        grabLvl: 3, mass: 2.4, armor: 0.45, heavy: true, capImpact: 0.25
+    },
+    // ---- every 5th wave ----------------------------------------------------
+    warden: {
+        hp: 640, hpw: 98, scale: 2.05, speed: 11, gold: 280, dmg: 46,
+        skin: '#5f7d3a', skinDark: '#455c28', shirt: '#3d3a30', pants: '#2b271f',
+        headR: 15, torsoW: 40, limb: 14, gut: 22, plate: true, helmet: true,
+        grabLvl: 4, mass: 5.0, armor: 0.3, boss: true, capImpact: 0.15
+    }
+};
+
+// Skeleton heights above the lane's ground line, at scale 1.
+const SK = { foot: 11, hips: 34, chest: 58, head: 80, hand: 54 };
+
+let zid = 0;
+
+class Zombie {
+    constructor(kind, wave, side, lane, elite) {
+        const t = TYPES[kind];
+        this.id = ++zid;
+        this.kind = kind;
+        this.t = t;
+        // Elites are a cheap, readable difficulty dial: same silhouette, more
+        // meat, worth more. Bosses are never elite — they're already the spike.
+        this.elite = !!elite && !t.boss;
+        this.s = t.scale * LANES[lane].scale * (this.elite ? 1.1 : 1);
+        this.lane = lane;
+        this.gy = laneGround(lane);
+
+        this.maxHp = (t.hp + t.hpw * wave) * (this.elite ? 1.7 : 1);
+        this.hp = this.maxHp;
+        this.gold = Math.round((t.gold + wave * 3) * (this.elite ? 1.9 : 1));
+
+        this.state = 'walk';          // walk | ragdoll | rise | dead
+        this.dir = side > 0 ? -1 : 1;
+        this.phase = rand(0, 6.28);
+        this.settle = 0;              // time spent nearly still while ragdolled
+        this.riseT = 0;
+        // Grace period after standing up during which traps can't re-floor them.
+        this.poiseT = 0;
+        // Wave this one spawned on — lift odds decay against it, so a late
+        // warden is genuinely harder to get a grip on than an early one.
+        this.spawnWave = wave;
+        // Banked failed-lift progress. See rollLift().
+        this.strain = 0;
+        // How hard THIS individual fights your hand, rolled once at birth. Two
+        // wardens in the same wave hold for different lengths of time, so you
+        // can't memorise a safe hold duration. See gripDrain().
+        this.thrash = rand(0.78, 1.34);
+        // Countdown to this one's next idle vocal. Staggered from birth so a
+        // wave that spawns together doesn't groan in unison.
+        this.groanT = rand(0.8, 6);
+        this.fade = 1;
+        this.attackCd = 0;
+        this.swing = 0;
+        this.grabbed = false;
+        this.impact = 0;              // biggest hit this frame
+        this.helmetHp = t.helmet ? 26 + wave * 2 : 0;
+        this.plateHp  = t.plate  ? 60 + wave * 8 : 0;
+        this.blocked = false;
+
+        // Per-zombie gadget cooldowns. Without these a spike or saw applies its
+        // full damage on every body point on every frame — 7 points x 60fps was
+        // why traps one-shot the entire field.
+        this.spikeCd = 0;
+        this.sawCd = 0;
+        // One throw lands over SEVERAL frames — feet, then hips, then head —
+        // and each of those frames used to be capped independently, so a
+        // "15% per slam" warden was actually losing ~90% of its HP to one
+        // throw. slamT is the window that groups those frames into ONE slam;
+        // slamBudget is what's left of that slam's damage allowance.
+        this.slamT = 0;
+        this.slamBudget = 0;
+        this.hasteT = 0;          // screamer buff timer
+        this.haste = 1;
+
+        // cosmetic variety
+        this.look = irand(0, 3);
+        this.stainA = { x: rand(-.5, .5), y: rand(-.3, .4) };
+        this.stainB = { x: rand(-.5, .5), y: rand(0, .6) };
+
+        const s = this.s;
+        // Jitter the entry point. Two bodies born on the exact same pixel make
+        // the separation pass explode.
+        const x = side > 0 ? W + 90 + rand(0, 210) : -90 - rand(0, 210);
+        const g = this.gy;
+
+        const P = (px, py, r) => ({ x: px, y: py, px, py, r });
+        this.head  = P(x, g - SK.head * s,  t.headR * s);
+        this.chest = P(x, g - SK.chest * s, t.torsoW * 0.5 * s);
+        this.hips  = P(x, g - SK.hips * s,  t.torsoW * 0.46 * s);
+        this.lhand = P(x, g - SK.hand * s,  6 * s);
+        this.rhand = P(x, g - SK.hand * s,  6 * s);
+        this.lfoot = P(x, g - SK.foot * s,  7 * s);
+        this.rfoot = P(x, g - SK.foot * s,  7 * s);
+
+        this.pts = [this.head, this.chest, this.hips, this.lhand, this.rhand, this.lfoot, this.rfoot];
+
+        // Authoritative ground position for the walk cycle.
+        this.wx = x;
+
+        const L = (a, b, stiff) => ({ a, b, len: Math.hypot(a.x - b.x, a.y - b.y) || 1, stiff, cut: false });
+        // Rest lengths come from the standing pose, so build it first.
+        this.applyPose(x, 1);
+        this.links = [
+            L(this.head, this.chest, 1),
+            L(this.chest, this.hips, 1),
+            L(this.chest, this.lhand, .8),
+            L(this.chest, this.rhand, .8),
+            L(this.hips, this.lfoot, .85),
+            L(this.hips, this.rfoot, .85),
+            L(this.head, this.hips, .5)          // spine brace
+        ];
+        this.links[2].limb = this.lhand;
+        this.links[3].limb = this.rhand;
+        this.links[4].limb = this.lfoot;
+        this.links[5].limb = this.rfoot;
+        for (const p of this.pts) { p.px = p.x; p.py = p.y; }
+    }
+
+    // ---------------------------------------------------------- walk cycle
+    // Writes the standing pose for hips-x = ax. k is the blend weight, so the
+    // rise animation can ease into it. Because this is positional and gravity
+    // is skipped while walking, the body cannot fold up and crawl.
+    //
+    // ax must come from the authoritative walk anchor (this.wx), never from
+    // hips.x — feeding the blended result back in makes each frame advance by
+    // only k * step, which silently scales walk speed down to a third.
+    applyPose(ax, k) {
+        const s = this.s, g = this.gy, d = this.dir, ph = this.phase;
+
+        const bob = Math.sin(ph * 2) * 1.9 * s;
+        const sway = Math.sin(ph) * 1.1 * s;
+        const lean = 5.5 * s;                    // hunched forward
+        const stride = 13 * s;
+        const swingAmt = this.swing;
+
+        const set = (p, tx, ty) => {
+            p.x = lerp(p.x, tx, k);
+            p.y = lerp(p.y, ty, k);
+        };
+
+        set(this.hips,  ax + sway * 0.3,        g - SK.hips * s + bob);
+        set(this.chest, ax + d * lean + sway,   g - SK.chest * s + bob * 0.65);
+        set(this.head,  ax + d * lean * 2.1,    g - SK.head * s + bob * 0.4);
+
+        // feet: cos>0 is the swing phase (lifted), cos<0 is the stance
+        for (const [f, off] of [[this.lfoot, 0], [this.rfoot, Math.PI]]) {
+            const p2 = ph + off;
+            const lift = Math.max(0, Math.cos(p2)) * 9 * s;
+            set(f, ax + d * (Math.sin(p2) * stride), g - f.r - lift);
+        }
+
+        // arms out front, classic shamble. swingAmt drives the shack-clawing.
+        const reach = (24 + swingAmt * 9) * s;
+        const hy = g - SK.hand * s + Math.sin(ph) * 3 * s - swingAmt * 5 * s;
+        set(this.lhand, ax + d * reach,            hy);
+        set(this.rhand, ax + d * (reach * 0.82),   hy + 6 * s);
+    }
+
+    get anchorX() { return this.hips.x; }
+
+    // ---------------------------------------------------------- damage
+    // kind: 'impact' = physics (your hands, slams, bowling)
+    //       'gadget' = spike / saw
+    //       'blast'  = grenade / bloater
+    // Armor and plating blunt gadget and blast damage but NEVER impact damage.
+    // That asymmetry is deliberate: it keeps the answer to a heavy zombie
+    // physical, which is the fantasy the whole game is built on.
+    hurt(amount, kind) {
+        if (this.state === 'dead' || amount <= 0) return;
+
+        if (kind === 'gadget' || kind === 'blast') {
+            amount *= this.t.armor === undefined ? 1 : this.t.armor;
+
+            if (this.plateHp > 0) {
+                this.plateHp -= amount;
+                amount *= 0.3;
+                if (this.plateHp <= 0) {
+                    popup(this.chest.x, this.chest.y - 20, 'PLATE CRACKED', '#9de0ff', 17);
+                    puff(this.chest.x, this.chest.y, '#8d95a0', 16, 5);
+                    sfx('plate');
+                }
+            }
+        }
+
+        if (this.helmetHp > 0 && kind === 'impact') {
+            this.helmetHp -= amount;
+            amount *= 0.45;
+            if (this.helmetHp <= 0) {
+                popup(this.head.x, this.head.y - 26, 'HAT OFF!', '#ffd83d', 18);
+                puff(this.head.x, this.head.y, '#d8a133', 14, 5);
+                sfx('helmet');
+            }
+        }
+
+        this.hp -= amount;
+        if (amount > 5) puff(this.chest.x, this.chest.y, this.t.skinDark, 4 + ((amount / 7) | 0), 3.4);
+        if (this.hp <= 0) this.die(amount, kind);
+    }
+
+    knockDown(recover) {
+        if (this.state === 'dead') return;
+        if (this.state === 'walk' || this.state === 'rise') {
+            this.state = 'ragdoll';
+            this.settle = -(recover || 0);
+        }
+    }
+
+    die(force, kind) {
+        if (this.state === 'dead') return;
+        this.state = 'dead';
+        this.grabbed = false;
+
+        // Capped at 12. The counter itself keeps climbing for the on-screen flex,
+        // but the payout stops at 2.8x — uncapped, a crowded wave-18 field chained
+        // 30+ kills and paid ~5x on every body, which is how a run ended up sitting
+        // on six figures of gold with every upgrade maxed and nothing left to buy.
+        const mult = 1 + Math.min(game.combo, 12) * 0.15;
+        const gold = Math.round(this.gold * mult);
+        game.gold += gold;
+        game.score += Math.round(100 * this.s * mult);
+        game.kills++;
+        game.combo++;
+        game.comboTimer = 2.4;
+        game.alive--;
+        if (force > game.bestSmash) game.bestSmash = Math.round(force);
+
+        popup(this.head.x, this.head.y - 26, pick(SPLATS), '#b6ff4a', 26);
+        popup(this.head.x, this.head.y - 2, '+' + gold + 'g', '#ffd83d', 17);
+        if (game.combo > 2) popup(this.head.x, this.head.y - 50, 'x' + game.combo + ' COMBO', '#ff9de0', 18);
+
+        // Death vocal scales with body size, so a warden's end is an event.
+        sfx('death', this.s);
+        if (game.combo > 2) sfx('combo', game.combo);
+
+        puff(this.chest.x, this.chest.y, this.t.skinDark, 24, 5);
+        bloodDecal(this.chest.x, this.gy - 5, 22 * this.s, '#3f6b1c');
+
+        // A brutal end tears limbs off.
+        if (force > 24 || kind === 'blast') {
+            for (const l of this.links) {
+                if (l.limb && Math.random() < 0.55) {
+                    l.cut = true;
+                    gibs.push({
+                        x: l.limb.x, y: l.limb.y, gy: this.gy,
+                        vx: rand(-5, 5), vy: rand(-9, -2),
+                        rot: rand(0, 6.3), vr: rand(-.4, .4),
+                        r: l.limb.r, life: 5, color: this.t.skin
+                    });
+                }
+            }
+            puff(this.chest.x, this.chest.y, '#8fd63f', 16, 7);
+            sfx('gib');
+        }
+
+        // Bloaters rupture. explode() only ever hits live zombies and this one is
+        // already flagged dead, so a pair of bloaters can chain without the
+        // recursion coming back around to either of them.
+        if (this.t.bloat) {
+            popup(this.chest.x, this.chest.y - 46, 'BLOAT!', '#c6ff6a', 24);
+            sfx('bloat');
+            explode(this.chest.x, this.chest.y, 128 * this.s, 34 + game.wave * 2.5, '#b6e04a');
+        }
+    }
+
+    limbOn(p) {
+        for (const l of this.links) if (l.limb === p) return !l.cut;
+        return true;
+    }
+}
+
+// ============================================================== AI
+const REACH = 30;   // how close the hips must be to the wall to claw at it
+
+function think(z, dt) {
+    if (z.spikeCd > 0) z.spikeCd -= dt;
+    if (z.sawCd > 0) z.sawCd -= dt;
+    if (z.poiseT > 0) z.poiseT -= dt;
+    if (z.slamT > 0) z.slamT -= dt;
+    if (z.hasteT > 0) { z.hasteT -= dt; if (z.hasteT <= 0) z.haste = 1; }
+
+    // Idle vocals. Each body runs its own timer, but they all draw from one
+    // global cooldown — a 40-zombie wave would otherwise be a wall of groaning
+    // instead of a horde you can pick individual voices out of. Bigger bodies
+    // get a longer gap so the warden's rumble stays an event.
+    if (z.state !== 'dead' && z.fade > 0) {
+        z.groanT -= dt;
+        if (z.groanT <= 0) {
+            if (groanGap <= 0) {
+                sfx('groan', z.s);
+                groanGap = 0.28;
+            }
+            z.groanT = rand(3.5, 9) * (z.t.boss ? 1.6 : 1);
+        }
+    }
+
+    if (z.state === 'dead' || z.grabbed) return;
+
+    if (z.state === 'ragdoll') {
+        // Settle test: once a live body stops tumbling it climbs back up.
+        let v = 0;
+        for (const p of z.pts) v += Math.abs(p.x - p.px) + Math.abs(p.y - p.py);
+        v /= z.pts.length;
+
+        const down = z.hips.y > z.gy - 40 * z.s;
+        z.settle += (v < 0.5 && down) ? dt : -dt * 2;
+        z.settle = Math.max(-1.5, z.settle);
+
+        // Don't stand up inside the shack — slide out from under it first.
+        const inHouse = z.hips.x > HOUSE.x - 10 && z.hips.x < HOUSE.r + 10 && z.hips.y < HOUSE.y + HOUSE.h;
+        if (inHouse) {
+            const out = z.hips.x < HOUSE.cx ? -1 : 1;
+            z.hips.x += out * 1.6;
+            return;
+        }
+
+        if (z.settle > 0.85) {
+            z.state = 'rise';
+            z.riseT = 0;
+            // Physics owned the body while it tumbled, so hand the walk anchor
+            // back the position it actually ended up in.
+            z.wx = z.hips.x;
+            // Always turn to face the shack, wherever the throw left them.
+            z.dir = z.hips.x < HOUSE.cx ? 1 : -1;
+        }
+        return;
+    }
+
+    if (z.state === 'rise') {
+        z.riseT += dt;
+        const k = clamp(z.riseT / 0.65, 0, 1);
+        z.applyPose(z.wx, 0.06 + k * 0.26);
+        // Poise window: for a beat after standing up they shrug off trap
+        // knockdowns. Without it a body lying in a spike strip is re-floored on
+        // the frame it finishes rising and never walks again.
+        if (k >= 1) { z.state = 'walk'; z.swing = 0; z.poiseT = 1.2; }
+        return;
+    }
+
+    // ---- walking ----------------------------------------------------------
+    z.dir = z.wx < HOUSE.cx ? 1 : -1;
+    z.attackCd -= dt;
+
+    // Real proximity test. The old half-plane check let anything flung past the
+    // shack keep chewing on it from across the map.
+    const edge = z.dir > 0 ? HOUSE.x : HOUSE.r;
+    const gap = Math.abs(z.wx - edge);
+    const atWall = gap < REACH * z.s && z.wx > HOUSE.x - REACH * z.s - 4
+                                     && z.wx < HOUSE.r + REACH * z.s + 4;
+
+    if (atWall) {
+        z.swing = (Math.sin(z.phase * 6) * 0.5 + 0.5);
+        z.phase += dt * 6;
+        z.applyPose(z.wx, 0.35);
+
+        if (z.attackCd <= 0 && game.hp > 0) {
+            z.attackCd = 1.05;
+            game.hp -= z.t.dmg;
+            game.shake = Math.max(game.shake, 7);
+            puff(edge + z.dir * -6, z.chest.y, '#c8a76a', 12, 4);
+            popup(z.wx, z.chest.y - 40, '-' + z.t.dmg, '#ff6b5e', 18);
+            sfx('house');
+            if (game.hp <= 0) { game.hp = 0; endGame(); }
+        }
+        return;
+    }
+
+    z.swing = lerp(z.swing, 0, 0.1);
+
+    // Queue behind whoever is ahead in this lane instead of walking through them.
+    z.blocked = false;
+    const minGap = 30 * z.s;
+    for (const o of zombies) {
+        if (o === z || o.lane !== z.lane || o.state === 'dead') continue;
+        const ahead = (o.hips.x - z.wx) * z.dir;
+        if (ahead > 0 && ahead < minGap && Math.abs(o.hips.y - z.hips.y) < 50 * z.s) {
+            // Only yield to someone facing the same way, so head-on pairs
+            // push past each other rather than deadlocking.
+            if (o.dir === z.dir || o.state !== 'walk') { z.blocked = true; break; }
+        }
+    }
+
+    // Wave speed ramp, capped. 1.5%/wave compounded meant wave 25 was a jog and
+    // wave 40 was unplayable; 2.6% with a +85% ceiling makes the horde visibly
+    // meaner every wave and then holds at "you cannot walk this off" instead of
+    // running away into farce. Late waves get their difficulty from composition
+    // and volume, not from speed alone.
+    const ramp = Math.min(1.85, 1 + game.wave * 0.026);
+    const speed = z.t.speed * ramp * z.haste * dt;
+    const move = z.blocked ? 0 : speed;
+    z.wx += z.dir * move;
+    z.phase += (move / (13 * z.s)) * 2.6 + dt * 0.5;
+    z.applyPose(z.wx, 0.34);
+}
+
+// Screamers rally the horde around them. Kept as its own pass so the cost is
+// (screamers x zombies) rather than every zombie scanning every other one.
+function howl(dt) {
+    for (const s of zombies) {
+        if (!s.t.howl || s.state === 'dead' || s.fade <= 0) continue;
+        s.howlT = (s.howlT || 0) + dt;
+        const R = 250 * s.s;
+        for (const z of zombies) {
+            if (z === s || z.state === 'dead' || z.fade <= 0) continue;
+            if (Math.hypot(z.hips.x - s.hips.x, z.hips.y - s.hips.y) > R) continue;
+            z.haste = 1.4;
+            z.hasteT = 0.4;
+        }
+    }
+}
+
+// ============================================================== PHYSICS
+function integrate(p) {
+    const vx = (p.x - p.px) * DAMP;
+    const vy = (p.y - p.py) * DAMP;
+    p.px = p.x; p.py = p.y;
+    p.x += clamp(vx, -60, 60);
+    p.y += clamp(vy, -60, 60) + GRAV;
+}
+
+function solve(l) {
+    if (l.cut) return;
+    const dx = l.b.x - l.a.x, dy = l.b.y - l.a.y;
+    const d = Math.hypot(dx, dy) || 0.001;
+    const diff = ((d - l.len) / d) * 0.5 * l.stiff;
+    const ox = dx * diff, oy = dy * diff;
+    l.a.x += ox; l.a.y += oy;
+    l.b.x -= ox; l.b.y -= oy;
+}
+
+// Returns the impact speed so callers can turn it into damage.
+function collide(p, gy) {
+    let hit = 0;
+
+    if (p.y + p.r > gy) {
+        const vy = p.y - p.py, vx = p.x - p.px;
+        if (vy > 0) hit = Math.max(hit, Math.hypot(vx, vy));
+        p.y = gy - p.r;
+        p.py = p.y + vy * 0.26;      // bounce
+        p.px = p.x - vx * 0.68;      // friction
+    }
+
+    if (p.x + p.r > HOUSE.x && p.x - p.r < HOUSE.r && p.y + p.r > HOUSE.y) {
+        const pl = (p.x + p.r) - HOUSE.x;
+        const pr = HOUSE.r - (p.x - p.r);
+        const pt = (p.y + p.r) - HOUSE.y;
+        const m = Math.min(pl, pr, pt);
+        const vx = p.x - p.px, vy = p.y - p.py;
+        if (m === pt)      { hit = Math.max(hit, Math.abs(vy)); p.y -= pt; p.py = p.y + vy * 0.3; }
+        else if (m === pl) { hit = Math.max(hit, Math.abs(vx)); p.x -= pl; p.px = p.x + vx * 0.4; }
+        else               { hit = Math.max(hit, Math.abs(vx)); p.x += pr; p.px = p.x + vx * 0.4; }
+    }
+
+    if (p.x < -260) { p.x = -260; p.px = p.x; }
+    if (p.x > W + 260) { p.x = W + 260; p.px = p.x; }
+    return hit;
+}
+
+// Separation between bodies. Same lane only, so depth reads correctly and
+// zombies never occupy the same space. This is position correction ONLY —
+// reading velocity here would mistake its own corrective shove for an impact,
+// which is how two zombies born on the same pixel used to kill each other on
+// frame one. Impact damage lives in collisionDamage().
+function separate() {
+    const list = [];
+    for (const z of zombies) {
+        if (z.fade <= 0) continue;
+        list.push([z, z.head], [z, z.chest], [z, z.hips]);
+    }
+    for (let i = 0; i < list.length; i++) {
+        const [za, a] = list[i];
+        for (let j = i + 1; j < list.length; j++) {
+            const [zb, b] = list[j];
+            if (za === zb || za.lane !== zb.lane) continue;
+
+            let dx = b.x - a.x, dy = b.y - a.y;
+            const min = a.r + b.r;
+            let d2 = dx * dx + dy * dy;
+            if (d2 >= min * min) continue;
+
+            // Exactly coincident points have no separation axis. Nudge along x
+            // rather than dividing by zero and launching them into orbit.
+            if (d2 < 0.01) { dx = (za.id < zb.id ? -1 : 1) * 0.4; dy = 0; d2 = 0.16; }
+
+            const d = Math.sqrt(d2);
+            // A walking zombie is pose-driven, so shove the other one harder.
+            const aFixed = za.state === 'walk', bFixed = zb.state === 'walk';
+            let wa = 0.5, wb = 0.5;
+            if (aFixed && !bFixed) { wa = 0.1; wb = 0.9; }
+            else if (bFixed && !aFixed) { wa = 0.9; wb = 0.1; }
+
+            // Cap the correction so a deep overlap resolves over a few frames
+            // instead of in one violent jump.
+            const push = Math.min((min - d) / d, 0.6);
+            a.x -= dx * push * wa; a.y -= dy * push * wa;
+            b.x += dx * push * wb; b.y += dy * push * wb;
+        }
+    }
+}
+
+// Bowling one body into another. Runs once per frame on integrated velocities,
+// before the constraint iterations muddy them.
+function collisionDamage() {
+    const list = [];
+    for (const z of zombies) {
+        if (z.fade <= 0 || z.state === 'dead') continue;
+        list.push([z, z.head], [z, z.chest], [z, z.hips]);
+    }
+    for (let i = 0; i < list.length; i++) {
+        const [za, a] = list[i];
+        for (let j = i + 1; j < list.length; j++) {
+            const [zb, b] = list[j];
+            if (za === zb || za.lane !== zb.lane) continue;
+            // At least one of them has to actually be flying.
+            if (!isSim(za) && !isSim(zb)) continue;
+
+            const dx = b.x - a.x, dy = b.y - a.y;
+            const reach = a.r + b.r + 6;
+            if (dx * dx + dy * dy >= reach * reach) continue;
+
+            const rvx = (b.x - b.px) - (a.x - a.px);
+            const rvy = (b.y - b.py) - (a.y - a.py);
+            const rel = Math.hypot(rvx, rvy);
+            if (rel < breakPt() + 2) continue;
+
+            za.impact = Math.max(za.impact, rel * 0.9);
+            zb.impact = Math.max(zb.impact, rel * 0.9);
+            popup((a.x + b.x) / 2, (a.y + b.y) / 2 - 30, 'STRIKE!', '#9de0ff', 17);
+        }
+    }
+}
+
+const ITER = 6;
+const isSim = z => z.grabbed || z.state === 'ragdoll' || z.state === 'dead';
+
+function physics() {
+    for (const z of zombies) {
+        if (z.fade <= 0 || !isSim(z)) continue;
+        for (const p of z.pts) integrate(p);
+    }
+
+    // Impacts are read from post-integration velocity, before the solver has a
+    // chance to alter it.
+    collisionDamage();
+
+    for (let it = 0; it < ITER; it++) {
+        // The held point chases the cursor every iteration so the rest of the
+        // body hangs off it. grab.drag is how much of that chase actually lands:
+        // a shambler snaps to the pointer, a warden lumbers after it.
+        if (grab.z) {
+            grab.p.x = lerp(grab.p.x, grab.x, grab.drag);
+            grab.p.y = lerp(grab.p.y, grab.y, grab.drag);
+        }
+
+        for (const z of zombies) {
+            if (z.fade <= 0 || !isSim(z)) continue;
+            for (const l of z.links) solve(l);
+            for (const p of z.pts) {
+                const hit = collide(p, z.gy);
+                // Only the first pass sees the true landing speed; later passes
+                // are looking at the bounce this function already applied.
+                if (it === 0 && hit > z.impact) z.impact = hit;
+            }
+        }
+        separate();
+    }
+
+    if (grab.z) {
+        grab.p.x = lerp(grab.p.x, grab.x, grab.drag);
+        grab.p.y = lerp(grab.p.y, grab.y, grab.drag);
+        // Throw speed is limited by how well you can actually swing the body.
+        grab.p.px = grab.p.x - grab.sx * grab.drag;
+        grab.p.py = grab.p.y - grab.sy * grab.drag;
+    }
+}
+
+// Speed becomes damage here, in one place, so ground slams, wall slams and
+// zombie-on-zombie bowling all read from the same scale.
+function resolveImpacts() {
+    const bp = breakPt();
+    for (const z of zombies) {
+        const imp = z.impact;
+        z.impact = 0;
+        if (z.state === 'dead' || z.fade <= 0 || imp <= 0) continue;
+
+        // Heavy bodies plant their feet. Rolled, not automatic: an unconditional
+        // knockdown here handed every big body a free floor every time it was
+        // bumped, which is what made slam-locking a warden possible.
+        if (imp > KNOCK * Math.sqrt(z.t.mass || 1)) tryKnock(z, 'slam', 0.25);
+        if (imp <= bp) continue;
+
+        let dmg = (imp - bp) * 2.4 * gripMul();
+
+        // Big bodies cap what a SINGLE slam can take off. Throw speed and grip
+        // both scale without bound, so uncapped a levelled player deleted a
+        // warden in two throws.
+        //
+        // The subtlety: one throw is not one frame. A body lands over ~4-8
+        // frames as feet, hips and head hit in sequence, and capping each of
+        // those frames on its own let a "15% max" warden lose most of its bar
+        // to a single fling. So the cap is a BUDGET spent over a time window —
+        // the whole landing sequence resolves as one slam, and you have to
+        // pick the body back up to earn another.
+        const cap = z.t.capImpact;
+        if (cap) {
+            if (z.slamT <= 0) {
+                z.slamT = SLAM_WINDOW;
+                z.slamBudget = z.maxHp * cap;
+            }
+            if (dmg > z.slamBudget) {
+                dmg = z.slamBudget;
+                // Tell the player the hit was throttled, otherwise a capped slam
+                // just looks like the throw didn't land. Only on the frame the
+                // budget actually runs dry, or it spams for the whole window.
+                if (dmg > 0 && z.state !== 'dead')
+                    popup(z.chest.x, z.chest.y - 56, 'TOUGH HIDE', '#9de0ff', 15);
+            }
+            z.slamBudget -= dmg;
+            if (dmg <= 0) continue;
+        }
+
+        const x = z.chest.x, y = z.chest.y;
+        z.hurt(dmg, 'impact');
+        sfx(dmg > 30 ? 'crunch' : 'impact', z.s * (1 + imp * 0.03));
+        game.shake = Math.max(game.shake, Math.min(12, imp * 0.55));
+        if (z.state !== 'dead') {
+            popup(x, y - 34, Math.round(dmg), '#ffe9a8', 15 + Math.min(11, dmg * 0.28));
+            puff(x, y, '#6ea72c', 5, 3.2);
+            bloodDecal(x, z.gy - 4, 11 * z.s, '#39621a');
+        }
+    }
+}
+
+// ============================================================== GADGETS
+function explode(x, y, r, dmg, tint) {
+    game.shake = Math.max(game.shake, 22);
+    sfx('explode');
+    puff(x, y, tint || '#fff3b0', 30, 12);
+    puff(x, y, tint ? '#7fae2c' : '#ff8a2f', 26, 9);
+    puff(x, y, '#4a4a44', 22, 6);
+    dctx.globalAlpha = 0.35;
+    dctx.fillStyle = tint ? '#22300c' : '#141008';
+    dctx.beginPath(); dctx.arc(x, Math.min(y, GROUND + 20), r * 0.45, 0, 7); dctx.fill();
+    dctx.globalAlpha = 1;
+
+    for (const z of zombies) {
+        if (z.state === 'dead' || z.fade <= 0) continue;
+        const d = Math.hypot(z.chest.x - x, z.chest.y - y);
+        if (d > r) continue;
+        const k = 1 - d / r;
+        // Blast is the one source that reliably floors light bodies; the heavy
+        // stock and the boss only get a roll at it. A body that's already off
+        // its feet always takes the shove regardless of the roll.
+        const knocked = tryKnock(z, 'blast', 0);
+        if (knocked || isSim(z)) for (const p of z.pts) {
+            const dx = p.x - x, dy = p.y - y;
+            const dd = Math.hypot(dx, dy) || 1;
+            // Heavy bodies resist the shove. A titan should lurch, not sail.
+            const heft = 30 / (z.t.mass || 1);
+            p.px -= (dx / dd) * heft * k;
+            p.py -= (dy / dd) * heft * k + 8 * k;
+        }
+        // Shrugged it off but still standing in a shockwave: rock them back a
+        // little so the hit reads even when they keep their footing.
+        if (!knocked && !isSim(z)) z.wx += Math.sign(z.hips.x - x || 1) * 9 * k / (z.t.mass || 1);
+        z.hurt(dmg * k, 'blast');
+    }
+}
+
+function useTool(x, y) {
+    const t = game.tool;
+    if (t === 'grenade' && ammo.grenade > 0) {
+        ammo.grenade--;
+        nades.push({ x, y: -30, vx: rand(-0.6, 0.6), vy: 3, fuse: 1.15, spin: 0 });
+        sfx('toss');
+        return true;
+    }
+    if (t === 'spike' && ammo.spike > 0) {
+        ammo.spike--;
+        spikes.push({ x: clamp(x, 40, W - 40), w: 78, cd: 0 });
+        puff(x, GROUND, '#9aa3ad', 12, 4);
+        sfx('toss');
+        return true;
+    }
+    if (t === 'saw' && ammo.saw > 0) {
+        ammo.saw--;
+        saws.push({ x, y: Math.min(y, GROUND - 60), vx: (x < HOUSE.cx ? 1 : -1) * 6.5, vy: 0, r: 24, rot: 0, life: 9 });
+        sfx('toss');
+        return true;
+    }
+    // Out of ammo on a selected gadget — say so, rather than eating the click.
+    if (t !== 'hand') sfx('deny');
+    return false;
+}
+
+function stepGadgets(dt) {
+    for (let i = nades.length - 1; i >= 0; i--) {
+        const n = nades[i];
+        n.vy += GRAV * 0.85;
+        n.x += n.vx; n.y += n.vy;
+        n.spin += 0.25;
+        if (n.y > GROUND - 8) { n.y = GROUND - 8; n.vy *= -0.42; n.vx *= 0.7; }
+        n.fuse -= dt;
+        if (n.fuse <= 0) { explode(n.x, n.y, 142, nadeDmg()); nades.splice(i, 1); }
+    }
+
+    for (const sp of spikes) {
+        sp.cd -= dt;
+        for (const z of zombies) {
+            if (z.state === 'dead' || z.fade <= 0) continue;
+            // One damage window per zombie, not one per body point per frame.
+            if (z.spikeCd > 0) continue;
+            for (const p of z.pts) {
+                if (Math.abs(p.x - sp.x) > sp.w * 0.5) continue;
+                if (p.y + p.r < z.gy - 26) continue;
+                const spd = Math.hypot(p.x - p.px, p.y - p.py);
+                // Spikes reward SLAMMING someone onto them. Standing on one is a
+                // slow bleed; being thrown onto one hurts.
+                const dmg = spikeDmg() + spd * 1.9;
+                z.spikeCd = 0.45;
+                z.hurt(dmg, 'gadget');
+                sfx('spike');
+                tryKnock(z, 'spike', 0.4);
+                puff(p.x, p.y, '#7d1f1f', 8, 3.5);
+                bloodDecal(p.x, z.gy - 6, 16 * z.s, '#5e1414');
+                p.py = p.y - 3;
+                if (sp.cd <= 0) { sp.cd = 0.25; popup(p.x, p.y - 30, 'SKEWERED', '#ff6b5e', 16); }
+                break;
+            }
+        }
+    }
+
+    for (let i = saws.length - 1; i >= 0; i--) {
+        const s = saws[i];
+        s.vy += GRAV * 0.7;
+        s.x += s.vx; s.y += s.vy;
+        s.rot += 0.55;
+        s.life -= dt;
+        if (s.y > GROUND - s.r) { s.y = GROUND - s.r; s.vy *= -0.55; }
+        if (s.x < s.r || s.x > W - s.r) s.vx *= -1;
+        for (const z of zombies) {
+            if (z.state === 'dead' || z.fade <= 0) continue;
+            // Ticking 60x/sec on 7 points was ~1100 dps from a single blade.
+            if (z.sawCd > 0) continue;
+            for (const p of z.pts) {
+                if (Math.hypot(p.x - s.x, p.y - s.y) > s.r + p.r) continue;
+                z.sawCd = 0.22;
+                z.hurt(sawDmg(), 'gadget');
+                sfx('saw');
+                tryKnock(z, 'saw', 0.3);
+                p.px = p.x - s.vx * 0.35;
+                puff(p.x, p.y, '#8e1b1b', 3, 4);
+                bloodDecal(p.x, p.y, 9, '#5e1414');
+                break;
+            }
+        }
+        if (s.life <= 0) { puff(s.x, s.y, '#9aa3ad', 12, 4); saws.splice(i, 1); }
+    }
+}
+
+// ============================================================== FX STEP
+function stepFX(dt) {
+    for (let i = parts.length - 1; i >= 0; i--) {
+        const p = parts[i];
+        p.x += p.vx; p.y += p.vy;
+        p.vy += 0.32; p.vx *= 0.99;
+        p.life -= p.decay;
+        if (p.life <= 0 || p.y > H + 60) parts.splice(i, 1);
+    }
+    for (let i = gibs.length - 1; i >= 0; i--) {
+        const g = gibs[i];
+        g.vy += GRAV * 0.9;
+        g.x += g.vx; g.y += g.vy; g.rot += g.vr;
+        if (g.y > g.gy - g.r) {
+            g.y = g.gy - g.r; g.vy *= -0.32; g.vx *= 0.72; g.vr *= 0.72;
+            if (Math.abs(g.vy) > 1) bloodDecal(g.x, g.gy - 3, 10, '#3f6b1c');
+        }
+        g.life -= dt;
+        if (g.life <= 0) gibs.splice(i, 1);
+    }
+    for (let i = popups.length - 1; i >= 0; i--) {
+        const p = popups[i];
+        p.y += p.vy; p.vy *= 0.945;
+        p.life -= dt * 0.85;
+        if (p.life <= 0) popups.splice(i, 1);
+    }
+    if (game.shake > 0) game.shake = Math.max(0, game.shake - dt * 34);
+    if (bannerT > 0) bannerT -= dt;
+}
+
+// ============================================================== WAVES
+function clearTimers() {
+    for (const t of spawnTimers) clearTimeout(t);
+    spawnTimers = [];
+}
+
+// Weighted roll over a cumulative table. Later waves unlock heavier stock and
+// the cheap trash quietly thins out.
+//
+// The bands widen with the wave on top of the unlock gates, so a wave-20 field
+// is mostly things that need a grip level, while a wave-6 field is still mostly
+// trash with a brute in it. Without the widening, every wave past ~12 had the
+// same 26% heavy share and the run flattened out into busywork.
+function rollKind(w) {
+    const r = Math.random();
+    const t = Math.min(1, Math.max(0, (w - 6) / 16));   // 0 at wave 6, 1 at wave 22
+    const lerpB = (a, b) => a + (b - a) * t;
+    if (w >= 12 && r < lerpB(0.07, 0.20)) return 'butcher';
+    if (w >= 8  && r < lerpB(0.16, 0.36)) return 'titan';
+    if (w >= 6  && r < lerpB(0.26, 0.50)) return 'brute';
+    if (w >= 7  && r < lerpB(0.34, 0.60)) return 'screamer';
+    if (w >= 5  && r < lerpB(0.44, 0.70)) return 'bloater';
+    if (w >= 4  && r < lerpB(0.58, 0.80)) return 'hardhat';
+    if (w >= 2  && r < lerpB(0.76, 0.92)) return 'runner';
+    return 'shambler';
+}
+
+const isBossWave = w => w % 5 === 0;
+
+function startWave() {
+    game.wave++;
+    game.mode = 'playing';
+    game.combo = 0;
+    game.clearT = 0;
+    game.tool = 'hand';
+
+    ammo.grenade = capOf.grenade();
+    ammo.spike = capOf.spike();
+    ammo.saw = capOf.saw();
+    nades.length = 0; spikes.length = 0; saws.length = 0;
+
+    const boss = isBossWave(game.wave);
+    // Boss waves trade crowd size for one enormous problem. Standard waves ramp
+    // up hard: 1.85x per wave is sustainable early, brutal late. By wave 15
+    // you're facing 30+ bodies with a meaningful share being heavies that need
+    // grip investment to even try lifting, and the ammo cap means you can't lean
+    // on gadgets to clear them all. The game stays a game because your upgrades
+    // are capped — you won't outscale the threat, you have to position and
+    // prioritise instead.
+    const n = boss ? 4 + Math.round(game.wave * 1.1)
+                   : 5 + Math.round(game.wave * 1.85);
+    const eliteChance = Math.min(0.34, Math.max(0, (game.wave - 3) * 0.035));
+
+    game.pending = n + (boss ? 1 : 0);
+    game.alive = 0;
+
+    banner(boss ? 'WAVE ' + game.wave + ' — WARDEN' : 'WAVE ' + game.wave,
+           boss ? '#ff6b5e' : '#b6ff4a');
+
+    // Retune the loop for the new wave: tempo and layer density climb with the
+    // wave number, and boss waves drop a held drone under everything.
+    musicSet(game.wave, boss);
+    sfx(boss ? 'bossHorn' : 'wave');
+
+    let t = 300;
+    for (let i = 0; i < n; i++) {
+        t += rand(360, 700) / (1 + game.wave * 0.05);
+        spawnTimers.push(setTimeout(() => {
+            if (game.mode !== 'playing') return;
+            zombies.push(new Zombie(rollKind(game.wave), game.wave,
+                                    Math.random() < 0.5 ? 1 : -1, irand(0, 2),
+                                    Math.random() < eliteChance));
+            game.pending--;
+            game.alive++;
+        }, t));
+    }
+
+    if (boss) {
+        spawnTimers.push(setTimeout(() => {
+            if (game.mode !== 'playing') return;
+            zombies.push(new Zombie('warden', game.wave,
+                                    Math.random() < 0.5 ? 1 : -1, 0, false));
+            game.pending--;
+            game.alive++;
+            game.shake = Math.max(game.shake, 18);
+        }, 900));
+    }
+}
+
+function openShop() {
+    game.mode = 'shop';
+    clearTimers();
+    zombies.length = 0;
+    game.gold += 25 + game.wave * 6;
+    document.getElementById('shopTitle').textContent = 'WAVE ' + game.wave + ' CLEARED';
+    buildShop();
+    document.getElementById('shopOverlay').classList.add('show');
+    // Between waves the pressure drops: quiet the loop down and play the jingle.
+    musicSet(1, false);
+    sfx('clear');
+}
+
+function endGame() {
+    if (game.mode === 'over') return;
+    game.mode = 'over';
+    clearTimers();
+    if (grab.z) { grab.z.grabbed = false; grab.z = null; }
+    game.shake = 26;
+    const best = loadBest();
+    if (game.wave > best) {
+        saveBest(game.wave);
+        refreshBest();
+    }
+    document.getElementById('ovWave').textContent = game.wave;
+    document.getElementById('ovKills').textContent = game.kills;
+    document.getElementById('ovBest').textContent = game.bestSmash ? game.bestSmash + ' dmg' : '—';
+    document.getElementById('ovScore').textContent = game.score;
+    document.getElementById('overOverlay').classList.add('show');
+    musicSet(1, false);
+    sfx('over');
+}
+
+// ============================================================== ART HELPERS
+function shade(hex, k) {
+    const n = parseInt(hex.slice(1), 16);
+    const m = 1 - k;
+    return 'rgb(' + (((n >> 16) & 255) * m | 0) + ','
+                  + (((n >> 8) & 255) * m | 0) + ','
+                  + ((n & 255) * m | 0) + ')';
+}
+
+// Cartoon limb: heavy ink pass under a flat colour pass, both segments at once
+// so the outline never cuts through the middle of the arm.
+function limb(a, j, b, w, color, ink) {
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(j.x, j.y); ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = INK; ctx.lineWidth = w + ink; ctx.stroke();
+    ctx.strokeStyle = color; ctx.lineWidth = w; ctx.stroke();
+}
+
+function blob(x, y, rx, ry, rot, fill, ink) {
+    ctx.beginPath(); ctx.ellipse(x, y, rx, ry, rot, 0, 7);
+    ctx.fillStyle = fill; ctx.fill();
+    if (ink > 0) { ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke(); }
+}
+
+// ============================================================== ZOMBIE ART
+function drawZombie(z) {
+    const t = z.t, s = z.s, d = z.dir;
+    const dim = z.lane * 0.11;
+    const skin = shade(t.skin, dim), skinD = shade(t.skinDark, dim);
+    const shirt = shade(t.shirt, dim), pants = shade(t.pants, dim);
+    const bSkin = shade(t.skin, dim + 0.22), bShirt = shade(t.shirt, dim + 0.22);
+    const bPants = shade(t.pants, dim + 0.22);
+
+    const hd = z.head, ch = z.chest, hp = z.hips;
+    const ink = 3.2 * s;
+    ctx.globalAlpha = clamp(z.fade, 0, 1);
+
+    // contact shadow
+    ctx.globalAlpha *= 0.34;
+    blob(hp.x, z.gy + 2, 26 * s, 6.5 * s, 0, '#000', 0);
+    ctx.globalAlpha = clamp(z.fade, 0, 1);
+
+    // Screamer rally ring, drawn on the floor so it reads as an area of effect
+    // rather than as part of the body.
+    if (t.howl && z.state !== 'dead') {
+        const pulse = (z.howlT || 0) % 1.1 / 1.1;
+        ctx.save();
+        ctx.globalAlpha = clamp(z.fade, 0, 1) * (1 - pulse) * 0.5;
+        ctx.strokeStyle = '#e07be0'; ctx.lineWidth = 3 * s;
+        ctx.beginPath();
+        ctx.ellipse(hp.x, z.gy + 2, 250 * s * pulse, 62 * s * pulse, 0, 0, 7);
+        ctx.stroke();
+        ctx.restore();
+        ctx.globalAlpha = clamp(z.fade, 0, 1);
+    }
+
+    // torso frame
+    let ax = ch.x - hp.x, ay = ch.y - hp.y;
+    const al = Math.hypot(ax, ay) || 1;
+    const nx = -ay / al, ny = ax / al;                 // sideways unit vector
+    const hw = t.torsoW * 0.5 * s, hipW = t.torsoW * 0.42 * s;
+
+    const shL = { x: ch.x - nx * hw * 0.86, y: ch.y - ny * hw * 0.86 };
+    const shR = { x: ch.x + nx * hw * 0.86, y: ch.y + ny * hw * 0.86 };
+    const hipL = { x: hp.x - nx * hipW, y: hp.y - ny * hipW };
+    const hipR = { x: hp.x + nx * hipW, y: hp.y + ny * hipW };
+
+    const legB = (SK.hips - SK.foot) * 0.62 * s;
+    const armB = 12.5 * s;
+    const near = d > 0 ? 1 : -1;
+
+    // --- far arm + far leg ------------------------------------------------
+    if (z.limbOn(z.rhand)) {
+        const el = ik(shR.x, shR.y, z.rhand.x, z.rhand.y, armB, armB, -near);
+        limb(shR, el, z.rhand, t.limb * 0.85 * s, bSkin, ink);
+        limb(shR, el, { x: lerp(shR.x, el.x, 0.9), y: lerp(shR.y, el.y, 0.9) },
+             t.limb * 1.05 * s, bShirt, ink * 0.7);
+        blob(z.rhand.x, z.rhand.y, 5.6 * s, 5.6 * s, 0, bSkin, ink * 0.8);
+    }
+    if (z.limbOn(z.rfoot)) {
+        const kn = ik(hipR.x, hipR.y, z.rfoot.x, z.rfoot.y, legB, legB, near);
+        limb(hipR, kn, z.rfoot, t.limb * 1.05 * s, bPants, ink);
+        blob(z.rfoot.x + d * 3 * s, z.rfoot.y + 2 * s, 8 * s, 4.6 * s, 0, shade('#2b2620', dim), ink * 0.8);
+    }
+
+    // --- torso ------------------------------------------------------------
+    ctx.beginPath();
+    ctx.moveTo(shL.x, shL.y);
+    ctx.lineTo(shR.x, shR.y);
+    ctx.quadraticCurveTo(hipR.x + nx * t.gut * s * 0.4, hipR.y, hipR.x, hipR.y);
+    ctx.lineTo(hipL.x, hipL.y);
+    ctx.quadraticCurveTo(hipL.x - nx * t.gut * s * 0.4, lerp(hipL.y, shL.y, 0.5), shL.x, shL.y);
+    ctx.closePath();
+    ctx.fillStyle = shirt; ctx.fill();
+    ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
+
+    // torn hem + belly
+    ctx.save();
+    ctx.clip();
+    ctx.fillStyle = pants;
+    ctx.beginPath();
+    ctx.moveTo(hipL.x - nx * 10 * s, lerp(hipL.y, shL.y, 0.24));
+    for (let i = 0; i <= 6; i++) {
+        const u = i / 6;
+        const bx = lerp(hipL.x, hipR.x, u), by = lerp(hipL.y, hipR.y, u);
+        ctx.lineTo(bx + nx * 0, by - (i % 2 ? 5 : 0) * s - 4 * s);
+    }
+    ctx.lineTo(hipR.x + nx * 10 * s, hipR.y + 20 * s);
+    ctx.lineTo(hipL.x - nx * 10 * s, hipL.y + 20 * s);
+    ctx.closePath(); ctx.fill();
+
+    // exposed ribs on the scruffier variants
+    if (z.look === 2) {
+        ctx.strokeStyle = 'rgba(232,240,205,0.85)';
+        ctx.lineWidth = 2.1 * s;
+        for (let i = 0; i < 3; i++) {
+            const u = 0.24 + i * 0.15;
+            const cx2 = lerp(shL.x, hipL.x, u) + nx * 3 * s;
+            const cy2 = lerp(shL.y, hipL.y, u);
+            ctx.beginPath();
+            ctx.moveTo(cx2 - nx * 5 * s, cy2);
+            ctx.lineTo(cx2 + nx * 8 * s, cy2 + 1 * s);
+            ctx.stroke();
+        }
+    }
+    // grime
+    ctx.fillStyle = 'rgba(40,30,16,0.3)';
+    ctx.beginPath();
+    ctx.arc(ch.x + z.stainA.x * hw * 1.6, lerp(ch.y, hp.y, 0.5 + z.stainA.y * 0.4), 6 * s, 0, 7);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(96,20,20,0.42)';
+    ctx.beginPath();
+    ctx.arc(ch.x + z.stainB.x * hw * 1.5, lerp(ch.y, hp.y, 0.3 + z.stainB.y * 0.5), 5 * s, 0, 7);
+    ctx.fill();
+    ctx.restore();
+
+    // Steel plate over the chest (butcher, warden). Its own HP is on the boss
+    // meter; here it just goes dull and cracked once spent, so you can read
+    // "hit it with your hands now" off the silhouette alone.
+    if (t.plate) {
+        const cracked = z.plateHp <= 0;
+        const pw = hw * 1.5, ph = Math.hypot(ch.x - hp.x, ch.y - hp.y) * 0.72;
+        ctx.save();
+        ctx.translate(lerp(ch.x, hp.x, 0.3), lerp(ch.y, hp.y, 0.3));
+        ctx.rotate(Math.atan2(hp.y - ch.y, hp.x - ch.x) - Math.PI / 2);
+        ctx.beginPath();
+        ctx.moveTo(-pw * 0.5, -ph * 0.5);
+        ctx.lineTo(pw * 0.5, -ph * 0.5);
+        ctx.lineTo(pw * 0.42, ph * 0.5);
+        ctx.lineTo(-pw * 0.42, ph * 0.5);
+        ctx.closePath();
+        ctx.fillStyle = shade(cracked ? '#4a4f55' : '#8d95a0', dim); ctx.fill();
+        ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
+        if (!cracked) {
+            ctx.strokeStyle = 'rgba(240,250,255,0.5)'; ctx.lineWidth = 2 * s;
+            ctx.beginPath();
+            ctx.moveTo(-pw * 0.24, -ph * 0.34); ctx.lineTo(-pw * 0.24, ph * 0.3);
+            ctx.stroke();
+        } else {
+            ctx.strokeStyle = INK; ctx.lineWidth = 2.2 * s;
+            ctx.beginPath();
+            ctx.moveTo(-pw * 0.4, -ph * 0.3); ctx.lineTo(0, 0);
+            ctx.lineTo(pw * 0.3, -ph * 0.1); ctx.lineTo(pw * 0.1, ph * 0.42);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    // Bloater sacs — the visual promise that this one is a bomb.
+    if (t.bloat && z.state !== 'dead') {
+        const throb = 1 + Math.sin(perf * 0.006 + z.phase) * 0.09;
+        for (let i = -1; i <= 1; i++) {
+            const u = 0.42 + i * 0.2;
+            const bx2 = lerp(ch.x, hp.x, u) + nx * (i * 5) * s;
+            const by2 = lerp(ch.y, hp.y, u);
+            blob(bx2, by2, 8.5 * s * throb, 7.5 * s * throb, 0,
+                 shade('#c6ff6a', dim + 0.05), ink * 0.7);
+            ctx.globalAlpha = clamp(z.fade, 0, 1) * 0.45;
+            blob(bx2 - 2 * s, by2 - 2 * s, 3.4 * s, 3 * s, 0, '#f2ffc9', 0);
+            ctx.globalAlpha = clamp(z.fade, 0, 1);
+        }
+    }
+
+    // --- near leg + near arm ---------------------------------------------
+    if (z.limbOn(z.lfoot)) {
+        const kn = ik(hipL.x, hipL.y, z.lfoot.x, z.lfoot.y, legB, legB, near);
+        limb(hipL, kn, z.lfoot, t.limb * 1.1 * s, pants, ink);
+        // torn trouser cuff shows bare shin
+        ctx.beginPath();
+        ctx.moveTo(kn.x, kn.y); ctx.lineTo(z.lfoot.x, z.lfoot.y);
+        ctx.strokeStyle = INK; ctx.lineWidth = t.limb * 0.85 * s + ink; ctx.stroke();
+        ctx.strokeStyle = skin; ctx.lineWidth = t.limb * 0.85 * s; ctx.stroke();
+        blob(z.lfoot.x + d * 3.4 * s, z.lfoot.y + 2 * s, 8.6 * s, 5 * s, 0, '#332c24', ink * 0.85);
+    }
+    if (z.limbOn(z.lhand)) {
+        const el = ik(shL.x, shL.y, z.lhand.x, z.lhand.y, armB, armB, -near);
+        limb(shL, el, z.lhand, t.limb * 0.9 * s, skin, ink);
+        limb(shL, el, { x: lerp(shL.x, el.x, 0.85), y: lerp(shL.y, el.y, 0.85) },
+             t.limb * 1.15 * s, shirt, ink * 0.8);
+        // clawed hand
+        blob(z.lhand.x, z.lhand.y, 6 * s, 5.6 * s, 0, skin, ink * 0.9);
+        ctx.strokeStyle = INK; ctx.lineWidth = 1.6 * s;
+        for (let i = -1; i <= 1; i++) {
+            ctx.beginPath();
+            ctx.moveTo(z.lhand.x, z.lhand.y);
+            ctx.lineTo(z.lhand.x + d * 8 * s, z.lhand.y + i * 4 * s);
+            ctx.stroke();
+        }
+    }
+
+    drawHead(z, skin, skinD, ink, dim);
+
+    // Elites: a hot rim over the head. Same silhouette as their base type, so
+    // the marker is the only warning you get that this one has 70% more meat.
+    if (z.elite && z.state !== 'dead') {
+        ctx.save();
+        ctx.globalAlpha = clamp(z.fade, 0, 1) * (0.6 + Math.sin(perf * 0.007 + z.phase) * 0.25);
+        ctx.strokeStyle = '#ff8a2f'; ctx.lineWidth = 2.6 * s;
+        ctx.beginPath();
+        ctx.arc(hd.x, hd.y, t.headR * s + 5 * s, 0, 7);
+        ctx.stroke();
+        ctx.restore();
+        ctx.globalAlpha = clamp(z.fade, 0, 1);
+    }
+
+    // --- health pip -------------------------------------------------------
+    if (z.hp < z.maxHp && z.state !== 'dead' && !t.boss) {
+        const bw = 40 * s, bx = hd.x - bw / 2, by = hd.y - t.headR * s - 15 * s;
+        ctx.fillStyle = 'rgba(0,0,0,0.62)'; ctx.fillRect(bx - 1, by - 1, bw + 2, 6 * s + 2);
+        const f = clamp(z.hp / z.maxHp, 0, 1);
+        ctx.fillStyle = f > 0.5 ? '#8fd63f' : f > 0.22 ? '#ffd83d' : '#ff5b47';
+        ctx.fillRect(bx, by, bw * f, 6 * s);
+    }
+
+    if (z.grabbed) {
+        ctx.strokeStyle = 'rgba(182,255,74,0.85)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(grab.x, grab.y, 20 + Math.sin(perf * 0.012) * 3, 0, 7); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+}
+
+function drawHead(z, skin, skinD, ink, dim) {
+    const t = z.t, s = z.s, d = z.dir;
+    const hd = z.head, ch = z.chest;
+    const R = t.headR * s;
+
+    // neck
+    ctx.beginPath();
+    ctx.moveTo(ch.x, ch.y); ctx.lineTo(hd.x, hd.y);
+    ctx.strokeStyle = INK; ctx.lineWidth = 9 * s + ink; ctx.lineCap = 'round'; ctx.stroke();
+    ctx.strokeStyle = skinD; ctx.lineWidth = 9 * s; ctx.stroke();
+
+    ctx.save();
+    ctx.translate(hd.x, hd.y);
+    ctx.rotate(Math.atan2(hd.x - ch.x, ch.y - hd.y));
+    ctx.scale(d, 1);
+
+    // skull + heavy brow
+    blob(0, -R * 0.14, R * 0.96, R * 1.0, 0, skin, ink);
+    // jaw, hanging slightly open
+    const jaw = z.state === 'dead' ? R * 0.28 : R * (0.5 + z.swing * 0.16);
+    blob(R * 0.12, jaw, R * 0.66, R * 0.44, 0, skin, ink);
+    // ear
+    blob(-R * 0.82, -R * 0.06, R * 0.2, R * 0.26, 0, skinD, ink * 0.8);
+
+    // sunken sockets
+    ctx.fillStyle = shade('#20280f', dim);
+    ctx.beginPath(); ctx.ellipse(R * 0.34, -R * 0.28, R * 0.31, R * 0.36, 0.2, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-R * 0.24, -R * 0.3, R * 0.27, R * 0.33, -0.2, 0, 7); ctx.fill();
+
+    if (z.state === 'dead') {
+        // X eyes
+        ctx.strokeStyle = '#f4ffd0'; ctx.lineWidth = 2.4 * s;
+        for (const ex of [R * 0.34, -R * 0.24]) {
+            ctx.beginPath();
+            ctx.moveTo(ex - R * .16, -R * .44); ctx.lineTo(ex + R * .16, -R * .14);
+            ctx.moveTo(ex + R * .16, -R * .44); ctx.lineTo(ex - R * .16, -R * .14);
+            ctx.stroke();
+        }
+    } else {
+        ctx.fillStyle = '#fbffdc';
+        ctx.beginPath(); ctx.arc(R * 0.42, -R * 0.26, R * 0.15, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(-R * 0.18, -R * 0.28, R * 0.12, 0, 7); ctx.fill();
+        ctx.fillStyle = '#1b1f0c';
+        ctx.beginPath(); ctx.arc(R * 0.46, -R * 0.25, R * 0.07, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(-R * 0.14, -R * 0.27, R * 0.06, 0, 7); ctx.fill();
+        // one eye dangling on the ugliest variant
+        if (z.look === 1) {
+            ctx.strokeStyle = '#9c3b3b'; ctx.lineWidth = 1.8 * s;
+            ctx.beginPath(); ctx.moveTo(-R * 0.18, -R * 0.2); ctx.lineTo(-R * 0.3, R * 0.24); ctx.stroke();
+            ctx.fillStyle = '#fbffdc';
+            ctx.beginPath(); ctx.arc(-R * 0.32, R * 0.3, R * 0.14, 0, 7); ctx.fill();
+            ctx.fillStyle = '#1b1f0c';
+            ctx.beginPath(); ctx.arc(-R * 0.3, R * 0.32, R * 0.06, 0, 7); ctx.fill();
+        }
+    }
+
+    // gaping grin with a couple of surviving teeth
+    ctx.fillStyle = '#2a1a12';
+    ctx.beginPath();
+    ctx.ellipse(R * 0.2, jaw - R * 0.06, R * 0.42, R * 0.24, 0, 0, 7);
+    ctx.fill();
+    ctx.fillStyle = '#f2f6d4';
+    for (let i = -1; i <= 1; i++) {
+        if (i === 0 && z.look !== 3) continue;
+        ctx.beginPath();
+        ctx.moveTo(R * 0.2 + i * R * 0.24 - R * 0.07, jaw - R * 0.28);
+        ctx.lineTo(R * 0.2 + i * R * 0.24 + R * 0.07, jaw - R * 0.28);
+        ctx.lineTo(R * 0.2 + i * R * 0.24, jaw - R * 0.02);
+        ctx.closePath(); ctx.fill();
+    }
+    // dribble
+    ctx.fillStyle = 'rgba(122,26,26,0.75)';
+    ctx.fillRect(R * 0.3, jaw + R * 0.1, 2.4 * s, R * 0.5);
+
+    // stitched scalp wound / hair tufts
+    if (t.helmet && z.helmetHp > 0) {
+        ctx.beginPath();
+        ctx.ellipse(0, -R * 0.62, R * 1.12, R * 0.66, 0, Math.PI, 0);
+        ctx.fillStyle = shade('#f0a81f', dim); ctx.fill();
+        ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-R * 1.24, -R * 0.6); ctx.lineTo(R * 1.3, -R * 0.6);
+        ctx.strokeStyle = INK; ctx.lineWidth = 5 * s; ctx.stroke();
+        ctx.strokeStyle = shade('#d8901a', dim); ctx.lineWidth = 3.2 * s; ctx.stroke();
+    } else {
+        ctx.strokeStyle = shade('#4b5a26', dim); ctx.lineWidth = 2.4 * s;
+        for (let i = 0; i < 4; i++) {
+            const a = -2.5 + i * 0.42 + (z.look * 0.15);
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(a) * R * 0.85, -R * 0.16 + Math.sin(a) * R * 0.9);
+            ctx.lineTo(Math.cos(a) * R * 1.3, -R * 0.16 + Math.sin(a) * R * 1.4);
+            ctx.stroke();
+        }
+        if (z.look === 0) {
+            ctx.strokeStyle = '#2f2016'; ctx.lineWidth = 1.7 * s;
+            ctx.beginPath(); ctx.moveTo(-R * 0.5, -R * 0.72); ctx.lineTo(R * 0.35, -R * 0.86); ctx.stroke();
+            for (let i = 0; i < 4; i++) {
+                const u = i / 3;
+                ctx.beginPath();
+                ctx.moveTo(lerp(-R * 0.5, R * 0.35, u), -R * 0.72 - R * 0.12 + lerp(0, -R * 0.14, u));
+                ctx.lineTo(lerp(-R * 0.5, R * 0.35, u), -R * 0.72 + R * 0.12 + lerp(0, -R * 0.14, u));
+                ctx.stroke();
+            }
+        }
+    }
+    ctx.restore();
+}
+
+// ============================================================== SCENERY
+const bg = document.createElement('canvas');
+bg.width = W; bg.height = H;
+const bctx = bg.getContext('2d');
+
+function paintBg() {
+    const c = bctx;
+    const sky = c.createLinearGradient(0, 0, 0, GROUND);
+    sky.addColorStop(0, '#0a1220');
+    sky.addColorStop(0.55, '#1d3040');
+    sky.addColorStop(1, '#4a5a35');
+    c.fillStyle = sky; c.fillRect(0, 0, W, GROUND);
+
+    // moon + haze
+    c.fillStyle = 'rgba(226,242,190,0.09)';
+    c.beginPath(); c.arc(1080, 118, 96, 0, 7); c.fill();
+    c.fillStyle = '#e8f4c6';
+    c.beginPath(); c.arc(1080, 118, 48, 0, 7); c.fill();
+    c.fillStyle = 'rgba(190,208,150,0.5)';
+    c.beginPath(); c.arc(1064, 106, 9, 0, 7); c.fill();
+    c.beginPath(); c.arc(1096, 132, 6, 0, 7); c.fill();
+
+    // stars
+    c.fillStyle = 'rgba(255,255,255,0.5)';
+    for (let i = 0; i < 70; i++) c.fillRect(rand(0, W), rand(0, 320), 2, 2);
+
+    // far hills
+    c.fillStyle = '#15241d';
+    c.beginPath(); c.moveTo(0, 470);
+    for (let x = 0; x <= W; x += 40) c.lineTo(x, 470 - Math.sin(x * 0.006) * 46 - Math.sin(x * 0.018) * 16);
+    c.lineTo(W, GROUND); c.lineTo(0, GROUND); c.fill();
+
+    // dead trees
+    for (const tx of [120, 300, 980, 1210]) {
+        c.strokeStyle = '#101a12'; c.lineCap = 'round';
+        c.lineWidth = 11; c.beginPath(); c.moveTo(tx, 500); c.lineTo(tx + 6, 400); c.stroke();
+        c.lineWidth = 6;
+        c.beginPath(); c.moveTo(tx + 5, 428); c.lineTo(tx - 30, 392); c.moveTo(tx + 5, 440);
+        c.lineTo(tx + 40, 400); c.stroke();
+    }
+
+    // picket fence
+    c.fillStyle = '#1c2a1a'; c.strokeStyle = '#0e1710'; c.lineWidth = 2;
+    for (let x = -10; x < W + 20; x += 26) {
+        c.beginPath();
+        c.moveTo(x, 552); c.lineTo(x + 7, 542); c.lineTo(x + 14, 552);
+        c.lineTo(x + 14, 596); c.lineTo(x, 596); c.closePath();
+        c.fill(); c.stroke();
+    }
+    c.fillStyle = '#182415'; c.fillRect(0, 560, W, 6); c.fillRect(0, 582, W, 6);
+
+    // tombstones
+    for (const [gx, gs] of [[210, 1], [420, .8], [860, .9], [1120, 1.05]]) {
+        c.save(); c.translate(gx, 588); c.scale(gs, gs);
+        c.fillStyle = '#3d4640'; c.strokeStyle = '#171c18'; c.lineWidth = 3;
+        c.beginPath();
+        c.moveTo(-20, 0); c.lineTo(-20, -30); c.arc(0, -30, 20, Math.PI, 0); c.lineTo(20, 0);
+        c.closePath(); c.fill(); c.stroke();
+        c.fillStyle = '#2a322c'; c.fillRect(-6, -40, 12, 4); c.fillRect(-3, -46, 6, 16);
+        c.restore();
+    }
+
+    // dirt
+    const dirt = c.createLinearGradient(0, GROUND - 6, 0, H);
+    dirt.addColorStop(0, '#5c5030');
+    dirt.addColorStop(0.14, '#463c24');
+    dirt.addColorStop(1, '#221d12');
+    c.fillStyle = dirt; c.fillRect(0, GROUND - 40, W, H - GROUND + 40);
+    c.fillStyle = '#3f5a22';
+    c.fillRect(0, GROUND - 42, W, 8);
+    for (let i = 0; i < 260; i++) {
+        const x = rand(0, W), y = rand(GROUND - 40, H);
+        c.fillStyle = 'rgba(0,0,0,' + rand(0.05, 0.18).toFixed(2) + ')';
+        c.fillRect(x, y, rand(3, 14), rand(2, 4));
+    }
+    c.strokeStyle = 'rgba(90,120,50,0.55)'; c.lineWidth = 2;
+    for (let i = 0; i < 90; i++) {
+        const x = rand(0, W), y = rand(GROUND - 44, GROUND + 30);
+        c.beginPath(); c.moveTo(x, y); c.lineTo(x + rand(-4, 4), y - rand(5, 12)); c.stroke();
+    }
+}
+paintBg();
+
+function drawHouse() {
+    const f = clamp(game.hp / game.maxHp, 0, 1);
+    const x = HOUSE.x, y = HOUSE.y, w = HOUSE.w, h = HOUSE.h;
+
+    ctx.globalAlpha = 0.36;
+    blob(HOUSE.cx, GROUND + 6, w * 0.62, 12, 0, '#000', 0);
+    ctx.globalAlpha = 1;
+
+    // walls
+    ctx.fillStyle = '#7b5a34'; ctx.strokeStyle = INK; ctx.lineWidth = 4;
+    ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
+    ctx.strokeStyle = 'rgba(50,32,14,0.55)'; ctx.lineWidth = 2;
+    for (let i = 1; i < 7; i++) {
+        ctx.beginPath(); ctx.moveTo(x, y + (h / 7) * i); ctx.lineTo(x + w, y + (h / 7) * i); ctx.stroke();
+    }
+
+    // roof
+    ctx.beginPath();
+    ctx.moveTo(x - 26, y + 4); ctx.lineTo(HOUSE.cx, y - 54); ctx.lineTo(x + w + 26, y + 4);
+    ctx.closePath();
+    ctx.fillStyle = '#8d3f2c'; ctx.fill();
+    ctx.strokeStyle = INK; ctx.lineWidth = 4; ctx.stroke();
+
+    // door + boarded window
+    ctx.fillStyle = '#4d3620'; ctx.strokeStyle = INK; ctx.lineWidth = 3.4;
+    ctx.fillRect(HOUSE.cx - 22, y + h - 60, 44, 60);
+    ctx.strokeRect(HOUSE.cx - 22, y + h - 60, 44, 60);
+    ctx.fillStyle = '#ffd83d';
+    ctx.beginPath(); ctx.arc(HOUSE.cx + 13, y + h - 30, 3.4, 0, 7); ctx.fill();
+
+    ctx.fillStyle = '#2b3a44';
+    ctx.fillRect(x + 16, y + 26, 40, 34);
+    ctx.strokeRect(x + 16, y + 26, 40, 34);
+    ctx.fillStyle = '#9b7643';
+    ctx.save(); ctx.translate(x + 36, y + 43); ctx.rotate(0.24);
+    ctx.fillRect(-30, -6, 60, 11); ctx.strokeRect(-30, -6, 60, 11);
+    ctx.restore();
+
+    // damage
+    if (f < 0.98) {
+        ctx.strokeStyle = 'rgba(24,16,8,0.8)';
+        const cracks = Math.round((1 - f) * 9);
+        for (let i = 0; i < cracks; i++) {
+            const sx = x + ((i * 53) % (w - 12)) + 6;
+            const sy = y + 12 + ((i * 37) % (h - 30));
+            ctx.lineWidth = 2 + (i % 3);
+            ctx.beginPath();
+            ctx.moveTo(sx, sy);
+            ctx.lineTo(sx + (i % 2 ? 14 : -12), sy + 20);
+            ctx.lineTo(sx + (i % 2 ? 4 : -2), sy + 44);
+            ctx.stroke();
+        }
+    }
+    if (f < 0.4) {
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(x + w - 46, y + 20, 30, 26);
+        ctx.fillRect(x + 8, y + h - 96, 24, 22);
+    }
+
+    // HP bar on the roof
+    const bw = w + 40, bx = HOUSE.cx - bw / 2, by = y - 78;
+    ctx.fillStyle = 'rgba(0,0,0,0.68)'; ctx.fillRect(bx - 3, by - 3, bw + 6, 20);
+    ctx.fillStyle = f > 0.5 ? '#8fd63f' : f > 0.25 ? '#ffd83d' : '#ff5b47';
+    ctx.fillRect(bx, by, bw * f, 14);
+    ctx.strokeStyle = '#0c1206'; ctx.lineWidth = 2; ctx.strokeRect(bx, by, bw, 14);
+    ctx.fillStyle = '#eafbd2'; ctx.font = 'bold 12px Trebuchet MS'; ctx.textAlign = 'center';
+    ctx.fillText('SHACK ' + Math.ceil(game.hp) + '/' + game.maxHp, HOUSE.cx, by + 11);
+}
+
+// ============================================================== HUD
+const BELT = [
+    { tool: 'hand',    icon: '🖐', label: 'HAND' },
+    { tool: 'grenade', icon: '💣', label: 'NADE' },
+    { tool: 'spike',   icon: '🔺', label: 'SPIKE' },
+    { tool: 'saw',     icon: '🪚', label: 'SAW' }
+];
+const BW = 82, BH = 60, BGAP = 10;
+const BELT_Y = H - 76;
+const BELT_X = W / 2 - (BELT.length * (BW + BGAP) - BGAP) / 2;
+const beltRect = i => ({ x: BELT_X + i * (BW + BGAP), y: BELT_Y, w: BW, h: BH });
+
+function drawBelt() {
+    ctx.textAlign = 'center';
+    for (let i = 0; i < BELT.length; i++) {
+        const b = BELT[i], r = beltRect(i);
+        const n = b.tool === 'hand' ? -1 : ammo[b.tool];
+        const on = game.tool === b.tool;
+        const usable = n !== 0;
+
+        ctx.globalAlpha = usable ? 1 : 0.4;
+        ctx.fillStyle = on ? '#4d7a1e' : 'rgba(18,24,12,0.82)';
+        ctx.strokeStyle = on ? '#d3ff8a' : '#5c7a33';
+        ctx.lineWidth = on ? 4 : 3;
+        roundRect(r.x, r.y, r.w, r.h, 10);
+        ctx.fill(); ctx.stroke();
+
+        ctx.font = '24px serif';
+        ctx.fillStyle = '#fff';
+        ctx.fillText(b.icon, r.x + r.w / 2, r.y + 30);
+        ctx.font = 'bold 11px Trebuchet MS';
+        ctx.fillStyle = '#cfe6ad';
+        ctx.fillText(b.label + (n >= 0 ? ' x' + n : ''), r.x + r.w / 2, r.y + 49);
+        ctx.globalAlpha = 1;
+    }
+}
+
+function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+}
+
+function drawHUD() {
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 26px Trebuchet MS';
+    ctx.fillStyle = '#0c1206';
+    ctx.fillText('WAVE ' + game.wave, 22, 40);
+    ctx.fillStyle = '#b6ff4a';
+    ctx.fillText('WAVE ' + game.wave, 20, 38);
+
+    ctx.font = 'bold 20px Trebuchet MS';
+    ctx.fillStyle = '#ffd83d';
+    ctx.fillText('⛁ ' + game.gold, 22, 68);
+    ctx.fillStyle = '#cfe6ad';
+    ctx.fillText('Score ' + game.score, 22, 92);
+
+    ctx.textAlign = 'right';
+    const left = game.alive + game.pending;
+    ctx.font = 'bold 20px Trebuchet MS';
+    ctx.fillStyle = '#eafbd2';
+    ctx.fillText('Zombies left: ' + left, W - 22, 40);
+    ctx.fillText('Killed: ' + game.kills, W - 22, 66);
+
+    if (game.combo > 1 && game.comboTimer > 0) {
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 34px Trebuchet MS';
+        ctx.fillStyle = '#ff9de0';
+        ctx.globalAlpha = clamp(game.comboTimer, 0, 1);
+        ctx.fillText('x' + game.combo + ' COMBO', W / 2, 54);
+        ctx.globalAlpha = 1;
+    }
+
+    // Boss bar. Only the biggest live boss gets one.
+    let boss = null;
+    for (const z of zombies) {
+        if (z.t.boss && z.state !== 'dead' && z.fade > 0 && (!boss || z.hp > boss.hp)) boss = z;
+    }
+    if (boss) {
+        const bw = 520, bx = (W - bw) / 2, by = 92;
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(bx - 3, by - 3, bw + 6, 24);
+        ctx.fillStyle = '#3a1414';
+        ctx.fillRect(bx, by, bw, 18);
+        ctx.fillStyle = '#d63b2f';
+        ctx.fillRect(bx, by, bw * clamp(boss.hp / boss.maxHp, 0, 1), 18);
+        if (boss.plateHp > 0) {
+            ctx.fillStyle = 'rgba(157,224,255,0.75)';
+            ctx.fillRect(bx, by, bw * clamp(boss.plateHp / (60 + game.wave * 8), 0, 1), 5);
+        }
+        ctx.strokeStyle = '#eafbd2'; ctx.lineWidth = 2;
+        ctx.strokeRect(bx, by, bw, 18);
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 15px Trebuchet MS';
+        ctx.fillStyle = '#eafbd2';
+        ctx.fillText('THE WARDEN', W / 2, by + 14);
+    }
+
+    // Wave banner
+    if (bannerT > 0) {
+        const k = bannerT > 1.9 ? (2.2 - bannerT) / 0.3 : Math.min(1, bannerT / 0.6);
+        ctx.globalAlpha = clamp(k, 0, 1);
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 62px Trebuchet MS';
+        ctx.lineWidth = 7; ctx.strokeStyle = INK;
+        ctx.strokeText(bannerText, W / 2, 200);
+        ctx.fillStyle = bannerColor;
+        ctx.fillText(bannerText, W / 2, 200);
+        ctx.globalAlpha = 1;
+    }
+
+    drawBelt();
+}
+
+// ============================================================== DRAW
+let perf = 0;
+
+function draw() {
+    ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    if (game.shake > 0.2) ctx.translate(rand(-game.shake, game.shake), rand(-game.shake, game.shake) * 0.6);
+
+    ctx.drawImage(bg, 0, 0);
+    ctx.drawImage(decal, 0, 0);
+
+    // spike traps sit on the dirt
+    for (const sp of spikes) {
+        ctx.fillStyle = '#8f979f'; ctx.strokeStyle = INK; ctx.lineWidth = 3;
+        for (let i = -3; i <= 3; i++) {
+            ctx.beginPath();
+            ctx.moveTo(sp.x + i * 11 - 6, GROUND);
+            ctx.lineTo(sp.x + i * 11, GROUND - 26);
+            ctx.lineTo(sp.x + i * 11 + 6, GROUND);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+        }
+        ctx.fillStyle = '#4a4038';
+        ctx.fillRect(sp.x - sp.w / 2, GROUND - 4, sp.w, 9);
+        ctx.strokeRect(sp.x - sp.w / 2, GROUND - 4, sp.w, 9);
+    }
+
+    drawHouse();
+
+    // back lanes first
+    const order = zombies.slice().sort((a, b) => b.lane - a.lane || a.hips.y - b.hips.y);
+    for (const z of order) if (z.fade > 0) drawZombie(z);
+
+    for (const g of gibs) {
+        ctx.save();
+        ctx.translate(g.x, g.y); ctx.rotate(g.rot);
+        ctx.globalAlpha = clamp(g.life, 0, 1);
+        blob(0, 0, g.r * 2.1, g.r * 0.95, 0, g.color, 3);
+        ctx.fillStyle = '#7a1a1a';
+        ctx.beginPath(); ctx.arc(g.r * 1.6, 0, g.r * 0.7, 0, 7); ctx.fill();
+        ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+
+    for (const s of saws) {
+        ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot);
+        ctx.fillStyle = '#c9d2da'; ctx.strokeStyle = INK; ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let i = 0; i < 12; i++) {
+            const a = (i / 12) * 6.283;
+            const rr = i % 2 ? s.r : s.r * 0.78;
+            ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * rr, Math.sin(a) * rr);
+        }
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#5a636b';
+        ctx.beginPath(); ctx.arc(0, 0, s.r * 0.3, 0, 7); ctx.fill();
+        ctx.restore();
+    }
+
+    for (const n of nades) {
+        ctx.save(); ctx.translate(n.x, n.y); ctx.rotate(n.spin);
+        blob(0, 0, 11, 9, 0, '#3b4a26', 3);
+        ctx.fillStyle = '#8a8375'; ctx.fillRect(-3, -14, 6, 6);
+        ctx.restore();
+        if (n.fuse < 0.45 && ((n.fuse * 14) | 0) % 2 === 0) {
+            ctx.fillStyle = 'rgba(255,90,40,0.75)';
+            ctx.beginPath(); ctx.arc(n.x, n.y, 20, 0, 7); ctx.fill();
+        }
+    }
+
+    for (const p of parts) {
+        ctx.globalAlpha = clamp(p.life, 0, 1);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+    }
+    ctx.globalAlpha = 1;
+
+    // grab tether
+    if (grab.z) {
+        ctx.strokeStyle = 'rgba(214,255,150,0.35)';
+        ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+        ctx.beginPath(); ctx.moveTo(grab.z.chest.x, grab.z.chest.y); ctx.lineTo(grab.x, grab.y); ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    ctx.textAlign = 'center';
+    for (const p of popups) {
+        ctx.globalAlpha = clamp(p.life, 0, 1);
+        ctx.font = 'bold ' + p.size + 'px Trebuchet MS';
+        ctx.lineWidth = 4; ctx.strokeStyle = '#131a08';
+        ctx.strokeText(p.text, p.x, p.y);
+        ctx.fillStyle = p.color;
+        ctx.fillText(p.text, p.x, p.y);
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.restore();
+    if (game.mode !== 'start') drawHUD();
+}
+
+// ============================================================== INPUT
+// grip    — remaining hold stamina on the current body, 1 → 0. See tickGrip().
+// escaped — set when a body tears loose, so the HUD can flash it.
+const grab = { z: null, p: null, x: 0, y: 0, lx: 0, ly: 0, sx: 0, sy: 0, drag: 1, held: 0, grip: 1, escaped: 0 };
+
+function toWorld(e) {
+    const r = canvas.getBoundingClientRect();
+    return {
+        x: (e.clientX - r.left) / r.width * W,
+        y: (e.clientY - r.top) / r.height * H
+    };
+}
+
+function onDown(e) {
+    if (game.mode !== 'playing') return;
+    e.preventDefault();
+    // Browsers refuse to start an AudioContext outside a gesture. The menu
+    // button normally does this, but cover the case where play began some
+    // other way so the field is never silent.
+    if (!audio.started) audioInit();
+    const m = toWorld(e);
+
+    for (let i = 0; i < BELT.length; i++) {
+        const r = beltRect(i);
+        if (m.x >= r.x && m.x <= r.x + r.w && m.y >= r.y && m.y <= r.y + r.h) {
+            const t = BELT[i].tool;
+            if (t === 'hand' || ammo[t] > 0) game.tool = t;
+            return;
+        }
+    }
+
+    if (game.tool !== 'hand') {
+        if (useTool(m.x, m.y) && ammo[game.tool] <= 0) game.tool = 'hand';
+        return;
+    }
+
+    // grab the closest body point
+    let best = null, bd = 46 * 46;
+    for (const z of zombies) {
+        if (z.fade <= 0) continue;
+        for (const p of z.pts) {
+            if (!z.limbOn(p)) continue;
+            const d = (p.x - m.x) ** 2 + (p.y - m.y) ** 2;
+            if (d < bd) { bd = d; best = { z, p }; }
+        }
+    }
+    if (!best) return;
+
+    // Too heavy for this grip level: your hand slips off. They must NOT ragdoll —
+    // a free knockdown on every failed click would make the gate meaningless and
+    // let you crowd-control a warden with a grip you haven't paid for. All you get
+    // is a shove on the walk anchor, so they visibly rock back and keep coming.
+    const need = best.z.t.grabLvl || 0;
+    if (liftLvl() < need) {
+        const z = best.z;
+        if (!isSim(z)) z.wx -= z.dir * (10 / (z.t.mass || 1));
+        popup(z.chest.x, z.chest.y - 52, 'TOO HEAVY', '#ff6b5e', 20);
+        popup(z.chest.x, z.chest.y - 28, 'NEEDS GRIP Lv' + need, '#ffd83d', 16);
+        puff(z.chest.x, z.chest.y, '#cfd6c2', 6, 2.6);
+        game.shake = Math.max(game.shake, 5);
+        sfx('slip');
+        return;
+    }
+
+    // Grip is high enough to try — now roll for purchase. A body already on the
+    // floor is always grabbable: it's the standing, braced ones that resist, and
+    // requiring a roll to pick up a ragdoll you just floored would be miserable.
+    if (!isSim(best.z) && !rollLift(best.z)) {
+        const z = best.z;
+        z.wx -= z.dir * (14 / (z.t.mass || 1));
+        popup(z.chest.x, z.chest.y - 52, 'SLIPPED!', '#ffd83d', 19);
+        popup(z.chest.x, z.chest.y - 28,
+              Math.round(liftChance(z) * 100) + '% GRIP', '#9db77a', 14);
+        puff(z.chest.x, z.chest.y, '#cfd6c2', 7, 3);
+        game.shake = Math.max(game.shake, 6);
+        sfx('slip');
+        return;
+    }
+
+    grab.z = best.z; grab.p = best.p;
+    grab.x = m.x; grab.y = m.y; grab.lx = m.x; grab.ly = m.y;
+    grab.sx = 0; grab.sy = 0; grab.held = 0;
+    // Heavier bodies lag behind the cursor. Grip levels above the requirement
+    // buy some of that weight back, so over-levelling still feels good.
+    const over = liftLvl() - need;
+    grab.drag = clamp(1 / (best.z.t.mass || 1) + over * 0.12, 0.18, 1);
+    // Stamina for this specific hold. Big bodies thrash and you lose your
+    // purchase over a couple of seconds — you can't just park a warden in the
+    // air and grind it into the floor at your leisure. See tickGrip().
+    grab.grip = 1;
+    grab.escaped = 0;
+    best.z.grabbed = true;
+    if (best.z.state === 'walk' || best.z.state === 'rise') best.z.state = 'ragdoll';
+    best.z.settle = -0.6;
+    canvas.classList.add('grabbing');
+    sfx(best.z.t.boss ? 'grabBoss' : 'grab');
+}
+
+// How fast a held body wears your hand out, per second. Trash never does, so
+// the moment-to-moment game with the stock zombies is completely unchanged.
+// This is the main thing that stops a levelled player from farming a boss:
+// you get a window, not ownership, and you have to convert it into a throw.
+// fast — runners and screamers are light enough to lift instantly, but they
+// squirm. A short, unpredictable hold means you have to fling them the moment
+// you catch one instead of carrying it around the field.
+// floor — the fastest a body will ever let go, no matter how much grip you buy.
+// This is the ceiling on the whole grip investment: a maxed hand holds a warden
+// about three seconds, never indefinitely, so there is no build that turns a boss
+// into a carryable object.
+const GRIP_DRAIN = {
+    boss:  { base: 0.66, floor: 0.34 },
+    heavy: { base: 0.38, floor: 0.20 },
+    fast:  { base: 0.30, floor: 0.17 }
+};
+
+function gripDrain(z) {
+    const d = z.t.boss ? GRIP_DRAIN.boss
+            : z.t.heavy ? GRIP_DRAIN.heavy
+            : (z.t.fast ? GRIP_DRAIN.fast : null);
+    if (!d) return 0;
+    // Every grip level above the requirement buys you a longer hold, and a
+    // late-wave body is stronger, so the same grip holds it for less time.
+    const over = liftLvl() - (z.t.grabLvl || 0);
+    const late = Math.max(0, (z.spawnWave || 1) - 4) * 0.014;
+    // Clamp BEFORE thrash, not after. Clamping last meant a maxed grip drove the
+    // raw figure negative, the floor swallowed it, and every heavy in the wave
+    // then held for the exact same 8.3 seconds — the memorisable timing this was
+    // supposed to remove. z.thrash is rolled once per body at birth, so applying
+    // it to the clamped value keeps two wardens in one wave behaving differently
+    // even at max investment. You read the tell, you don't count frames.
+    return Math.max(d.floor, d.base + late - over * 0.06) * z.thrash;
+}
+
+// Called every frame while something is held. Drains the hold, and when it runs
+// out the body tears loose — landing on its feet if it was never really airborne,
+// so an escape is a genuine setback rather than a free knockdown.
+function tickGrip(dt) {
+    const z = grab.z;
+    if (!z) return;
+    const d = gripDrain(z);
+    if (d <= 0) return;
+
+    grab.grip -= d * dt;
+    // Thrashing shakes the screen a little as they work loose — the tell that
+    // your window is closing, without needing to read a meter.
+    if (grab.grip < 0.34 && Math.random() < 0.10) {
+        game.shake = Math.max(game.shake, 3);
+        puff(z.chest.x, z.chest.y, '#cfd6c2', 2, 2);
+    }
+    if (grab.grip > 0) return;
+
+    // Torn loose. They keep whatever momentum you'd built, so flinging them at
+    // the last second still works — that's the skill expression here.
+    popup(z.chest.x, z.chest.y - 54, 'TORE LOOSE!', '#ff6b5e', 21);
+    puff(z.chest.x, z.chest.y, '#cfd6c2', 12, 4);
+    game.shake = Math.max(game.shake, 9);
+    sfx('slip');
+    z.grabbed = false;
+    // A body that escapes gets a beat of poise so it can't be instantly
+    // re-grabbed into a lock, and its banked strain is wiped: you start the
+    // wrestle over. Without this you'd just re-click and keep it forever.
+    z.strain = 0;
+    z.poiseT = Math.max(z.poiseT, 0.5);
+    z.settle = -0.5;
+    grab.z = null; grab.p = null;
+    grab.escaped = 1;
+    canvas.classList.remove('grabbing');
+}
+
+function onMove(e) {
+    if (!grab.z) return;
+    e.preventDefault();
+    const m = toWorld(e);
+    grab.x = m.x; grab.y = m.y;
+}
+
+function onUp() {
+    if (!grab.z) return;
+    // Only call it a throw if they actually left your hand with pace.
+    const spd = Math.hypot(grab.sx, grab.sy);
+    if (spd > 9) sfx('throw');
+    grab.z.grabbed = false;
+    grab.z.settle = -0.5;
+    grab.z = null; grab.p = null;
+    canvas.classList.remove('grabbing');
+}
+
+canvas.addEventListener('pointerdown', onDown);
+window.addEventListener('pointermove', onMove, { passive: false });
+window.addEventListener('pointerup', onUp);
+window.addEventListener('pointercancel', onUp);
+
+window.addEventListener('keydown', e => {
+    // ESC toggles the pause menu, but only from inside a run. In the shop or on
+    // the game-over screen it does nothing, otherwise you could stack two
+    // overlays and be unable to dismiss either.
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        if (game.mode === 'playing') pauseGame();
+        else if (game.mode === 'paused') resumeGame();
+        return;
+    }
+    if (game.mode !== 'playing') return;
+    const i = '1234'.indexOf(e.key);
+    if (i >= 0) {
+        const t = BELT[i].tool;
+        if (t === 'hand' || ammo[t] > 0) game.tool = t;
+    }
+});
+
+// ============================================================== PAUSE
+// The frame loop already skips update() for any mode that isn't 'playing', so
+// pausing is just a mode switch — physics, timers and spawn countdowns all
+// freeze together and can't drift apart.
+function pauseGame() {
+    if (game.mode !== 'playing') return;
+    // Drop whatever's in hand. Holding a body across a pause would let you park
+    // a boss mid-air indefinitely and dodge the grip drain entirely.
+    if (grab.z) onUp();
+    game.mode = 'paused';
+    document.getElementById('pzWave').textContent = game.wave;
+    document.getElementById('pzHp').textContent =
+        Math.max(0, Math.ceil(game.hp)) + ' / ' + game.maxHp;
+    document.getElementById('pzGold').textContent = game.gold;
+    // Mirror the current audio state onto the pause toggles so they never show
+    // MUSIC as on while it's actually muted.
+    document.getElementById('pMusicTgl').classList.toggle('on', !!audio.musicOn);
+    document.getElementById('pSfxTgl').classList.toggle('on', !!audio.sfxOn);
+    document.getElementById('pauseOverlay').classList.add('show');
+    musicToggle(false);
+    sfx('ui');
+}
+
+function resumeGame() {
+    if (game.mode !== 'paused') return;
+    hide('pauseOverlay');
+    game.mode = 'playing';
+    // Swallow the elapsed wall-clock time, or the first frame back tries to
+    // simulate however long the menu was open.
+    last = performance.now();
+    acc = 0;
+    if (document.getElementById('pMusicTgl').classList.contains('on')) musicToggle(true);
+    sfx('ui');
+}
+
+// ============================================================== SHOP
+const shopGrid = document.getElementById('shopGrid');
+for (const k in upgrades) upgrades[k].base = upgrades[k].cost;
+
+function buildShop() {
+    document.getElementById('shopGold').textContent = game.gold;
+    shopGrid.innerHTML = '';
+    for (const key in upgrades) {
+        const u = upgrades[key];
+        const b = document.createElement('button');
+        const full = maxed(key);
+        b.className = 'shop-item' + (full ? ' maxed' : '');
+        // Show the ceiling on every card so the player can plan a build instead
+        // of discovering the cap by clicking into a dead button.
+        b.innerHTML = '<span class="nm">' + u.name
+                    + '<span class="lv">Lv' + u.lvl + '/' + u.max + '</span></span>'
+                    + '<span class="ds">' + u.desc + '</span><br>'
+                    + '<span class="pr">' + (full ? 'MAXED' : u.cost + 'g') + '</span>';
+        b.disabled = full || game.gold < u.cost;
+        b.addEventListener('click', () => buy(key));
+        shopGrid.appendChild(b);
+    }
+
+    // Repairs, always available, priced against the wave. Two jobs: the shack
+    // upgrade heals to full as a side effect, so once it's maxed you'd have no way
+    // to fix the roof at all; and with every upgrade capped, a long run otherwise
+    // banks gold it can never spend. This is the sink — survive on a cracked shack
+    // and bank it, or pay to patch up and go in clean.
+    const hurt = game.maxHp - game.hp;
+    const r = document.createElement('button');
+    const cost = repairCost();
+    r.className = 'shop-item';
+    r.innerHTML = '<span class="nm">🔨 Repair Shack'
+                + '<span class="lv">' + Math.ceil(game.hp) + '/' + game.maxHp + '</span></span>'
+                + '<span class="ds">' + (hurt > 0 ? 'Patch the roof back to full' : 'Nothing to fix') + '</span><br>'
+                + '<span class="pr">' + (hurt > 0 ? cost + 'g' : '—') + '</span>';
+    r.disabled = hurt <= 0 || game.gold < cost;
+    r.addEventListener('click', () => {
+        if (game.maxHp - game.hp <= 0) { sfx('deny'); return; }
+        const c = repairCost();
+        if (game.gold < c) { sfx('deny'); return; }
+        game.gold -= c;
+        game.hp = game.maxHp;
+        sfx('buy');
+        buildShop();
+    });
+    shopGrid.appendChild(r);
+}
+
+// Scales with the wave so it stays a real decision late instead of pocket change.
+const repairCost = () => Math.round((game.maxHp - game.hp) * (2.2 + game.wave * 0.55));
+
+function buy(key) {
+    const u = upgrades[key];
+    if (maxed(key)) { sfx('deny'); return; }
+    if (game.gold < u.cost) { sfx('deny'); return; }
+    game.gold -= u.cost;
+    u.lvl++;
+    u.cost = Math.round(u.cost * u.step);
+    // Reinforcing adds capacity and patches in the new material, but it does NOT
+    // top you up for free — that used to make the shack line a full heal you could
+    // buy ten times, so damage taken never carried between waves. Repair is its
+    // own purchase now.
+    if (key === 'shack') { game.maxHp += 50; game.hp += 50; }
+    sfx('buy');
+    buildShop();
+}
+
+// ============================================================== UPDATE
+function update(dt) {
+    // Global spacing on idle vocals — see the groan block in think().
+    if (groanGap > 0) groanGap -= dt;
+
+    for (const z of zombies) {
+        if (z.fade <= 0) continue;
+        // Snapshot the pre-pose position of kinematic bodies. Verlet infers
+        // velocity from (x - px), so this hands a knocked-down walker its real
+        // walking momentum instead of a dead stop.
+        const kin = !isSim(z);
+        if (kin) for (const p of z.pts) { p.px = p.x; p.py = p.y; }
+        think(z, dt);
+        if (z.state === 'dead') z.fade -= dt * 0.17;
+    }
+
+    howl(dt);
+    physics();
+    resolveImpacts();
+    stepGadgets(dt);
+    stepFX(dt);
+
+    for (let i = zombies.length - 1; i >= 0; i--) if (zombies[i].fade <= 0) zombies.splice(i, 1);
+
+    if (game.comboTimer > 0) {
+        game.comboTimer -= dt;
+        if (game.comboTimer <= 0) game.combo = 0;
+    }
+
+    // smoothed cursor velocity, used for the throw
+    if (grab.z) {
+        grab.sx = lerp(grab.sx, clamp(grab.x - grab.lx, -46, 46), 0.55);
+        grab.sy = lerp(grab.sy, clamp(grab.y - grab.ly, -46, 46), 0.55);
+        grab.lx = grab.x; grab.ly = grab.y;
+        grab.held += dt;
+        tickGrip(dt);
+    }
+
+    // <= rather than ===. An exact-equality gate here means a single miscounted
+    // spawn strands the player on an empty field with no way to advance.
+    if (game.pending <= 0 && game.alive <= 0) {
+        game.clearT += dt;
+        if (game.clearT > 1.1) openShop();
+    } else {
+        game.clearT = 0;
+    }
+}
+
+// ============================================================== LOOP
+let last = performance.now(), acc = 0;
+// Shared cooldown so a big wave doesn't groan as one voice. See think().
+let groanGap = 0;
+
+function frame(now) {
+    requestAnimationFrame(frame);
+    let dt = (now - last) / 1000;
+    last = now;
+    perf = now;
+    if (dt > 0.25) dt = 0.25;
+
+    if (game.mode === 'playing') {
+        acc += dt;
+        let guard = 0;
+        while (acc >= STEP && guard++ < 5) { update(STEP); acc -= STEP; }
+    } else {
+        acc = 0;
+        // Paused means paused: freezing the particles too makes the menu read as a
+        // still frame. Every other non-playing mode (shop, game over, title) still
+        // wants its smoke and embers drifting behind the panel.
+        if (game.mode !== 'paused') stepFX(dt);
+    }
+    // The sequencer only *schedules* ahead on the audio clock, so calling it
+    // once per frame is enough and a dropped frame can't stutter the music.
+    musicTick();
+    draw();
+}
+requestAnimationFrame(frame);
+
+// ============================================================== BOOT
+function resetGame() {
+    clearTimers();
+    zombies.length = 0; gibs.length = 0; parts.length = 0;
+    nades.length = 0; spikes.length = 0; saws.length = 0; popups.length = 0;
+    dctx.clearRect(0, 0, W, H);
+    grab.z = null; grab.p = null;
+    grab.drag = 1; grab.held = 0; grab.sx = 0; grab.sy = 0;
+    bannerT = 0;
+    canvas.classList.remove('grabbing');
+
+    for (const k in upgrades) { upgrades[k].lvl = 0; upgrades[k].cost = upgrades[k].base; }
+
+    game.wave = 0; game.score = 0; game.gold = 0; game.kills = 0;
+    game.combo = 0; game.comboTimer = 0; game.bestSmash = 0;
+    game.maxHp = 240; game.hp = 240;
+    game.alive = 0; game.pending = 0; game.shake = 0;
+    game.clearT = 0; game.tool = 'hand';
+}
+
+const hide = id => document.getElementById(id).classList.remove('show');
+
+// ---- persistent best run -------------------------------------------------------
+// Wrapped because localStorage throws outright when a file:// page is opened
+// with site data blocked, and a menu that can't render is worse than a menu
+// that can't remember.
+function loadBest() {
+    try { return parseInt(localStorage.getItem('zs_best') || '0', 10) || 0; }
+    catch (e) { return 0; }
+}
+function saveBest(w) {
+    try { localStorage.setItem('zs_best', String(w)); } catch (e) {}
+}
+function refreshBest() {
+    const b = loadBest();
+    document.getElementById('menuBest').textContent = b ? 'Wave ' + b : '—';
+}
+refreshBest();
+
+// ---- main menu navigation ------------------------------------------------------
+function showPane(name) {
+    for (const p of document.querySelectorAll('.pane')) p.classList.remove('on');
+    document.getElementById('pane' + name).classList.add('on');
+}
+
+function buildBestiary() {
+    const order = ['shambler', 'runner', 'hardhat', 'brute', 'bloater', 'screamer', 'titan', 'butcher', 'warden'];
+    const list = document.getElementById('bestList');
+    list.innerHTML = '';
+    for (const k of order) {
+        const t = TYPES[k];
+        const r = document.createElement('div');
+        r.className = 'best-row' + (t.boss ? ' boss' : '');
+        const swatch = document.createElement('div');
+        swatch.className = 'swatch';
+        swatch.style.background = t.skin;
+        r.appendChild(swatch);
+        const info = document.createElement('div');
+        info.className = 'info';
+        const bn = document.createElement('div');
+        bn.className = 'bn';
+        bn.textContent = k.toUpperCase();
+        const bd = document.createElement('div');
+        bd.className = 'bd';
+        bd.textContent = `HP ${t.hp} (+${t.hpw}/wave) · DMG ${t.dmg} · SPD ${t.speed} · ${t.gold} gold`;
+        info.appendChild(bn);
+        info.appendChild(bd);
+        const tags = [];
+        if (t.grabLvl > 0) tags.push(`Grip Lv${t.grabLvl} to attempt`);
+        if (t.heavy) tags.push('Resists lift');
+        if (t.boss) tags.push('Boss — very hard to lift');
+        if (t.armor < 1) tags.push(`${Math.round((1 - t.armor) * 100)}% gadget resistance`);
+        if (t.howl) tags.push('Speeds allies');
+        if (t.bloat) tags.push('Explodes on death');
+        if (tags.length) {
+            const tg = document.createElement('div');
+            tg.className = 'tags';
+            tg.textContent = tags.join(' · ');
+            info.appendChild(tg);
+        }
+        r.appendChild(info);
+        list.appendChild(r);
+    }
+}
+
+document.getElementById('startBtn').addEventListener('click', () => {
+    if (!audio.started) audioInit();
+    hide('startOverlay');
+    resetGame();
+    startWave();
+    sfx('ui');
+});
+
+document.getElementById('howBtn').addEventListener('click', () => { showPane('How'); sfx('ui'); });
+document.getElementById('bestBtn').addEventListener('click', () => { buildBestiary(); showPane('Best'); sfx('ui'); });
+
+for (const btn of document.querySelectorAll('.back-btn')) {
+    btn.addEventListener('click', () => { showPane('Main'); sfx('ui'); });
+}
+
+document.getElementById('musicTgl').addEventListener('click', function() {
+    if (!audio.started) audioInit();
+    this.classList.toggle('on');
+    musicToggle(this.classList.contains('on'));
+    sfx('ui');
+});
+
+document.getElementById('sfxTgl').addEventListener('click', function() {
+    if (!audio.started) audioInit();
+    this.classList.toggle('on');
+    sfxToggle(this.classList.contains('on'));
+    // Can't play a click when you just turned clicks off, so no sfx here.
+});
+
+// ---- pause menu buttons --------------------------------------------------------
+document.getElementById('resumeBtn').addEventListener('click', resumeGame);
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+    hide('pauseOverlay');
+    game.mode = 'playing';
+    last = performance.now();
+    acc = 0;
+    resetGame();
+    startWave();
+    sfx('ui');
+});
+
+document.getElementById('quitBtn').addEventListener('click', () => {
+    hide('pauseOverlay');
+    // Back to the title card. resetGame() clears the field so the menu isn't
+    // sitting on top of a live horde, and 'start' is the mode drawHUD() skips.
+    resetGame();
+    game.mode = 'start';
+    showPane('Main');
+    document.getElementById('startOverlay').classList.add('show');
+    refreshBest();
+    musicToggle(document.getElementById('musicTgl').classList.contains('on'));
+    sfx('ui');
+});
+
+document.getElementById('pMusicTgl').addEventListener('click', function() {
+    this.classList.toggle('on');
+    // Music stays silent until we resume; this only records the preference and
+    // keeps the title-screen toggle in agreement with it.
+    document.getElementById('musicTgl').classList.toggle('on', this.classList.contains('on'));
+    sfx('ui');
+});
+
+document.getElementById('pSfxTgl').addEventListener('click', function() {
+    this.classList.toggle('on');
+    const on = this.classList.contains('on');
+    sfxToggle(on);
+    document.getElementById('sfxTgl').classList.toggle('on', on);
+});
+
+document.getElementById('nextWaveBtn').addEventListener('click', () => {    hide('shopOverlay');
+    startWave();
+    sfx('ui');
+});
+
+document.getElementById('againBtn').addEventListener('click', () => {
+    hide('overOverlay');
+    resetGame();
+    startWave();
+    sfx('ui');
+});
+</script>
+</body>
+</html>
+
