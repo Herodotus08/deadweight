@@ -1,0 +1,10 @@
+# Scratch harnesses and extraction dumps from balance testing.
+_*.js
+_chk.js
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/

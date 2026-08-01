@@ -1,0 +1,43 @@
+DEADWEIGHT
+Copyright (c) 2026 Dale D. All rights reserved.
+
+This source code is published for viewing, evaluation, and portfolio review
+purposes only. It is NOT open source and NOT public domain.
+
+You MAY:
+  - Read, study, and inspect this source code.
+  - Play the game.
+  - Link to this repository or its GitHub Pages build.
+  - Quote short excerpts with attribution, e.g. in a review or article.
+
+You MAY NOT, without prior written permission from the copyright holder:
+  - Copy, redistribute, republish, mirror, or host this work or any
+    substantial portion of it.
+  - Modify this work or create derivative works from it.
+  - Sell, license, sublicense, or commercially exploit this work, including
+    bundling it into an app, ad-supported page, game portal, or asset pack.
+  - Remove, alter, or obscure the authorship notices in the source header
+    or on the title screen.
+  - Present this work, in whole or in substantial part, as your own.
+
+NO WARRANTY. This work is provided "as is", without warranty of any kind,
+express or implied, including but not limited to the warranties of
+merchantability, fitness for a particular purpose, and noninfringement. In no
+event shall the copyright holder be liable for any claim, damages, or other
+liability arising from, out of, or in connection with this work or its use.
+
+Note on hosting: this repository is public on GitHub, which means GitHub's
+Terms of Service grant other GitHub users the ability to view and fork it
+within GitHub. That mechanism is a platform feature and does not grant any
+license to the rights reserved above.
+
+Deadweight is an original work inspired by the physics-sandbox genre and in
+particular by ZombieSmash! (GameDoctors / Zynga, 2012). It contains no code,
+art, audio, or other assets from that or any other game; all visuals are
+drawn procedurally with the Canvas 2D API and all audio is synthesised at
+runtime with the Web Audio API. Deadweight is not affiliated with, endorsed
+by, or sponsored by Zynga Inc. or GameDoctors. All third-party trademarks are
+the property of their respective owners.
+
+For permission requests or licensing enquiries, open an issue on the
+repository.
