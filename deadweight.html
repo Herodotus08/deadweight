@@ -564,6 +564,14 @@ function sfx(name, p) {
             // Short rip; the blade's drone is handled by 'sawLoop'.
             noise({ fc: 1900, fc1: 2600, d: 0.07, v: 0.15, q: 3, rate: 2.1 });
             break;
+        case 'shotgun':
+            // Joey's 12-gauge shotgun blast from the upstairs gable window + pump rack!
+            tone({ type: 'sawtooth', f: 155, f1: 36, d: 0.28, v: 0.34, filter: 'lowpass', fc: 900 });
+            noise({ filter: 'lowpass', fc: 2600, fc1: 280, d: 0.26, v: 0.36, q: 0.9, rate: 0.85 });
+            noise({ fc: 4200, fc1: 1800, d: 0.08, v: 0.22, q: 1.8, rate: 1.7 });
+            noise({ fc: 3400, fc1: 1600, d: 0.045, v: 0.14, q: 3.2, rate: 2.1, delay: 0.24 });
+            noise({ fc: 2800, fc1: 4200, d: 0.050, v: 0.16, q: 3.0, rate: 2.0, delay: 0.31 });
+            break;
         case 'toss':
             tone({ type: 'square', f: 520, f1: 900, d: 0.08, v: 0.1, filter: 'lowpass', fc: 2000 });
             break;
@@ -881,67 +889,67 @@ const INK = '#232620';
 
 const TYPES = {
     shambler: {
-        hp: 32, hpw: 7.5, scale: 1.00, speed: 31, gold: 8,  dmg: 10,
+        hp: 34, hpw: 8.0, scale: 0.86, speed: 36, gold: 8,  dmg: 10,
         skin: '#a3ba9b', skinDark: '#7b9174', shirt: '#2b5723', pants: '#5c3b20',
-        headR: 21.0, torsoW: 19, limb: 7.0, gut: 0,
+        headR: 15.6, torsoW: 16, limb: 5.8, gut: 0,
         grabLvl: 0, mass: 1.0, armor: 1
     },
     runner: {
-        hp: 21, hpw: 5.0, scale: 0.94, speed: 64, gold: 12, dmg: 8,
+        hp: 24, hpw: 5.5, scale: 0.80, speed: 105, gold: 12, dmg: 9,
         skin: '#aebfa6', skinDark: '#85997e', shirt: '#bfa682', pants: '#9e8664',
-        headR: 20.0, torsoW: 15, limb: 5.8, gut: 0,
+        headR: 14.6, torsoW: 13, limb: 4.8, gut: 0,
         grabLvl: 0, mass: 0.85, armor: 1, fast: true
     },
     hardhat: {
-        hp: 44, hpw: 9.0, scale: 1.04, speed: 28, gold: 16, dmg: 12,
+        hp: 48, hpw: 9.5, scale: 0.89, speed: 33, gold: 16, dmg: 12,
         skin: '#9db595', skinDark: '#768c6f', shirt: '#4b5736', pants: '#523b24',
-        headR: 21.0, torsoW: 20, limb: 7.6, gut: 2, helmet: true,
+        headR: 15.8, torsoW: 17, limb: 6.2, gut: 2, helmet: true,
         grabLvl: 0, mass: 1.15, armor: 0.9
     },
     brute: {
-        hp: 96, hpw: 16, scale: 1.38, speed: 19, gold: 28, dmg: 24,
+        hp: 102, hpw: 17, scale: 1.18, speed: 22, gold: 28, dmg: 24,
         skin: '#9ab392', skinDark: '#738a6c', shirt: '#c7c0a3', pants: '#3b536e',
-        headR: 20.5, torsoW: 28, limb: 10.2, gut: 14,
+        headR: 16.0, torsoW: 24, limb: 8.6, gut: 12,
         grabLvl: 0, mass: 2.1, armor: 0.85, heavy: true, capImpact: 0.34, maxLift: 115
     },
     bloater: {
-        hp: 54, hpw: 10, scale: 1.16, speed: 21, gold: 24, dmg: 16,
+        hp: 58, hpw: 11, scale: 0.98, speed: 25, gold: 24, dmg: 16,
         skin: '#a5bd9c', skinDark: '#7d9475', shirt: '#bab396', pants: '#6e4726',
-        headR: 21.0, torsoW: 25, limb: 8.2, gut: 20,
+        headR: 15.8, torsoW: 21, limb: 6.8, gut: 16,
         grabLvl: 0, mass: 1.75, armor: 0.8, bloat: true, heavy: true, capImpact: 0.38, maxLift: 135
     },
     screamer: {
-        hp: 36, hpw: 7.0, scale: 0.96, speed: 48, gold: 30, dmg: 9,
+        hp: 38, hpw: 7.5, scale: 0.82, speed: 68, gold: 30, dmg: 9,
         skin: '#a8bfb8', skinDark: '#7e968f', shirt: '#2b2d33', pants: '#23252a',
-        headR: 20.5, torsoW: 15, limb: 5.8, gut: 0,
+        headR: 14.8, torsoW: 13, limb: 4.8, gut: 0,
         grabLvl: 0, mass: 0.95, armor: 1, howl: true, fast: true
     },
     titan: {
-        hp: 230, hpw: 34, scale: 1.72, speed: 16, gold: 74, dmg: 36,
+        hp: 240, hpw: 36, scale: 1.44, speed: 18.5, gold: 74, dmg: 36,
         skin: '#97b090', skinDark: '#708769', shirt: '#c7c0a3', pants: '#3b536e',
-        headR: 20.5, torsoW: 35, limb: 12.5, gut: 18,
+        headR: 16.2, torsoW: 29, limb: 10.4, gut: 15,
         grabLvl: 0, mass: 3.8, armor: 0.55, heavy: true, grounded: true, hurler: true,
         capImpact: 0.26, maxLift: 64
     },
     butcher: {
-        hp: 170, hpw: 26, scale: 1.32, speed: 35, gold: 66, dmg: 28,
+        hp: 180, hpw: 28, scale: 1.10, speed: 42, gold: 66, dmg: 28,
         skin: '#9eb596', skinDark: '#768c70', shirt: '#38312c', pants: '#29231f',
-        headR: 20.5, torsoW: 26, limb: 9.2, gut: 5, plate: true,
+        headR: 15.6, torsoW: 21, limb: 7.4, gut: 4, plate: true,
         grabLvl: 0, mass: 2.9, armor: 0.45, heavy: true, grounded: true,
         capImpact: 0.24, maxLift: 74
     },
     // ---- Every 4th wave: The Giant Boss (ZombieSmash! HD Behemoth) ---------
     warden: {
-        hp: 580, hpw: 88, scale: 2.32, speed: 13.5, gold: 280, dmg: 46,
+        hp: 600, hpw: 92, scale: 1.82, speed: 15.5, gold: 280, dmg: 46,
         skin: '#94ad8d', skinDark: '#6c8266', shirt: '#c7c0a3', pants: '#364d66',
-        headR: 20.5, torsoW: 42, limb: 14.8, gut: 22, plate: true, helmet: true,
+        headR: 16.5, torsoW: 34, limb: 12.0, gut: 18, plate: true, helmet: true,
         grabLvl: 0, mass: 6.0, armor: 0.35, boss: true, grounded: true, hurler: true,
         capImpact: 0.16, maxLift: 46
     }
 };
 
-// Skeleton heights above the lane's ground line, at scale 1.
-const SK = { foot: 11, hips: 34, chest: 58, head: 84, hand: 54 };
+// Skeleton heights above the lane's ground line, at scale 1 (compact ZombieSmash! HD proportions).
+const SK = { foot: 9, hips: 28, chest: 48, head: 68, hand: 44 };
 
 let zid = 0;
 
@@ -1061,11 +1069,12 @@ class Zombie {
     // only k * step, which silently scales walk speed down to a third.
     applyPose(ax, k) {
         const s = this.s, g = this.gy, d = this.dir, ph = this.phase;
+        const isFast = this.kind === 'runner' || this.kind === 'screamer';
 
-        const bob = Math.sin(ph * 2) * 1.9 * s;
-        const sway = Math.sin(ph) * 1.1 * s;
-        const lean = 5.5 * s;                    // hunched forward
-        const stride = 13 * s;
+        const bob = Math.sin(ph * 2) * (isFast ? 2.4 : 1.5) * s;
+        const sway = Math.sin(ph) * 0.9 * s;
+        const lean = (this.kind === 'runner' ? 8.0 : (isFast ? 6.2 : 4.5)) * s;
+        const stride = (this.kind === 'runner' ? 14.2 : 10.5) * s;
         const swingAmt = this.swing;
 
         const set = (p, tx, ty) => {
@@ -1075,20 +1084,20 @@ class Zombie {
 
         set(this.hips,  ax + sway * 0.3,        g - SK.hips * s + bob);
         set(this.chest, ax + d * lean + sway,   g - SK.chest * s + bob * 0.65);
-        set(this.head,  ax + d * lean * 2.1,    g - SK.head * s + bob * 0.4);
+        set(this.head,  ax + d * lean * 2.0,    g - SK.head * s + bob * 0.4);
 
         // feet: cos>0 is the swing phase (lifted), cos<0 is the stance
         for (const [f, off] of [[this.lfoot, 0], [this.rfoot, Math.PI]]) {
             const p2 = ph + off;
-            const lift = Math.max(0, Math.cos(p2)) * 9 * s;
+            const lift = Math.max(0, Math.cos(p2)) * (this.kind === 'runner' ? 11.2 : 7.5) * s;
             set(f, ax + d * (Math.sin(p2) * stride), g - f.r - lift);
         }
 
         // arms out front, classic shamble. swingAmt drives the shack-clawing.
-        const reach = (30 + swingAmt * 10) * s;
-        const hy = g - SK.hand * s + Math.sin(ph) * 3 * s - swingAmt * 5 * s;
+        const reach = (23 + swingAmt * 8) * s;
+        const hy = g - SK.hand * s + Math.sin(ph) * (isFast ? 4.2 : 2.5) * s - swingAmt * 4.5 * s;
         set(this.lhand, ax + d * reach,            hy);
-        set(this.rhand, ax + d * (reach * 0.82),   hy + 6 * s);
+        set(this.rhand, ax + d * (reach * 0.82),   hy + 5 * s);
     }
 
     get anchorX() { return this.hips.x; }
@@ -1248,7 +1257,7 @@ function think(z, dt) {
             return;
         }
 
-        if (z.settle > 0.62) {
+        if (z.settle > 0.48) {
             z.state = 'rise';
             z.riseT = 0;
             // Physics owned the body while it tumbled, so hand the walk anchor
@@ -1262,8 +1271,8 @@ function think(z, dt) {
 
     if (z.state === 'rise') {
         z.riseT += dt;
-        const k = clamp(z.riseT / 0.50, 0, 1);
-        z.applyPose(z.wx, 0.08 + k * 0.28);
+        const k = clamp(z.riseT / 0.42, 0, 1);
+        z.applyPose(z.wx, 0.10 + k * 0.30);
         // Poise window: for a beat after standing up they shrug off trap
         // knockdowns and cannot be chain-tripped while scrambling up.
         if (k >= 1) { z.state = 'walk'; z.swing = 0; z.poiseT = z.t.grounded ? 1.8 : 1.1; }
@@ -1337,12 +1346,12 @@ function think(z, dt) {
     }
 
     // Stronger wave speed ramp for tighter ZombieSmash! HD pressure.
-    const ramp = Math.min(2.0, 1 + game.wave * 0.032);
+    const ramp = Math.min(2.15, 1 + game.wave * 0.038);
     const speed = z.t.speed * ramp * z.haste * dt;
     const move = z.blocked ? 0 : speed;
     z.wx += z.dir * move;
-    z.phase += (move / (13 * z.s)) * 2.6 + dt * 0.5;
-    z.applyPose(z.wx, 0.34);
+    z.phase += (move / (10.5 * z.s)) * (z.kind === 'runner' ? 3.1 : 2.5) + dt * 0.5;
+    z.applyPose(z.wx, 0.36);
 }
 
 // Screamers rally the horde around them. Kept as its own pass so the cost is
@@ -1789,8 +1798,99 @@ function stepGadgets(dt) {
     }
 }
 
+// ============================================================== JOEY (HOUSE DEFENDER — REF_2.JPG)
+const shots = [];
+const joey = {
+    dir: -1,
+    aim: Math.PI - 0.26,
+    cd: 1.1,
+    recoil: 0,
+    flash: 0
+};
+
+function stepJoey(dt) {
+    joey.recoil = Math.max(0, joey.recoil - dt * 18);
+    joey.flash = Math.max(0, joey.flash - dt * 9.5);
+
+    const jx = HOUSE.x + 14;
+    const jy = GROUND - 151;
+
+    // Target the closest live zombie approaching the farmhouse
+    let target = null, bestD = 540;
+    for (const z of zombies) {
+        if (z.state === 'dead' || z.fade <= 0.2) continue;
+        const dx = Math.abs(z.chest.x - jx);
+        if (dx < bestD) { bestD = dx; target = z; }
+    }
+
+    if (target) {
+        joey.dir = target.chest.x >= jx ? 1 : -1;
+        const rawAim = Math.atan2((target.chest.y - 4) - jy, target.chest.x - jx);
+        let diff = rawAim - joey.aim;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        joey.aim += diff * Math.min(1, dt * 10);
+
+        joey.cd -= dt;
+        if (joey.cd <= 0) {
+            joey.cd = Math.max(1.20, 2.25 - (upgrades.shack.lvl || 0) * 0.10) + rand(-0.18, 0.22);
+            joey.recoil = 6.8;
+            joey.flash = 1.0;
+            sfx('shotgun', 0.95);
+
+            const mx = jx + Math.cos(joey.aim) * 28;
+            const my = jy + Math.sin(joey.aim) * 28;
+
+            // 5 buckshot pellet tracer streaks
+            for (let i = 0; i < 5; i++) {
+                const sp = (i - 2) * 0.045 + rand(-0.02, 0.02);
+                const dist = Math.hypot(target.chest.x - mx, target.chest.y - my) + rand(-14, 18);
+                shots.push({
+                    x1: mx, y1: my,
+                    x2: mx + Math.cos(joey.aim + sp) * dist,
+                    y2: my + Math.sin(joey.aim + sp) * dist,
+                    life: 0.16, maxLife: 0.16
+                });
+            }
+
+            // Gunsmoke puff at muzzle + ejecting brass shotgun shell casing
+            puff(mx, my, '#dce6f0', 7, 2.8);
+            parts.push({
+                x: jx - joey.dir * 4, y: jy - 3,
+                vx: -joey.dir * rand(2.2, 4.2), vy: rand(-4.8, -2.6),
+                size: 4.5, color: '#f5c842', life: 0.75, decay: 0.025
+            });
+
+            // Buckshot damage, blood splatter, and physical stagger
+            const buckDmg = 18 + game.wave * 1.5;
+            target.hurt(buckDmg, 'shotgun');
+            puff(target.chest.x, target.chest.y, '#a81313', 10, 4.0);
+            const push = target.t.grounded ? 5 : 16;
+            target.wx -= target.dir * push;
+            if (!target.t.grounded && (isSim(target) || Math.random() < 0.42)) {
+                target.knockDown(0.28);
+                for (const p of target.pts) p.px += target.dir * 3.8;
+            }
+            game.shake = Math.max(game.shake, 4.5);
+        }
+    } else {
+        const patrolDir = Math.sin(perf * 0.0015) >= 0 ? 1 : -1;
+        joey.dir = patrolDir;
+        const idleAim = patrolDir > 0 ? 0.24 + Math.sin(perf * 0.003) * 0.08 : Math.PI - 0.24 + Math.sin(perf * 0.003) * 0.08;
+        let diff = idleAim - joey.aim;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        joey.aim += diff * Math.min(1, dt * 5);
+        joey.cd = Math.max(0.35, joey.cd - dt * 0.5);
+    }
+}
+
 // ============================================================== FX STEP
 function stepFX(dt) {
+    for (let i = shots.length - 1; i >= 0; i--) {
+        shots[i].life -= dt;
+        if (shots[i].life <= 0) shots.splice(i, 1);
+    }
     for (let i = parts.length - 1; i >= 0; i--) {
         const p = parts[i];
         p.x += p.vx; p.y += p.vy;
@@ -1804,7 +1904,7 @@ function stepFX(dt) {
         g.x += g.vx; g.y += g.vy; g.rot += g.vr;
         if (g.y > g.gy - g.r) {
             g.y = g.gy - g.r; g.vy *= -0.32; g.vx *= 0.72; g.vr *= 0.72;
-            if (Math.abs(g.vy) > 1) bloodDecal(g.x, g.gy - 3, 10, '#3f6b1c');
+            if (Math.abs(g.vy) > 1) bloodDecal(g.x, g.gy - 3, 10, '#7a0e0e');
         }
         g.life -= dt;
         if (g.life <= 0) gibs.splice(i, 1);
@@ -1835,7 +1935,7 @@ function rollKind(w) {
     if (w >= 6  && r < lerpB(0.36, 0.62)) return 'screamer';
     if (w >= 4  && r < lerpB(0.46, 0.72)) return 'bloater';
     if (w >= 3  && r < lerpB(0.60, 0.82)) return 'hardhat';
-    if (w >= 2  && r < lerpB(0.78, 0.93)) return 'runner';
+    if (w >= 1  && r < (w === 1 ? 0.22 : lerpB(0.80, 0.94))) return 'runner';
     return 'shambler';
 }
 
@@ -1856,9 +1956,9 @@ function startWave() {
     nades.length = 0; spikes.length = 0; saws.length = 0; boulders.length = 0;
 
     const boss = isBossWave(game.wave);
-    const n = boss ? 5 + Math.round(game.wave * 1.25)
-                   : 6 + Math.round(game.wave * 2.0);
-    const eliteChance = Math.min(0.38, Math.max(0, (game.wave - 2) * 0.04));
+    const n = boss ? 6 + Math.round(game.wave * 1.45)
+                   : 7 + Math.round(game.wave * 2.25);
+    const eliteChance = Math.min(0.42, Math.max(0, (game.wave - 2) * 0.045));
 
     game.pending = n + (boss ? 1 : 0);
     game.alive = 0;
@@ -1869,9 +1969,9 @@ function startWave() {
     musicSet(game.wave, boss);
     sfx(boss ? 'bossHorn' : 'wave');
 
-    let t = 260;
+    let t = 240;
     for (let i = 0; i < n; i++) {
-        t += rand(310, 610) / (1 + game.wave * 0.055);
+        t += rand(265, 520) / (1 + game.wave * 0.065);
         spawnTimers.push(setTimeout(() => {
             if (game.mode !== 'playing') return;
             zombies.push(new Zombie(rollKind(game.wave), game.wave,
@@ -2021,9 +2121,9 @@ function drawZombie(z) {
         const hairCol = shade(z.kind === 'runner' ? '#69231a' : '#1b1f24', dim + 0.08);
         ctx.fillStyle = hairCol; ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.85;
         ctx.beginPath();
-        ctx.moveTo(hd.x - d * 14 * s, hd.y - 4 * s);
-        ctx.quadraticCurveTo(ch.x - d * 24 * s, ch.y + 6 * s, ch.x - d * 18 * s, ch.y + 24 * s);
-        ctx.lineTo(ch.x - d * 4 * s, ch.y + 16 * s);
+        ctx.moveTo(hd.x - d * 8 * s, hd.y - 3 * s);
+        ctx.quadraticCurveTo(ch.x - d * 18 * s, ch.y + 4 * s, ch.x - d * 14 * s, ch.y + 19 * s);
+        ctx.lineTo(ch.x - d * 3 * s, ch.y + 12 * s);
         ctx.closePath();
         ctx.fill(); ctx.stroke();
     }
@@ -2046,7 +2146,7 @@ function drawZombie(z) {
     const hipFar  = { x: hp.x + d * hipW * 0.26, y: hp.y - 1.0 * s };
 
     const legB = (SK.hips - SK.foot) * 0.64 * s;
-    const armB = (isGiant ? 16.5 : 14.2) * s;
+    const armB = (isGiant ? 13.5 : 11.2) * s;
     const near = d > 0 ? 1 : -1;
 
     // --- 1. Far arm + far leg (behind torso) -------------------------------
@@ -2305,8 +2405,8 @@ function drawHead(z, skin, skinD, blotch, ink, dim) {
     const isFemale = z.kind === 'runner' || z.kind === 'screamer';
     const isGiant = z.kind === 'warden' || z.kind === 'titan' || z.kind === 'brute';
 
-    // Slightly larger, expressive ZombieSmash! HD head scale (ref_0.jpg & ref_extra_0.jpg)
-    const R = t.headR * s * (isGiant ? 1.05 : 1.12);
+    // Compact, sleek ZombieSmash! HD head scale matching smaller body proportions
+    const R = t.headR * s;
 
     const dead = z.state === 'dead';
     const airborne = isSim(z) && !dead && z.hips.y < z.gy - 52 * s;
@@ -3040,39 +3140,6 @@ function drawHouse() {
     ctx.closePath();
     ctx.fill(); ctx.stroke();
 
-    // Upstairs Left Gable Window with Joey aiming his shotgun (ref_2.jpg & ref_0.jpg!)
-    const gx = mainPeakX - 16, gy = wallTop - 54, gw = 34, gh = 40;
-    ctx.fillStyle = '#1b151c'; ctx.strokeStyle = '#594856'; ctx.lineWidth = 2.6;
-    ctx.fillRect(gx, gy, gw, gh);
-    ctx.strokeRect(gx, gy, gw, gh);
-
-    // Joey inside upstairs gable window
-    ctx.save();
-    ctx.beginPath(); ctx.rect(gx + 2, gy + 2, gw - 4, gh - 2); ctx.clip();
-    ctx.fillStyle = '#c95b27';
-    ctx.fillRect(gx + 7, gy + 23, 20, 17);
-    blob(gx + 17, gy + 15, 8.5, 9, 0, '#f2cfb6', 1.8);
-    ctx.fillStyle = '#4a3219';
-    ctx.beginPath();
-    ctx.moveTo(gx + 8, gy + 12); ctx.lineTo(gx + 11, gy + 4);
-    ctx.lineTo(gx + 17, gy + 6); ctx.lineTo(gx + 23, gy + 3);
-    ctx.lineTo(gx + 26, gy + 12); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(gx + 12, gy + 12, 4, 3.5); ctx.fillRect(gx + 19, gy + 12, 4, 3.5);
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(gx + 14, gy + 13, 2, 2); ctx.fillRect(gx + 20, gy + 13, 2, 2);
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(gx + 13, gy + 19, 8, 2.5);
-    ctx.restore();
-    // Shotgun barrel poking out
-    ctx.save();
-    ctx.translate(gx + 23, gy + 26);
-    ctx.rotate(-0.22 + Math.sin(perf * 0.003) * 0.08);
-    ctx.fillStyle = '#242a30'; ctx.strokeStyle = '#0e1214'; ctx.lineWidth = 2;
-    ctx.fillRect(-3, -3, 22, 5);
-    ctx.strokeRect(-3, -3, 22, 5);
-    ctx.restore();
-
     // Main Roof Sloping Shingle Plane (from mainPeakX -> mainRidgeRightX down to wallTop)
     ctx.save();
     ctx.beginPath();
@@ -3121,6 +3188,193 @@ function drawHouse() {
     ctx.lineTo(x - 8, wallTop + 10);
     ctx.closePath();
     ctx.fill(); ctx.stroke();
+
+    // --- 3B. Upstairs Left Gable Window + JOEY (Exact ZombieSmash! HD Hero from ref_2.jpg!)
+    // Drawn AFTER the main roof shingles & bargeboard so the roof never clips Joey or his shotgun!
+    const gx = mainPeakX - 18, gy = wallTop - 58, gw = 36, gh = 44;
+
+    // Open louvered wooden shutters flanking the upstairs window (ref_2.jpg & ref_0.jpg)
+    ctx.fillStyle = '#2d202b'; ctx.strokeStyle = '#140e14'; ctx.lineWidth = 2;
+    for (const sx of [gx - 11, gx + gw + 2]) {
+        ctx.fillRect(sx, gy + 1, 9, gh - 2);
+        ctx.strokeRect(sx, gy + 1, 9, gh - 2);
+        ctx.strokeStyle = '#473444'; ctx.lineWidth = 1.2;
+        for (let ly = gy + 5; ly < gy + gh - 3; ly += 4) {
+            ctx.beginPath(); ctx.moveTo(sx + 1.5, ly); ctx.lineTo(sx + 7.5, ly); ctx.stroke();
+        }
+        ctx.strokeStyle = '#140e14'; ctx.lineWidth = 2;
+    }
+
+    // Outer wooden window casing + dark attic interior + heavy wooden sill
+    ctx.fillStyle = '#63525e'; ctx.strokeStyle = '#181218'; ctx.lineWidth = 2.4;
+    ctx.fillRect(gx - 3, gy - 3, gw + 6, gh + 6);
+    ctx.strokeRect(gx - 3, gy - 3, gw + 6, gh + 6);
+    ctx.fillStyle = '#140f16';
+    ctx.fillRect(gx, gy, gw, gh);
+    ctx.strokeRect(gx, gy, gw, gh);
+    ctx.fillStyle = '#756270';
+    ctx.fillRect(gx - 5, gy + gh - 1, gw + 10, 5);
+    ctx.strokeRect(gx - 5, gy + gh - 1, gw + 10, 5);
+
+    // JOEY inside the window (exact ref_2.jpg: spiky dark-brown hair, furrowed angry brows,
+    // intense eyes, wide clenched-teeth badass grin, brown vest over orange-tan shirt!)
+    const jx = gx + gw * 0.5, jy = gy + 29;
+    const jd = joey.dir || -1;
+
+    ctx.save();
+    ctx.beginPath(); ctx.rect(gx - 2, gy - 6, gw + 4, gh + 6); ctx.clip();
+
+    // Shoulders & torso: orange-tan undershirt + dark-brown survivor vest (ref_2.jpg)
+    blob(jx, gy + 36, 13.5, 11, 0, '#d96b27', 2.2);
+    ctx.fillStyle = '#4a3121'; ctx.strokeStyle = '#140e10'; ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(jx - 12, gy + 26);
+    ctx.lineTo(jx - 4, gy + 26);
+    ctx.lineTo(jx - 2, gy + 43);
+    ctx.lineTo(jx - 13, gy + 43);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(jx + 12, gy + 26);
+    ctx.lineTo(jx + 4, gy + 26);
+    ctx.lineTo(jx + 2, gy + 43);
+    ctx.lineTo(jx + 13, gy + 43);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    // Sculpted 3/4 cartoon head & jawline (ref_2.jpg)
+    const hx = jx - jd * 1.2, hy = gy + 16.5;
+    blob(hx, hy, 9.8, 10.6, 0, '#f0c4a0', 2.2);
+    // Warm lower-jaw shading / stubble tone
+    ctx.fillStyle = '#d4a17a';
+    ctx.beginPath();
+    ctx.arc(hx, hy + 1.5, 8.6, 0.15, Math.PI - 0.15);
+    ctx.fill();
+    // Side ear with inner contour
+    blob(hx - jd * 9.2, hy + 1.2, 2.8, 3.8, 0, '#e6b48e', 1.6);
+
+    // Iconic wide clenched-teeth grin (ref_2.jpg!)
+    const gxMouth = hx + jd * 1.8, gyMouth = hy + 4.8;
+    ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#140e10'; ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.roundRect(gxMouth - 6.2, gyMouth - 2.6, 12.4, 5.4, 2.2);
+    ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = '#140e10'; ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(gxMouth - 5.5, gyMouth + 0.1); ctx.lineTo(gxMouth + 5.5, gyMouth + 0.1);
+    for (let ti = -1; ti <= 1; ti++) {
+        ctx.moveTo(gxMouth + ti * 3.0, gyMouth - 2.3);
+        ctx.lineTo(gxMouth + ti * 3.0, gyMouth + 2.5);
+    }
+    ctx.stroke();
+
+    // Sculpted cartoon nose
+    ctx.fillStyle = '#dfad86'; ctx.strokeStyle = '#140e10'; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(hx + jd * 2.6, hy + 0.4, 2.1, -Math.PI * 0.4, Math.PI * 0.7);
+    ctx.fill(); ctx.stroke();
+
+    // Intense eyes tracking target + heavy furrowed angry dark-brown eyebrows (ref_2.jpg!)
+    const ex1 = hx + jd * 0.2 - 3.2, ex2 = hx + jd * 2.2 + 2.6, ey = hy - 2.2;
+    blob(ex1, ey, 2.6, 2.3, 0, '#ffffff', 1.4);
+    blob(ex2, ey, 2.6, 2.3, 0, '#ffffff', 1.4);
+    ctx.fillStyle = '#140e10';
+    ctx.beginPath();
+    ctx.arc(ex1 + jd * 0.8, ey + 0.2, 1.25, 0, 7);
+    ctx.arc(ex2 + jd * 0.8, ey + 0.2, 1.25, 0, 7);
+    ctx.fill();
+
+    // Thick angry V-slanted eyebrows
+    ctx.strokeStyle = '#26150b'; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(ex1 - 2.8, ey - 3.0); ctx.lineTo(ex1 + 2.4, ey - 1.5);
+    ctx.moveTo(ex2 + 2.8, ey - 3.0); ctx.lineTo(ex2 - 2.4, ey - 1.5);
+    ctx.stroke();
+
+    // Iconic spiky dark-brown hair with widow's peak & thick sideburns (exact ref_2.jpg!)
+    ctx.fillStyle = '#382010'; ctx.strokeStyle = '#120a05'; ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(hx - 9.8, hy + 1.5);
+    ctx.lineTo(hx - 11.2, hy - 4.5);
+    ctx.lineTo(hx - 8.2, hy - 5.2);
+    ctx.lineTo(hx - 9.5, hy - 10.5);
+    ctx.lineTo(hx - 4.2, hy - 8.8);
+    ctx.lineTo(hx - 2.0, hy - 13.5);
+    ctx.lineTo(hx + 1.5, hy - 9.5);
+    ctx.lineTo(hx + 6.2, hy - 12.8);
+    ctx.lineTo(hx + 6.8, hy - 8.2);
+    ctx.lineTo(hx + 11.2, hy - 8.8);
+    ctx.lineTo(hx + 9.5, hy - 2.5);
+    ctx.lineTo(hx + 7.2, hy - 5.0);
+    ctx.lineTo(hx + jd * 1.2, hy - 4.2); // Widow's peak dip
+    ctx.lineTo(hx - 5.5, hy - 5.2);
+    ctx.lineTo(hx - jd * 7.2, hy + 2.2); // Sideburn
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    // Joey's Muscular Arms, Hands & Pump-Action Shotgun (drawn UNCLIPPED so barrel & muzzle flash project out!)
+    ctx.save();
+    const rx = -Math.cos(joey.aim) * joey.recoil;
+    const ry = -Math.sin(joey.aim) * joey.recoil;
+    ctx.translate(jx + rx, jy + ry);
+    ctx.rotate(joey.aim);
+    if (Math.cos(joey.aim) < 0) ctx.scale(1, -1);
+
+    // Walnut wooden stock tucked against shoulder
+    ctx.fillStyle = '#7d4420'; ctx.strokeStyle = '#140e10'; ctx.lineWidth = 2.0;
+    ctx.beginPath();
+    ctx.moveTo(-11, -2.5); ctx.lineTo(-2, -2.5); ctx.lineTo(-2, 3.2); ctx.lineTo(-11, 4.8);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    // Steel shotgun receiver & dark ejection port
+    ctx.fillStyle = '#6e7b87';
+    ctx.fillRect(-2, -3.5, 10, 5.8);
+    ctx.strokeRect(-2, -3.5, 10, 5.8);
+    ctx.fillStyle = '#1f252b';
+    ctx.fillRect(0.5, -2.2, 4.5, 2.0);
+
+    // Extended gunmetal barrel + under-barrel magazine tube + front sight bead
+    ctx.fillStyle = '#333b42';
+    ctx.fillRect(8, -3.6, 21, 3.4);
+    ctx.strokeRect(8, -3.6, 21, 3.4);
+    ctx.fillStyle = '#566470';
+    ctx.fillRect(8.5, -3.1, 19.5, 1.2);
+    ctx.fillStyle = '#1d2226';
+    ctx.fillRect(8, -0.2, 16, 2.4);
+    ctx.strokeRect(8, -0.2, 16, 2.4);
+    ctx.fillStyle = '#dce6f0';
+    ctx.fillRect(26.5, -5.2, 2.0, 1.8);
+
+    // Ribbed wooden pump forend
+    ctx.fillStyle = '#915027';
+    ctx.fillRect(10.5, -0.8, 9.5, 4.2);
+    ctx.strokeRect(10.5, -0.8, 9.5, 4.2);
+
+    // Joey's rear trigger hand & front pump hand gripping the shotgun
+    blob(-1.5, 1.8, 3.6, 3.2, 0, '#f0c4a0', 1.8);
+    blob(14.8, 2.2, 3.8, 3.2, 0, '#eab893', 1.8);
+
+    // Blazing multi-layered 12-gauge Muzzle Flash Cone when firing!
+    if (joey.flash > 0) {
+        const fl = joey.flash;
+        ctx.save();
+        ctx.translate(29.5, -1.8);
+        ctx.scale(0.85 + fl * 0.45, 0.85 + fl * 0.45);
+        ctx.fillStyle = 'rgba(255, 120, 20, ' + (fl * 0.92) + ')';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(18, -11); ctx.lineTo(13, -3);
+        ctx.lineTo(25, 0);
+        ctx.lineTo(13, 3); ctx.lineTo(18, 11);
+        ctx.closePath(); ctx.fill();
+
+        ctx.fillStyle = 'rgba(255, 240, 120, ' + fl + ')';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(11, -5.5); ctx.lineTo(16, 0); ctx.lineTo(11, 5.5);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+    }
+    ctx.restore();
 
     // --- 4. Right Projecting Cross-Gable Roof & Front Gable Triangle (exact ref_0.jpg & ref_extra_0.jpg!)
     const rightPeakX = lerp(rightFaceX, r, 0.52), rightPeakY = wallTop - 96;
@@ -3501,6 +3755,26 @@ function draw() {
 
     const order = zombies.slice().sort((a, b) => b.lane - a.lane || a.hips.y - b.hips.y);
     for (const z of order) if (z.fade > 0) drawZombie(z);
+
+    // Joey's 12-gauge buckshot tracer streaks
+    if (shots.length) {
+        ctx.save();
+        ctx.lineCap = 'round';
+        for (const s of shots) {
+            const a = clamp(s.life / s.maxLife, 0, 1);
+            ctx.strokeStyle = 'rgba(255, 232, 130, ' + (a * 0.85) + ')';
+            ctx.lineWidth = 2.4;
+            ctx.beginPath();
+            ctx.moveTo(s.x1, s.y1);
+            ctx.lineTo(s.x2, s.y2);
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(255, 250, 210, ' + a + ')';
+            ctx.beginPath();
+            ctx.arc(s.x2, s.y2, 2.6, 0, 7);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
 
     for (const b of boulders) {
         ctx.save();
@@ -3947,6 +4221,7 @@ function update(dt) {
     physics();
     resolveImpacts();
     stepGadgets(dt);
+    stepJoey(dt);
     stepFX(dt);
 
     for (let i = zombies.length - 1; i >= 0; i--) if (zombies[i].fade <= 0) zombies.splice(i, 1);
@@ -4024,7 +4299,8 @@ requestAnimationFrame(frame);
 function resetGame() {
     clearTimers();
     zombies.length = 0; boulders.length = 0; gibs.length = 0; parts.length = 0;
-    nades.length = 0; spikes.length = 0; saws.length = 0; popups.length = 0;
+    nades.length = 0; spikes.length = 0; saws.length = 0; popups.length = 0; shots.length = 0;
+    joey.dir = -1; joey.aim = Math.PI - 0.26; joey.cd = 0.8; joey.recoil = 0; joey.flash = 0;
     dctx.clearRect(0, 0, W, H);
     grab.z = null; grab.p = null; grab.boulder = null;
     grab.drag = 1; grab.held = 0; grab.sx = 0; grab.sy = 0;
