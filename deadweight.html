@@ -25,7 +25,7 @@
 
     body {
         font-family: 'Trebuchet MS', 'Arial Black', sans-serif;
-        background: #0d0f0b;
+        background: #06121e;
         overflow: hidden;
         touch-action: none;
         display: flex;
@@ -52,26 +52,28 @@
         display: none;
         align-items: center;
         justify-content: center;
-        background: rgba(8, 10, 6, 0.88);
+        background: rgba(6, 16, 26, 0.56);
+        backdrop-filter: blur(1.5px);
         border-radius: 6px;
     }
     .overlay.show { display: flex; }
 
     .panel {
-        background: linear-gradient(#2b3320, #1b2014);
-        border: 4px solid #7fb03a;
-        border-radius: 14px;
-        padding: 22px 26px;
+        background: linear-gradient(180deg, rgba(24, 52, 74, 0.94), rgba(12, 28, 42, 0.96));
+        border: 4px solid #8ab4d0;
+        border-radius: 16px;
+        padding: 24px 28px;
         text-align: center;
-        color: #eafbd2;
+        color: #eaf4fc;
         max-width: 92%;
-        box-shadow: 0 10px 0 rgba(0,0,0,0.4);
+        box-shadow: 0 12px 28px rgba(0,0,0,0.65), inset 0 2px 0 rgba(255,255,255,0.18);
     }
 
     .panel h1 {
-        font-size: 34px;
-        color: #b6ff4a;
-        text-shadow: 3px 3px 0 #24310f;
+        font-size: 36px;
+        color: #b4cfa4;
+        -webkit-text-stroke: 2px #1c2419;
+        text-shadow: 0 4px 0 #1c2419, 0 6px 12px rgba(0,0,0,0.6);
         margin-bottom: 4px;
         letter-spacing: 1px;
     }
@@ -81,13 +83,30 @@
        padding cancels the trailing gap letter-spacing adds, which would
        otherwise push the centred title a few pixels left. */
     .panel h1.brand {
-        letter-spacing: 6px;
-        padding-left: 6px;
-        font-size: 38px;
+        letter-spacing: 5px;
+        padding-left: 5px;
+        font-size: 44px;
+        color: #b4cfa4;
+        -webkit-text-stroke: 2.5px #1c2419;
+        text-shadow: 0 5px 0 #1c2419, 0 8px 16px rgba(0,0,0,0.7);
     }
 
-    .panel .sub { color: #9db77a; margin-bottom: 4px; font-size: 14px; letter-spacing: 2px; }
-    .panel .byline { color: #6f8154; font-size: 11px; margin-bottom: 14px; letter-spacing: 1px; }
+    .panel .sub {
+        display: inline-block;
+        background: #c92626;
+        color: #fff8e7;
+        padding: 3px 14px;
+        border-radius: 6px;
+        border: 2px solid #241010;
+        box-shadow: 0 3px 0 #241010;
+        transform: rotate(-2deg);
+        margin-bottom: 8px;
+        font-weight: 900;
+        font-size: 14px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+    .panel .byline { color: #8cb2cc; font-size: 11px; margin-bottom: 14px; letter-spacing: 1px; }
 
     .shop-grid {
         display: grid;
@@ -97,10 +116,10 @@
     }
 
     .shop-item {
-        background: linear-gradient(#3d4a28, #26301a);
-        border: 3px solid #6d9333;
+        background: linear-gradient(180deg, #244b69, #152f45);
+        border: 3px solid #649ec4;
         border-radius: 10px;
-        color: #eafbd2;
+        color: #eaf4fc;
         padding: 9px 8px;
         cursor: pointer;
         font-family: inherit;
@@ -112,33 +131,34 @@
     .shop-item:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.18); }
     .shop-item:active:not(:disabled) { transform: translateY(1px); }
     .shop-item:disabled { opacity: .42; cursor: not-allowed; }
-    .shop-item .nm { font-weight: bold; font-size: 13px; display: block; color: #d7ff8f; }
-    .shop-item .ds { color: #a9c286; }
+    .shop-item .nm { font-weight: bold; font-size: 13px; display: block; color: #b8f272; }
+    .shop-item .ds { color: #a7cade; }
     .shop-item .pr { color: #ffd83d; font-weight: bold; }
     .shop-item .lv { float: right; color: #7fe3a0; }
     /* A maxed card reads as "done", not as "you can't afford this". */
-    .shop-item.maxed { border-color: #6d7a52; opacity: .72; }
-    .shop-item.maxed .pr { color: #9db77a; }
+    .shop-item.maxed { border-color: #4d6a7e; opacity: .72; }
+    .shop-item.maxed .pr { color: #8cb2cc; }
     .shop-item.maxed .lv { color: #ffd83d; }
 
     .big-btn {
-        background: linear-gradient(#8fd63f, #4f8f1c);
-        border: 3px solid #d3ff8a;
+        background: linear-gradient(180deg, #e03c31, #9e1b14);
+        border: 3px solid #ffb3a7;
         border-radius: 12px;
-        color: #16210a;
+        color: #fff9eb;
         font-family: inherit;
-        font-weight: bold;
+        font-weight: 900;
         font-size: 20px;
         padding: 12px 34px;
         margin-top: 10px;
         cursor: pointer;
-        text-shadow: 0 1px 0 rgba(255,255,255,.4);
+        text-shadow: 0 2px 0 #3d0906;
+        box-shadow: 0 5px 0 #3d0906;
     }
     .big-btn:hover { filter: brightness(1.12); }
-    .big-btn:active { transform: translateY(2px); }
+    .big-btn:active { transform: translateY(2px); box-shadow: 0 3px 0 #3d0906; }
 
     .gold-line { color: #ffd83d; font-size: 19px; font-weight: bold; margin: 6px 0; }
-    .stat-row { color: #cfe6ad; font-size: 15px; margin: 3px 0; }
+    .stat-row { color: #c4dfee; font-size: 15px; margin: 3px 0; }
     .how { text-align: left; max-width: 440px; margin: 14px auto; line-height: 1.6; font-size: 14px; }
 
     /* ---- main menu ---- */
@@ -150,10 +170,10 @@
     .menu-btns { display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 6px; }
 
     .menu-btn {
-        background: linear-gradient(#3d4a28, #26301a);
-        border: 3px solid #6d9333;
+        background: linear-gradient(180deg, #285373, #17344b);
+        border: 3px solid #6faad1;
         border-radius: 10px;
-        color: #d7ff8f;
+        color: #e4f3fc;
         font-family: inherit;
         font-weight: bold;
         font-size: 15px;
@@ -168,10 +188,10 @@
     .toggles { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
 
     .tgl {
-        background: #26301a;
-        border: 3px solid #4d642a;
+        background: #132a3d;
+        border: 3px solid #3c6280;
         border-radius: 999px;
-        color: #7d8f63;
+        color: #799eb8;
         font-family: inherit;
         font-weight: bold;
         font-size: 13px;
@@ -181,9 +201,9 @@
     /* Lit = audible. The state has to be legible at a glance, since the only
        other feedback is sound the player may have muted precisely because
        they can't hear it. */
-    .tgl.on { border-color: #8fd63f; color: #d7ff8f; background: #35431f; }
+    .tgl.on { border-color: #8fd63f; color: #d7ff8f; background: #234224; }
 
-    .menu-foot { color: #7d8f63; font-size: 12px; margin-top: 12px; }
+    .menu-foot { color: #8cb2cc; font-size: 12px; margin-top: 12px; }
 
     /* ---- bestiary ---- */
     .bestiary {
@@ -857,64 +877,64 @@ function ik(ax, ay, bx, by, l1, l2, sign) {
 // ZombieSmash! HD style: expressive oversized heads, vivid cartoon contrast,
 // punchier speeds, and grounded heavy/boss physics (maxLift caps how high above
 // the dirt a body can ever be hoisted by hand, even at Lv10 Grip).
-const INK = '#1a1f0c';
+const INK = '#232620';
 
 const TYPES = {
     shambler: {
         hp: 32, hpw: 7.5, scale: 1.00, speed: 31, gold: 8,  dmg: 10,
-        skin: '#95b858', skinDark: '#6c8d3f', shirt: '#5e7094', pants: '#3b4659',
-        headR: 21.5, torsoW: 20, limb: 7.5, gut: 0,
+        skin: '#a3ba9b', skinDark: '#7b9174', shirt: '#2b5723', pants: '#5c3b20',
+        headR: 21.0, torsoW: 19, limb: 7.0, gut: 0,
         grabLvl: 0, mass: 1.0, armor: 1
     },
     runner: {
-        hp: 21, hpw: 5.0, scale: 0.92, speed: 64, gold: 12, dmg: 8,
-        skin: '#acd062', skinDark: '#82a344', shirt: '#a44a4a', pants: '#4a3830',
-        headR: 20.5, torsoW: 16, limb: 6.2, gut: 0,
+        hp: 21, hpw: 5.0, scale: 0.94, speed: 64, gold: 12, dmg: 8,
+        skin: '#aebfa6', skinDark: '#85997e', shirt: '#bfa682', pants: '#9e8664',
+        headR: 20.0, torsoW: 15, limb: 5.8, gut: 0,
         grabLvl: 0, mass: 0.85, armor: 1, fast: true
     },
     hardhat: {
         hp: 44, hpw: 9.0, scale: 1.04, speed: 28, gold: 16, dmg: 12,
-        skin: '#8fb253', skinDark: '#69873d', shirt: '#cf8e28', pants: '#464136',
-        headR: 21.5, torsoW: 21, limb: 8, gut: 2, helmet: true,
+        skin: '#9db595', skinDark: '#768c6f', shirt: '#4b5736', pants: '#523b24',
+        headR: 21.0, torsoW: 20, limb: 7.6, gut: 2, helmet: true,
         grabLvl: 0, mass: 1.15, armor: 0.9
     },
     brute: {
-        hp: 96, hpw: 16, scale: 1.36, speed: 19, gold: 28, dmg: 24,
-        skin: '#7fa148', skinDark: '#5d7834', shirt: '#4f4434', pants: '#383024',
-        headR: 21.0, torsoW: 28, limb: 10, gut: 14,
+        hp: 96, hpw: 16, scale: 1.38, speed: 19, gold: 28, dmg: 24,
+        skin: '#9ab392', skinDark: '#738a6c', shirt: '#c7c0a3', pants: '#3b536e',
+        headR: 20.5, torsoW: 28, limb: 10.2, gut: 14,
         grabLvl: 0, mass: 2.1, armor: 0.85, heavy: true, capImpact: 0.34, maxLift: 115
     },
     bloater: {
-        hp: 54, hpw: 10, scale: 1.18, speed: 21, gold: 24, dmg: 16,
-        skin: '#a6c05c', skinDark: '#7b9142', shirt: '#687a46', pants: '#434d34',
-        headR: 22.0, torsoW: 27, limb: 8.5, gut: 24,
+        hp: 54, hpw: 10, scale: 1.16, speed: 21, gold: 24, dmg: 16,
+        skin: '#a5bd9c', skinDark: '#7d9475', shirt: '#bab396', pants: '#6e4726',
+        headR: 21.0, torsoW: 25, limb: 8.2, gut: 20,
         grabLvl: 0, mass: 1.75, armor: 0.8, bloat: true, heavy: true, capImpact: 0.38, maxLift: 135
     },
     screamer: {
         hp: 36, hpw: 7.0, scale: 0.96, speed: 48, gold: 30, dmg: 9,
-        skin: '#bfd06a', skinDark: '#8e9c4b', shirt: '#7a468a', pants: '#3f324a',
-        headR: 22.5, torsoW: 16, limb: 6.4, gut: 0,
+        skin: '#a8bfb8', skinDark: '#7e968f', shirt: '#2b2d33', pants: '#23252a',
+        headR: 20.5, torsoW: 15, limb: 5.8, gut: 0,
         grabLvl: 0, mass: 0.95, armor: 1, howl: true, fast: true
     },
     titan: {
-        hp: 230, hpw: 34, scale: 1.64, speed: 16, gold: 74, dmg: 36,
-        skin: '#6e8f3e', skinDark: '#50692c', shirt: '#4c3f2f', pants: '#322b20',
+        hp: 230, hpw: 34, scale: 1.72, speed: 16, gold: 74, dmg: 36,
+        skin: '#97b090', skinDark: '#708769', shirt: '#c7c0a3', pants: '#3b536e',
         headR: 20.5, torsoW: 35, limb: 12.5, gut: 18,
         grabLvl: 0, mass: 3.8, armor: 0.55, heavy: true, grounded: true, hurler: true,
         capImpact: 0.26, maxLift: 64
     },
     butcher: {
         hp: 170, hpw: 26, scale: 1.32, speed: 35, gold: 66, dmg: 28,
-        skin: '#89a34e', skinDark: '#647838', shirt: '#8c2b2b', pants: '#3a3026',
-        headR: 20.5, torsoW: 27, limb: 9.5, gut: 5, plate: true,
+        skin: '#9eb596', skinDark: '#768c70', shirt: '#38312c', pants: '#29231f',
+        headR: 20.5, torsoW: 26, limb: 9.2, gut: 5, plate: true,
         grabLvl: 0, mass: 2.9, armor: 0.45, heavy: true, grounded: true,
         capImpact: 0.24, maxLift: 74
     },
-    // ---- Every 4th wave: The Warden Boss -----------------------------------
+    // ---- Every 4th wave: The Giant Boss (ZombieSmash! HD Behemoth) ---------
     warden: {
-        hp: 580, hpw: 88, scale: 2.05, speed: 13.5, gold: 280, dmg: 46,
-        skin: '#5d7e36', skinDark: '#415924', shirt: '#3b382e', pants: '#29251d',
-        headR: 21.0, torsoW: 41, limb: 14.5, gut: 22, plate: true, helmet: true,
+        hp: 580, hpw: 88, scale: 2.32, speed: 13.5, gold: 280, dmg: 46,
+        skin: '#94ad8d', skinDark: '#6c8266', shirt: '#c7c0a3', pants: '#364d66',
+        headR: 20.5, torsoW: 42, limb: 14.8, gut: 22, plate: true, helmet: true,
         grabLvl: 0, mass: 6.0, armor: 0.35, boss: true, grounded: true, hurler: true,
         capImpact: 0.16, maxLift: 46
     }
@@ -1065,7 +1085,7 @@ class Zombie {
         }
 
         // arms out front, classic shamble. swingAmt drives the shack-clawing.
-        const reach = (24 + swingAmt * 9) * s;
+        const reach = (30 + swingAmt * 10) * s;
         const hy = g - SK.hand * s + Math.sin(ph) * 3 * s - swingAmt * 5 * s;
         set(this.lhand, ax + d * reach,            hy);
         set(this.rhand, ax + d * (reach * 0.82),   hy + 6 * s);
@@ -1147,8 +1167,8 @@ class Zombie {
         sfx('death', this.s);
         if (game.combo > 2) sfx('combo', game.combo);
 
-        puff(this.chest.x, this.chest.y, this.t.skinDark, 24, 5);
-        bloodDecal(this.chest.x, this.gy - 5, 22 * this.s, '#3f6b1c');
+        puff(this.chest.x, this.chest.y, '#9e1414', 24, 5);
+        bloodDecal(this.chest.x, this.gy - 5, 22 * this.s, '#7a0c0c');
 
         // A brutal end tears limbs off.
         if (force > 24 || kind === 'blast') {
@@ -1163,7 +1183,7 @@ class Zombie {
                     });
                 }
             }
-            puff(this.chest.x, this.chest.y, '#8fd63f', 16, 7);
+            puff(this.chest.x, this.chest.y, '#b81818', 16, 7);
             sfx('gib');
         }
 
@@ -1567,8 +1587,8 @@ function resolveImpacts() {
         game.shake = Math.max(game.shake, Math.min(12, imp * 0.55));
         if (z.state !== 'dead') {
             popup(x, y - 34, Math.round(dmg), '#ffe9a8', 15 + Math.min(11, dmg * 0.28));
-            puff(x, y, '#6ea72c', 5, 3.2);
-            bloodDecal(x, z.gy - 4, 11 * z.s, '#39621a');
+            puff(x, y, '#a81616', 6, 3.2);
+            bloodDecal(x, z.gy - 4, 12 * z.s, '#820d0d');
         }
     }
 }
@@ -1932,30 +1952,63 @@ function blob(x, y, rx, ry, rot, fill, ink) {
 }
 
 // ============================================================== ZOMBIE ART (ZOMBIESMASH! HD STYLE)
+function drawStar5(x, y, rOuter, rInner, fill, stroke, lw) {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+        const a = -Math.PI / 2 + (i * Math.PI) / 5;
+        const r = i % 2 === 0 ? rOuter : rInner;
+        ctx[i === 0 ? 'moveTo' : 'lineTo'](x + Math.cos(a) * r, y + Math.sin(a) * r);
+    }
+    ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill();
+    if (lw > 0) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
+}
+
+// Helper to draw authentic ZombieSmash! HD 3-fingered reaching zombie hand (ref_0.jpg & ref_extra_0.jpg)
+function drawZSHand(hx, hy, d, s, skinCol, ink) {
+    blob(hx, hy, 4.8 * s, 4.2 * s, 0, skinCol, ink * 0.85);
+    ctx.fillStyle = skinCol;
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = ink * 0.78;
+    for (let i = -1; i <= 1; i++) {
+        const fx = hx + d * (4.2 + (i === 0 ? 1.2 : 0)) * s;
+        const fy = hy + (i * 2.8 + 0.6) * s;
+        ctx.beginPath();
+        ctx.ellipse(fx, fy, 3.2 * s, 1.7 * s, d * (0.18 + i * 0.22), 0, 7);
+        ctx.fill();
+        ctx.stroke();
+    }
+}
+
 function drawZombie(z) {
     const t = z.t, s = z.s, d = z.dir;
-    const dim = z.lane * 0.10;
+    const dim = z.lane * 0.08;
     const skin = shade(t.skin, dim), skinD = shade(t.skinDark, dim);
-    const skinHi = shade('#d8f294', dim + 0.08);
+    const blotch = shade('#7e6387', dim);
     const shirt = shade(t.shirt, dim), pants = shade(t.pants, dim);
-    const bSkin = shade(t.skin, dim + 0.22), bShirt = shade(t.shirt, dim + 0.22);
-    const bPants = shade(t.pants, dim + 0.22);
+    const bSkin = shade(t.skin, dim + 0.16), bShirt = shade(t.shirt, dim + 0.16);
+    const bPants = shade(t.pants, dim + 0.16);
+
+    const isFemale = z.kind === 'runner' || z.kind === 'screamer';
+    const isGiant = z.kind === 'warden' || z.kind === 'titan' || z.kind === 'brute';
+    const isOveralls = isGiant || z.kind === 'bloater';
+    const isLongSleeve = z.kind === 'shambler' || z.kind === 'hardhat' || z.kind === 'butcher';
 
     const hd = z.head, ch = z.chest, hp = z.hips;
-    const ink = 3.3 * s;
+    const ink = Math.max(1.8, 2.15 * s);
     ctx.globalAlpha = clamp(z.fade, 0, 1);
 
-    // Contact shadow
-    ctx.globalAlpha *= 0.38;
-    blob(hp.x, z.gy + 2, 28 * s, 7 * s, 0, '#000', 0);
+    // Contact shadow on the moonlit ground
+    ctx.globalAlpha *= 0.44;
+    blob(hp.x, z.gy + 2, (isGiant ? 32 : 25) * s, (isGiant ? 8 : 6.2) * s, 0, '#0d1821', 0);
     ctx.globalAlpha = clamp(z.fade, 0, 1);
 
-    // Screamer rally ring
+    // Screamer sonic ring
     if (t.howl && z.state !== 'dead') {
         const pulse = (z.howlT || 0) % 1.1 / 1.1;
         ctx.save();
-        ctx.globalAlpha = clamp(z.fade, 0, 1) * (1 - pulse) * 0.55;
-        ctx.strokeStyle = '#f07bff'; ctx.lineWidth = 3.2 * s;
+        ctx.globalAlpha = clamp(z.fade, 0, 1) * (1 - pulse) * 0.45;
+        ctx.strokeStyle = '#9ad4ff'; ctx.lineWidth = 2.6 * s;
         ctx.beginPath();
         ctx.ellipse(hp.x, z.gy + 2, 250 * s * pulse, 62 * s * pulse, 0, 0, 7);
         ctx.stroke();
@@ -1963,39 +2016,67 @@ function drawZombie(z) {
         ctx.globalAlpha = clamp(z.fade, 0, 1);
     }
 
-    // Torso coordinate frame
+    // Back hair layer for long-haired female zombies (Runner auburn, Screamer black)
+    if (isFemale) {
+        const hairCol = shade(z.kind === 'runner' ? '#69231a' : '#1b1f24', dim + 0.08);
+        ctx.fillStyle = hairCol; ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.85;
+        ctx.beginPath();
+        ctx.moveTo(hd.x - d * 14 * s, hd.y - 4 * s);
+        ctx.quadraticCurveTo(ch.x - d * 24 * s, ch.y + 6 * s, ch.x - d * 18 * s, ch.y + 24 * s);
+        ctx.lineTo(ch.x - d * 4 * s, ch.y + 16 * s);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+    }
+
+    // Torso coordinate frame — directional so near/far shoulders & hips are symmetric on BOTH left & right sides!
     let ax = ch.x - hp.x, ay = ch.y - hp.y;
     const al = Math.hypot(ax, ay) || 1;
     const nx = -ay / al, ny = ax / al;
-    const hw = t.torsoW * 0.52 * s, hipW = t.torsoW * 0.44 * s;
+    const hw = t.torsoW * 0.54 * s, hipW = t.torsoW * 0.45 * s;
 
-    const shL = { x: ch.x - nx * hw * 0.88, y: ch.y - ny * hw * 0.88 };
-    const shR = { x: ch.x + nx * hw * 0.88, y: ch.y + ny * hw * 0.88 };
+    // shL/shR are torso silhouette edges; shNear/shFar are anatomical shoulder joints oriented by facing dir (d)
+    const shL = { x: ch.x - nx * hw * 0.90, y: ch.y - ny * hw * 0.90 };
+    const shR = { x: ch.x + nx * hw * 0.90, y: ch.y + ny * hw * 0.90 };
     const hipL = { x: hp.x - nx * hipW, y: hp.y - ny * hipW };
     const hipR = { x: hp.x + nx * hipW, y: hp.y + ny * hipW };
 
-    const legB = (SK.hips - SK.foot) * 0.62 * s;
-    const armB = 12.8 * s;
+    const shNear  = { x: ch.x - d * hw * 0.34, y: ch.y + 2.5 * s };
+    const shFar   = { x: ch.x + d * hw * 0.38, y: ch.y - 1.5 * s };
+    const hipNear = { x: hp.x - d * hipW * 0.26, y: hp.y + 1.0 * s };
+    const hipFar  = { x: hp.x + d * hipW * 0.26, y: hp.y - 1.0 * s };
+
+    const legB = (SK.hips - SK.foot) * 0.64 * s;
+    const armB = (isGiant ? 16.5 : 14.2) * s;
     const near = d > 0 ? 1 : -1;
 
-    // --- Far arm + far leg ------------------------------------------------
+    // --- 1. Far arm + far leg (behind torso) -------------------------------
     if (z.limbOn(z.rhand)) {
-        const el = ik(shR.x, shR.y, z.rhand.x, z.rhand.y, armB, armB, -near);
-        limb(shR, el, z.rhand, t.limb * 0.86 * s, bSkin, ink);
-        limb(shR, el, { x: lerp(shR.x, el.x, 0.88), y: lerp(shR.y, el.y, 0.88) },
-             t.limb * 1.08 * s, bShirt, ink * 0.75);
-        blob(z.rhand.x, z.rhand.y, 5.8 * s, 5.4 * s, 0, bSkin, ink * 0.85);
+        const el = ik(shFar.x, shFar.y, z.rhand.x, z.rhand.y, armB, armB, -near);
+        limb(shFar, el, z.rhand, t.limb * 0.84 * s, bSkin, ink);
+        if (!isFemale) {
+            const slvEnd = isLongSleeve ? 0.76 : 0.42;
+            limb(shFar, el, { x: lerp(el.x, z.rhand.x, slvEnd), y: lerp(el.y, z.rhand.y, slvEnd) },
+                 t.limb * 1.04 * s, bShirt, ink * 0.78);
+        }
+        drawZSHand(z.rhand.x, z.rhand.y, d, s * 0.9, bSkin, ink);
     }
     if (z.limbOn(z.rfoot)) {
-        const kn = ik(hipR.x, hipR.y, z.rfoot.x, z.rfoot.y, legB, legB, near);
-        limb(hipR, kn, z.rfoot, t.limb * 1.06 * s, bPants, ink);
-        blob(z.rfoot.x + d * 3.4 * s, z.rfoot.y + 2 * s, 8.6 * s, 5 * s, 0, shade('#241f1a', dim), ink * 0.85);
+        const kn = ik(hipFar.x, hipFar.y, z.rfoot.x, z.rfoot.y, legB, legB, near);
+        if (isFemale) {
+            limb(hipFar, kn, z.rfoot, t.limb * 0.88 * s, bSkin, ink);
+            blob(z.rfoot.x + d * 3 * s, z.rfoot.y + 2 * s, 7.2 * s, 3.8 * s, 0, bSkin, ink * 0.8);
+        } else {
+            limb(hipFar, kn, z.rfoot, t.limb * 1.06 * s, bPants, ink);
+            const shoeCol = z.kind === 'shambler' ? shade('#d4d8ce', dim + 0.1)
+                          : isOveralls ? bSkin : shade('#2a231d', dim);
+            blob(z.rfoot.x + d * 3.2 * s, z.rfoot.y + 2 * s, 8.4 * s, 4.4 * s, 0, shoeCol, ink * 0.8);
+        }
     }
 
-    // --- Torso with ZombieSmash! HD cel-shading & archetype gear ----------
+    // --- 2 & 3. Torso Silhouette (with seamless hunched upper back on Giant Overalls Bosses!)
     ctx.beginPath();
     ctx.moveTo(shL.x, shL.y);
-    ctx.lineTo(shR.x, shR.y);
+    ctx.quadraticCurveTo(ch.x - d * hw * 0.18, ch.y - (isGiant ? 14 : 3) * s, shR.x, shR.y);
     ctx.quadraticCurveTo(hipR.x + nx * t.gut * s * 0.45, hipR.y, hipR.x, hipR.y);
     ctx.lineTo(hipL.x, hipL.y);
     ctx.quadraticCurveTo(hipL.x - nx * t.gut * s * 0.45, lerp(hipL.y, shL.y, 0.5), shL.x, shL.y);
@@ -2003,553 +2084,512 @@ function drawZombie(z) {
     ctx.fillStyle = shirt; ctx.fill();
     ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
 
-    // Inner torso clip: cel-highlight, belt, tattered pants, archetype details
+    // Inner torso details (Blue denim overalls with yellow brass buttons, tattered dress, suit & tie, green sweater)
     ctx.save();
     ctx.clip();
 
-    // Cel highlight along the chest leading edge
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.beginPath();
-    ctx.arc(ch.x + d * hw * 0.35, ch.y - 4 * s, hw * 0.75, 0, 7);
-    ctx.fill();
-
-    // Brute bulging belly cutout
-    if (z.kind === 'brute') {
-        blob(lerp(ch.x, hp.x, 0.62) + d * 4 * s, lerp(ch.y, hp.y, 0.62), hw * 0.75, hw * 0.55, 0, skin, ink * 0.6);
-        blob(lerp(ch.x, hp.x, 0.68) + d * 7 * s, lerp(ch.y, hp.y, 0.68), 2.2 * s, 2.2 * s, 0, skinD, 0);
-    }
-
-    // Hardhat reflective safety vest stripes
-    if (z.kind === 'hardhat') {
-        ctx.strokeStyle = shade('#e8ff4a', dim);
-        ctx.lineWidth = 3.6 * s;
+    if (isOveralls) {
+        // Faded blue/brown bib overalls over cream/beige shirt (exact ref_extra_0.jpg & ref_3.jpg!)
+        ctx.fillStyle = pants;
         ctx.beginPath();
-        ctx.moveTo(shL.x + nx * 4 * s, shL.y); ctx.lineTo(hipL.x + nx * 4 * s, hipL.y);
-        ctx.moveTo(shR.x - nx * 4 * s, shR.y); ctx.lineTo(hipR.x - nx * 4 * s, hipR.y);
+        ctx.moveTo(hipL.x - nx * 14 * s, lerp(ch.y, hp.y, 0.24));
+        ctx.lineTo(hipR.x + nx * 14 * s, lerp(ch.y, hp.y, 0.24));
+        ctx.lineTo(hipR.x + nx * 16 * s, hipR.y + 26 * s);
+        ctx.lineTo(hipL.x - nx * 16 * s, hipL.y + 26 * s);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.82; ctx.stroke();
+
+        // Two overall shoulder straps coming down to the chest bib
+        const st1X = ch.x - d * hw * 0.18, st2X = ch.x + d * hw * 0.42;
+        const bibY = lerp(ch.y, hp.y, 0.30);
+        ctx.strokeStyle = INK; ctx.lineWidth = 7.2 * s;
+        ctx.beginPath();
+        ctx.moveTo(st1X - d * 3 * s, ch.y - 12 * s); ctx.lineTo(st1X, bibY);
+        ctx.moveTo(st2X - d * 2 * s, ch.y - 10 * s); ctx.lineTo(st2X, bibY);
+        ctx.stroke();
+        ctx.strokeStyle = pants; ctx.lineWidth = 5.0 * s;
+        ctx.beginPath();
+        ctx.moveTo(st1X - d * 3 * s, ch.y - 12 * s); ctx.lineTo(st1X, bibY);
+        ctx.moveTo(st2X - d * 2 * s, ch.y - 10 * s); ctx.lineTo(st2X, bibY);
+        ctx.stroke();
+
+        // Two bright yellow brass overall buttons on the bib (ref_extra_0.jpg!)
+        ctx.fillStyle = '#f5d742'; ctx.strokeStyle = INK; ctx.lineWidth = 1.6 * s;
+        for (const bx of [st1X, st2X]) {
+            ctx.beginPath(); ctx.arc(bx, bibY + 1 * s, 3.1 * s, 0, 7); ctx.fill(); ctx.stroke();
+        }
+        // Dark denim stain patch on overalls belly
+        blob(hp.x + d * 4 * s, hp.y - 3 * s, 6.5 * s, 4.2 * s, 0.2, shade(t.pants, dim + 0.26), 0);
+    } else if (isFemale) {
+        // Tattered sleeveless dress (ref_0.jpg & ref_extra_2.jpg)
+        if (z.kind === 'runner') {
+            blob(ch.x - 2 * s, lerp(ch.y, hp.y, 0.4), 5 * s, 3.5 * s, 0.2, shade('#826a4b', dim), 0);
+            blob(ch.x + 4 * s, lerp(ch.y, hp.y, 0.75), 4.5 * s, 3 * s, -0.3, shade('#826a4b', dim), 0);
+        } else {
+            // Screamer dark dress with white collar & apron trim (ref_extra_2.jpg)
+            ctx.fillStyle = shade('#e6e8e1', dim);
+            ctx.beginPath();
+            ctx.arc(ch.x + d * 2 * s, ch.y - 4 * s, 9.5 * s, 0, Math.PI);
+            ctx.fill();
+            ctx.fillRect(hipL.x - 10 * s, hp.y - 5 * s, 36 * s, 5 * s);
+        }
+    } else if (z.kind === 'butcher') {
+        // Business Suit Zombie (ref_extra_2.jpg): white dress shirt V-neck + crimson/dark tie
+        ctx.fillStyle = shade('#e8e6dc', dim);
+        ctx.beginPath();
+        ctx.moveTo(ch.x - 6 * s, ch.y - 10 * s);
+        ctx.lineTo(ch.x + d * 9 * s, ch.y - 10 * s);
+        ctx.lineTo(ch.x + d * 3 * s, lerp(ch.y, hp.y, 0.68));
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = INK; ctx.lineWidth = 1.2 * s; ctx.stroke();
+        ctx.fillStyle = shade('#7a1c1c', dim);
+        ctx.beginPath();
+        ctx.moveTo(ch.x + d * 2 * s, ch.y - 5 * s);
+        ctx.lineTo(ch.x + d * 5.5 * s, lerp(ch.y, hp.y, 0.62));
+        ctx.lineTo(ch.x + d * 1.0 * s, lerp(ch.y, hp.y, 0.62));
+        ctx.closePath(); ctx.fill();
+    } else {
+        // Classic Male Neighbor Zombie (shambler / hardhat): torn brown waist & white sweater stitches (ref_0.jpg)
+        ctx.fillStyle = pants;
+        ctx.beginPath();
+        ctx.moveTo(hipL.x - nx * 10 * s, lerp(hipL.y, shL.y, 0.22));
+        for (let i = 0; i <= 6; i++) {
+            const u = i / 6;
+            const bx = lerp(hipL.x, hipR.x, u), by = lerp(hipL.y, hipR.y, u);
+            ctx.lineTo(bx, by - (i % 2 ? 4 : 0) * s - 3 * s);
+        }
+        ctx.lineTo(hipR.x + nx * 10 * s, hipR.y + 20 * s);
+        ctx.lineTo(hipL.x - nx * 10 * s, hipL.y + 20 * s);
+        ctx.closePath(); ctx.fill();
+
+        // White stitch mark on green sweater shoulder/chest (exact ref_0.jpg detail!)
+        ctx.strokeStyle = shade('#e6ebd8', dim); ctx.lineWidth = 1.7 * s;
+        const sx = ch.x - d * 2 * s, sy = lerp(ch.y, hp.y, 0.36);
+        ctx.beginPath();
+        ctx.moveTo(sx - 3.5 * s, sy - 2 * s); ctx.lineTo(sx + 3.5 * s, sy + 2 * s);
+        for (let i = -1; i <= 1; i++) {
+            ctx.moveTo(sx + i * 2 * s - 1 * s, sy + 2.5 * s);
+            ctx.lineTo(sx + i * 2 * s + 1 * s, sy - 2.5 * s);
+        }
         ctx.stroke();
     }
+    ctx.restore();
 
-    // Runner straightjacket / asylum straps
-    if (z.kind === 'runner') {
-        ctx.strokeStyle = shade('#d8d2c0', dim);
-        ctx.lineWidth = 3.2 * s;
+    // Jagged skirt hem over hips for female dress zombies (ref_0.jpg)
+    if (isFemale) {
+        ctx.fillStyle = shirt; ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.85;
         ctx.beginPath();
-        ctx.moveTo(shL.x, shL.y); ctx.lineTo(hipR.x, hipR.y);
-        ctx.moveTo(shR.x, shR.y); ctx.lineTo(hipL.x, hipL.y);
-        ctx.stroke();
-    }
-
-    // Torn hem + pants + belt
-    ctx.fillStyle = pants;
-    ctx.beginPath();
-    ctx.moveTo(hipL.x - nx * 10 * s, lerp(hipL.y, shL.y, 0.24));
-    for (let i = 0; i <= 6; i++) {
-        const u = i / 6;
-        const bx = lerp(hipL.x, hipR.x, u), by = lerp(hipL.y, hipR.y, u);
-        ctx.lineTo(bx, by - (i % 2 ? 5 : 0) * s - 4 * s);
-    }
-    ctx.lineTo(hipR.x + nx * 10 * s, hipR.y + 20 * s);
-    ctx.lineTo(hipL.x - nx * 10 * s, hipL.y + 20 * s);
-    ctx.closePath(); ctx.fill();
-
-    // Belt + brass buckle
-    ctx.strokeStyle = '#1e1912'; ctx.lineWidth = 3.8 * s;
-    ctx.beginPath(); ctx.moveTo(hipL.x - nx * 4 * s, hipL.y - 2 * s); ctx.lineTo(hipR.x + nx * 4 * s, hipR.y - 2 * s); ctx.stroke();
-    ctx.fillStyle = '#d4a838';
-    ctx.fillRect(hp.x + d * 2 * s - 3.5 * s, hp.y - 5 * s, 7 * s, 5.5 * s);
-
-    // Shambler tattered red office tie
-    if (z.kind === 'shambler') {
-        ctx.fillStyle = shade('#c82828', dim);
-        ctx.strokeStyle = INK; ctx.lineWidth = 1.6 * s;
-        ctx.beginPath();
-        ctx.moveTo(ch.x + d * 2 * s, ch.y - 6 * s);
-        ctx.lineTo(ch.x + d * 7 * s, lerp(ch.y, hp.y, 0.55));
-        ctx.lineTo(ch.x + d * 2 * s, lerp(ch.y, hp.y, 0.68));
-        ctx.lineTo(ch.x - d * 2 * s, lerp(ch.y, hp.y, 0.55));
+        ctx.moveTo(hipL.x - 2 * s, hipL.y - 2 * s);
+        ctx.lineTo(hipL.x - 4 * s, hipL.y + 11 * s);
+        ctx.lineTo(hp.x, hipL.y + 7 * s);
+        ctx.lineTo(hipR.x + 3 * s, hipR.y + 12 * s);
+        ctx.lineTo(hipR.x + 2 * s, hipR.y - 2 * s);
         ctx.closePath(); ctx.fill(); ctx.stroke();
     }
 
-    // Exposed ribs on scruffy variant
-    if (z.look === 2) {
-        ctx.strokeStyle = 'rgba(236,244,210,0.88)';
-        ctx.lineWidth = 2.2 * s;
-        for (let i = 0; i < 3; i++) {
-            const u = 0.24 + i * 0.15;
-            const cx2 = lerp(shL.x, hipL.x, u) + nx * 3 * s;
-            const cy2 = lerp(shL.y, hipL.y, u);
-            ctx.beginPath();
-            ctx.moveTo(cx2 - nx * 5 * s, cy2);
-            ctx.lineTo(cx2 + nx * 8 * s, cy2 + 1 * s);
-            ctx.stroke();
-        }
-    }
-
-    // Grime & blood splatters
-    ctx.fillStyle = 'rgba(40,30,16,0.32)';
-    ctx.beginPath();
-    ctx.arc(ch.x + z.stainA.x * hw * 1.6, lerp(ch.y, hp.y, 0.5 + z.stainA.y * 0.4), 6 * s, 0, 7);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(115,20,20,0.48)';
-    ctx.beginPath();
-    ctx.arc(ch.x + z.stainB.x * hw * 1.5, lerp(ch.y, hp.y, 0.3 + z.stainB.y * 0.5), 5.5 * s, 0, 7);
-    ctx.fill();
-    ctx.restore();
-
-    // Steel plate over chest (butcher, warden) + Warden spiked pauldrons
-    if (t.plate) {
-        const cracked = z.plateHp <= 0;
-        const pw = hw * 1.52, ph = Math.hypot(ch.x - hp.x, ch.y - hp.y) * 0.74;
-        ctx.save();
-        ctx.translate(lerp(ch.x, hp.x, 0.3), lerp(ch.y, hp.y, 0.3));
-        ctx.rotate(Math.atan2(hp.y - ch.y, hp.x - ch.x) - Math.PI / 2);
-        ctx.beginPath();
-        ctx.moveTo(-pw * 0.5, -ph * 0.5);
-        ctx.lineTo(pw * 0.5, -ph * 0.5);
-        ctx.lineTo(pw * 0.42, ph * 0.5);
-        ctx.lineTo(-pw * 0.42, ph * 0.5);
-        ctx.closePath();
-        ctx.fillStyle = shade(cracked ? '#4a4f55' : '#8d96a2', dim); ctx.fill();
-        ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
-        // Corner rivets
-        ctx.fillStyle = '#dce6f0';
-        for (const [rx, ry] of [[-0.36, -0.36], [0.36, -0.36], [-0.30, 0.34], [0.30, 0.34]]) {
-            ctx.beginPath(); ctx.arc(pw * rx, ph * ry, 2.2 * s, 0, 7); ctx.fill();
-        }
-        if (!cracked) {
-            ctx.strokeStyle = 'rgba(240,250,255,0.55)'; ctx.lineWidth = 2.2 * s;
-            ctx.beginPath();
-            ctx.moveTo(-pw * 0.24, -ph * 0.34); ctx.lineTo(-pw * 0.24, ph * 0.3);
-            ctx.stroke();
+    // --- 4. Near leg + authentic ZombieSmash! HD footwear/rips -------------
+    if (z.limbOn(z.lfoot)) {
+        const kn = ik(hipNear.x, hipNear.y, z.lfoot.x, z.lfoot.y, legB, legB, near);
+        if (isFemale) {
+            limb(hipNear, kn, z.lfoot, t.limb * 0.92 * s, skin, ink);
+            blob(z.lfoot.x + d * 3.5 * s, z.lfoot.y + 2 * s, 7.6 * s, 3.8 * s, 0, skin, ink * 0.85);
         } else {
-            ctx.strokeStyle = INK; ctx.lineWidth = 2.4 * s;
-            ctx.beginPath();
-            ctx.moveTo(-pw * 0.4, -ph * 0.3); ctx.lineTo(0, 0);
-            ctx.lineTo(pw * 0.3, -ph * 0.1); ctx.lineTo(pw * 0.1, ph * 0.42);
-            ctx.stroke();
-        }
-        ctx.restore();
-
-        if (t.boss) {
-            // Spiked shoulder pauldrons for the Warden
-            for (const sh of [shL, shR]) {
-                blob(sh.x, sh.y - 2 * s, 11 * s, 8 * s, 0, shade('#5a626c', dim), ink * 0.85);
-                ctx.fillStyle = shade('#c8d2dc', dim);
-                ctx.beginPath();
-                ctx.moveTo(sh.x - 4 * s, sh.y - 8 * s);
-                ctx.lineTo(sh.x, sh.y - 18 * s);
-                ctx.lineTo(sh.x + 4 * s, sh.y - 8 * s);
-                ctx.closePath(); ctx.fill(); ctx.stroke();
+            limb(hipNear, kn, z.lfoot, t.limb * 1.14 * s, pants, ink);
+            // Exposed knee rip on shambler/hardhat (ref_0.jpg) or dark denim patch on overalls (ref_extra_0.jpg)
+            if (z.kind === 'shambler' || z.kind === 'hardhat') {
+                blob(kn.x + d * 1.5 * s, kn.y + 1 * s, 3.8 * s, 4.8 * s, 0.1, skin, ink * 0.65);
+            } else if (isOveralls) {
+                blob(kn.x + d * 1 * s, kn.y, 4.8 * s, 6.0 * s, 0.1, shade('#223345', dim), 0);
+            }
+            const footCol = z.kind === 'shambler' ? shade('#e8ece2', dim)
+                          : isOveralls ? skin
+                          : shade('#26201b', dim);
+            blob(z.lfoot.x + d * 3.8 * s, z.lfoot.y + 2 * s, 8.8 * s, 4.6 * s, 0, footCol, ink * 0.85);
+            if (z.kind === 'shambler') {
+                blob(z.lfoot.x - d * 2 * s, z.lfoot.y + 2.2 * s, 3.2 * s, 2.0 * s, 0, '#8a2b2b', 0);
             }
         }
     }
 
-    // Bloater glowing toxic pustules
-    if (t.bloat && z.state !== 'dead') {
-        const throb = 1 + Math.sin(perf * 0.007 + z.phase) * 0.10;
-        for (let i = -1; i <= 1; i++) {
-            const u = 0.42 + i * 0.2;
-            const bx2 = lerp(ch.x, hp.x, u) + nx * (i * 5.5) * s;
-            const by2 = lerp(ch.y, hp.y, u);
-            blob(bx2, by2, 9 * s * throb, 8 * s * throb, 0,
-                 shade('#c6ff5e', dim + 0.04), ink * 0.72);
-            ctx.globalAlpha = clamp(z.fade, 0, 1) * 0.55;
-            blob(bx2 - 2.2 * s, by2 - 2.2 * s, 3.6 * s, 3.2 * s, 0, '#f4ffd4', 0);
-            ctx.globalAlpha = clamp(z.fade, 0, 1);
-        }
+    // For Giant Overalls Behemoths (ref_extra_0.jpg), draw the forward-hunched head BEFORE the massive foreground arm!
+    if (isGiant) {
+        drawHead(z, skin, skinD, blotch, ink, dim);
     }
 
-    // --- Near leg + cartoon boot + near arm + fingers/props ---------------
-    if (z.limbOn(z.lfoot)) {
-        const kn = ik(hipL.x, hipL.y, z.lfoot.x, z.lfoot.y, legB, legB, near);
-        limb(hipL, kn, z.lfoot, t.limb * 1.12 * s, pants, ink);
-        ctx.beginPath();
-        ctx.moveTo(kn.x, kn.y); ctx.lineTo(z.lfoot.x, z.lfoot.y);
-        ctx.strokeStyle = INK; ctx.lineWidth = t.limb * 0.86 * s + ink; ctx.stroke();
-        ctx.strokeStyle = skin; ctx.lineWidth = t.limb * 0.86 * s; ctx.stroke();
-        // Cartoon boot with sole
-        blob(z.lfoot.x + d * 3.8 * s, z.lfoot.y + 2 * s, 9.2 * s, 5.2 * s, 0, '#362e26', ink * 0.9);
-        ctx.fillStyle = '#cfc6b8';
-        ctx.fillRect(z.lfoot.x - 5 * s, z.lfoot.y + 4.5 * s, 13 * s, 2.2 * s);
-    }
+    // --- 5. Near arm (sweeping from near shoulder across torso with purple blotches & props)
     if (z.limbOn(z.lhand)) {
-        const el = ik(shL.x, shL.y, z.lhand.x, z.lhand.y, armB, armB, -near);
-        limb(shL, el, z.lhand, t.limb * 0.92 * s, skin, ink);
-        limb(shL, el, { x: lerp(shL.x, el.x, 0.85), y: lerp(shL.y, el.y, 0.85) },
-             t.limb * 1.16 * s, shirt, ink * 0.82);
+        const el = ik(shNear.x, shNear.y, z.lhand.x, z.lhand.y, armB, armB, -near);
+        limb(shNear, el, z.lhand, t.limb * 0.94 * s, skin, ink);
 
-        // Titan iron wrist shackle
-        if (z.kind === 'titan') {
-            blob(z.lhand.x - d * 3 * s, z.lhand.y - 1 * s, 5 * s, 6.5 * s, 0, '#5a636b', ink * 0.7);
+        if (isLongSleeve) {
+            limb(shNear, el, { x: lerp(el.x, z.lhand.x, 0.72), y: lerp(el.y, z.lhand.y, 0.72) },
+                 t.limb * 1.15 * s, shirt, ink * 0.84);
+            if (z.kind === 'shambler') {
+                ctx.strokeStyle = shade('#e6ebd8', dim); ctx.lineWidth = 1.6 * s;
+                ctx.beginPath();
+                ctx.moveTo(shNear.x - 3 * s, shNear.y + 4 * s);
+                ctx.lineTo(shNear.x + 4 * s, shNear.y + 6 * s);
+                ctx.stroke();
+            }
+        } else if (isOveralls) {
+            // Torn short beige sleeve on upper arm + 3 neat purple zombie spots on forearm (exact ref_extra_0.jpg!)
+            limb(shNear, { x: lerp(shNear.x, el.x, 0.52), y: lerp(shNear.y, el.y, 0.52) },
+                 { x: lerp(shNear.x, el.x, 0.88), y: lerp(shNear.y, el.y, 0.88) },
+                 t.limb * 1.18 * s, shirt, ink * 0.84);
+            blob(lerp(el.x, z.lhand.x, 0.28), lerp(el.y, z.lhand.y, 0.28),
+                 3.2 * s, 2.2 * s, 0.25, blotch, 0);
+            blob(lerp(el.x, z.lhand.x, 0.55), lerp(el.y, z.lhand.y, 0.55) + 1.2 * s,
+                 2.4 * s, 1.7 * s, -0.2, blotch, 0);
+            blob(lerp(shNear.x, el.x, 0.85), lerp(shNear.y, el.y, 0.85),
+                 2.8 * s, 2.0 * s, -0.15, blotch, 0);
         }
-        // Butcher meat cleaver in hand
+
+        // Bloater carrying round black bomb with sparking fuse (exact ref_3.jpg bottom-left!)
+        if (z.kind === 'bloater' && z.state !== 'dead') {
+            const bx = z.lhand.x + d * 6 * s, by = z.lhand.y + 4 * s;
+            blob(bx, by, 10.5 * s, 10.5 * s, 0, '#1e2226', ink);
+            ctx.strokeStyle = '#3e464f'; ctx.lineWidth = 1.4 * s;
+            ctx.beginPath();
+            ctx.arc(bx, by, 10 * s, -0.6, 0.6);
+            ctx.moveTo(bx - 9 * s, by); ctx.lineTo(bx + 9 * s, by);
+            ctx.stroke();
+            const spk = (Math.sin(perf * 0.025) * 0.5 + 0.5);
+            ctx.fillStyle = '#ff9d2e';
+            ctx.beginPath(); ctx.arc(bx + d * 3 * s, by - 12 * s, (2.5 + spk * 2) * s, 0, 7); ctx.fill();
+        }
+
+        // Butcher meat cleaver
         if (z.kind === 'butcher' && z.state !== 'dead') {
             ctx.save();
             ctx.translate(z.lhand.x + d * 4 * s, z.lhand.y);
-            ctx.rotate(d * (0.3 - z.swing * 0.8));
-            ctx.fillStyle = '#c8d2dc'; ctx.strokeStyle = INK; ctx.lineWidth = 2.4 * s;
-            ctx.fillRect(0, -14 * s, d * 18 * s, 11 * s);
-            ctx.strokeRect(0, -14 * s, d * 18 * s, 11 * s);
-            ctx.fillStyle = '#8e1b1b';
-            ctx.fillRect(d * 8 * s, -14 * s, d * 9 * s, 4 * s);
+            ctx.rotate(d * (0.28 - z.swing * 0.8));
+            ctx.fillStyle = '#c4cdd6'; ctx.strokeStyle = INK; ctx.lineWidth = 2.0 * s;
+            ctx.fillRect(0, -13 * s, d * 17 * s, 10 * s);
+            ctx.strokeRect(0, -13 * s, d * 17 * s, 10 * s);
+            ctx.fillStyle = '#8a1414';
+            ctx.fillRect(d * 7 * s, -13 * s, d * 9 * s, 3.8 * s);
             ctx.restore();
         }
 
-        // Cartoon hand with fingers
-        blob(z.lhand.x, z.lhand.y, 6.2 * s, 5.8 * s, 0, skin, ink * 0.9);
-        blob(z.lhand.x - d * 1.5 * s, z.lhand.y - 1.5 * s, 2.5 * s, 2 * s, 0, skinHi, 0);
-        ctx.strokeStyle = INK; ctx.lineWidth = 1.8 * s;
-        for (let i = -1; i <= 1; i++) {
-            ctx.beginPath();
-            ctx.moveTo(z.lhand.x + d * 2 * s, z.lhand.y + i * 2.2 * s);
-            ctx.lineTo(z.lhand.x + d * 8.5 * s, z.lhand.y + i * 4.2 * s);
-            ctx.stroke();
-        }
+        drawZSHand(z.lhand.x, z.lhand.y, d, s, skin, ink);
     }
 
-    drawHead(z, skin, skinD, skinHi, ink, dim);
+    // For normal zombies, draw the head on top of the shoulders/arms
+    if (!isGiant) {
+        drawHead(z, skin, skinD, blotch, ink, dim);
+    }
 
-    // Elites: fiery orange crown aura
     if (z.elite && z.state !== 'dead') {
-        ctx.save();
-        ctx.globalAlpha = clamp(z.fade, 0, 1) * (0.65 + Math.sin(perf * 0.008 + z.phase) * 0.25);
-        ctx.strokeStyle = '#ff8a2f'; ctx.lineWidth = 2.8 * s;
-        ctx.beginPath();
-        ctx.arc(hd.x, hd.y, t.headR * s + 5 * s, 0, 7);
-        ctx.stroke();
-        ctx.restore();
-        ctx.globalAlpha = clamp(z.fade, 0, 1);
+        drawStar5(hd.x - d * 18 * s, hd.y - t.headR * s - 2 * s, 7 * s, 3.2 * s, '#ffd83d', INK, 1.5 * s);
     }
 
-    // Health bar above damaged non-boss zombies
     if (z.hp < z.maxHp && z.state !== 'dead' && !t.boss) {
-        const bw = 42 * s, bx = hd.x - bw / 2, by = hd.y - t.headR * s - 16 * s;
-        ctx.fillStyle = 'rgba(0,0,0,0.68)'; ctx.fillRect(bx - 1, by - 1, bw + 2, 6 * s + 2);
+        const bw = 40 * s, bx = hd.x - bw / 2, by = hd.y - t.headR * s - 12 * s;
+        ctx.fillStyle = 'rgba(10,20,30,0.75)'; ctx.fillRect(bx - 1, by - 1, bw + 2, 5.5 * s + 2);
         const f = clamp(z.hp / z.maxHp, 0, 1);
-        ctx.fillStyle = f > 0.5 ? '#8fd63f' : f > 0.22 ? '#ffd83d' : '#ff5b47';
-        ctx.fillRect(bx, by, bw * f, 6 * s);
+        ctx.fillStyle = f > 0.5 ? '#28b8ff' : f > 0.22 ? '#ffd83d' : '#ff4d4d';
+        ctx.fillRect(bx, by, bw * f, 5.5 * s);
     }
 
     if (z.grabbed) {
-        ctx.strokeStyle = 'rgba(182,255,74,0.9)';
-        ctx.lineWidth = 2.8;
-        ctx.beginPath(); ctx.arc(grab.x, grab.y, 20 + Math.sin(perf * 0.014) * 3, 0, 7); ctx.stroke();
+        ctx.strokeStyle = 'rgba(120,220,255,0.85)';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.arc(grab.x, grab.y, 19 + Math.sin(perf * 0.014) * 3, 0, 7); ctx.stroke();
     }
     ctx.globalAlpha = 1;
 }
 
-function drawHead(z, skin, skinD, skinHi, ink, dim) {
+function drawHead(z, skin, skinD, blotch, ink, dim) {
     const t = z.t, s = z.s, d = z.dir;
     const hd = z.head, ch = z.chest;
-    const R = t.headR * s;
+    const isFemale = z.kind === 'runner' || z.kind === 'screamer';
+    const isGiant = z.kind === 'warden' || z.kind === 'titan' || z.kind === 'brute';
 
-    // Expressive state flags for ZombieSmash! HD facial reactions
+    // Slightly larger, expressive ZombieSmash! HD head scale (ref_0.jpg & ref_extra_0.jpg)
+    const R = t.headR * s * (isGiant ? 1.05 : 1.12);
+
     const dead = z.state === 'dead';
     const airborne = isSim(z) && !dead && z.hips.y < z.gy - 52 * s;
     const panicked = !dead && (z.grabbed || airborne);
     const dizzy = !dead && !panicked && (z.state === 'ragdoll' || z.state === 'rise');
 
-    // Neck
+    // Anchor head LOW and FORWARD onto the hunched shoulders (eliminates the long giraffe neck!)
+    // For Giant Overalls Behemoth (ref_extra_0.jpg), head sits low & forward on the hunched shoulders!
+    const hx = isGiant
+        ? lerp(ch.x, hd.x, 0.58) + d * 7.5 * s
+        : lerp(ch.x, hd.x, 0.65) + d * 3.5 * s;
+    const hy = isGiant
+        ? lerp(ch.y, hd.y, 0.52) + 1.5 * s
+        : lerp(ch.y, hd.y, 0.64) + 2.5 * s;
+
+    // Short, thick hunched neck connection
     ctx.beginPath();
-    ctx.moveTo(ch.x, ch.y); ctx.lineTo(hd.x, hd.y);
-    ctx.strokeStyle = INK; ctx.lineWidth = 9.5 * s + ink; ctx.lineCap = 'round'; ctx.stroke();
-    ctx.strokeStyle = skinD; ctx.lineWidth = 9.5 * s; ctx.stroke();
+    ctx.moveTo(ch.x + d * 2 * s, ch.y - 2 * s);
+    ctx.lineTo(hx - d * 2 * s, hy + R * 0.15);
+    ctx.strokeStyle = INK; ctx.lineWidth = (isGiant ? 12 : 8.5) * s + ink; ctx.lineCap = 'round'; ctx.stroke();
+    ctx.strokeStyle = skinD; ctx.lineWidth = (isGiant ? 12 : 8.5) * s; ctx.stroke();
 
     ctx.save();
-    ctx.translate(hd.x, hd.y);
-    ctx.rotate(clamp(Math.atan2(hd.x - ch.x, ch.y - hd.y), -1.1, 1.1));
+    ctx.translate(hx, hy);
+    ctx.rotate(clamp(Math.atan2(hd.x - ch.x, ch.y - hd.y), -0.85, 0.85) + d * (isGiant ? 0.10 : 0.06));
     ctx.scale(d, 1);
 
-    // Back ear
-    blob(-R * 0.84, -R * 0.04, R * 0.22, R * 0.29, -0.15, skinD, ink * 0.85);
-    blob(-R * 0.84, -R * 0.04, R * 0.10, R * 0.14, -0.15, shade('#4a5828', dim), 0);
+    // --- 1. Sculpted 3/4-profile ZombieSmash! HD head shape (ref_0.jpg & ref_extra_0.jpg)
+    const jawDrop = dead ? R * 0.26
+                  : panicked ? R * 0.44
+                  : (t.howl ? R * (0.42 + Math.sin(perf * 0.02) * 0.07)
+                            : R * (0.32 + z.swing * 0.14 + Math.sin(z.phase * 2) * 0.03));
 
-    // Cranium + cheek structure
-    blob(0, -R * 0.14, R * 0.98, R * 0.98, 0, skin, ink);
-    // Forehead cel-highlight
-    ctx.globalAlpha = clamp(z.fade, 0, 1) * 0.38;
-    blob(-R * 0.14, -R * 0.56, R * 0.54, R * 0.30, -0.2, skinHi, 0);
-    ctx.globalAlpha = clamp(z.fade, 0, 1);
+    ctx.beginPath();
+    ctx.arc(-R * 0.05, -R * 0.14, R * 0.94, Math.PI * 0.76, -Math.PI * 0.10, false);
+    ctx.quadraticCurveTo(R * 0.94, R * 0.10, R * 0.72, jawDrop + R * 0.34);
+    ctx.quadraticCurveTo(R * 0.20, jawDrop + R * 0.54, -R * 0.36, jawDrop + R * 0.22);
+    ctx.quadraticCurveTo(-R * 0.84, R * 0.20, -R * 0.80, -R * 0.18);
+    ctx.closePath();
+    ctx.fillStyle = skin; ctx.fill();
+    ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
 
-    // Prominent cartoon cheekbone
-    blob(R * 0.22, R * 0.08, R * 0.42, R * 0.26, 0.1, skin, 0);
+    // --- 2. Signature ZombieSmash! HD purple decomposition blotches on temple & forehead (ref_extra_0.jpg & ref_0.jpg)
+    ctx.save();
+    ctx.clip();
+    blob(-R * 0.30, -R * 0.50, R * 0.30, R * 0.18, -0.3, blotch, 0);
+    blob(R * 0.42, -R * 0.52, R * 0.20, R * 0.14, 0.2, blotch, 0);
+    if (!isGiant) {
+        blob(-R * 0.36, R * 0.18, R * 0.14, R * 0.10, 0.1, blotch, 0);
+    }
+    ctx.fillStyle = 'rgba(38, 52, 34, 0.24)';
+    ctx.fillRect(-R, jawDrop + R * 0.18, R * 2.2, R * 0.5);
+    ctx.restore();
 
-    // Articulated lower jaw (drops wide open when panicked, screaming, or biting!)
-    const jawDrop = dead ? R * 0.34
-                  : panicked ? R * 0.72
-                  : (t.howl ? R * (0.64 + Math.sin(perf * 0.02) * 0.12)
-                            : R * (0.48 + z.swing * 0.22 + Math.sin(z.phase * 2) * 0.05));
-    const jawW = (z.kind === 'brute' || t.boss) ? R * 0.78 : R * 0.68;
-    blob(R * 0.14, jawDrop, jawW, R * 0.46, 0.05, skin, ink);
-    // Chin stubble / shadow
-    ctx.globalAlpha = clamp(z.fade, 0, 1) * 0.28;
-    blob(R * 0.18, jawDrop + R * 0.14, jawW * 0.72, R * 0.22, 0, '#1e260e', 0);
-    ctx.globalAlpha = clamp(z.fade, 0, 1);
+    // --- 3. Side ear with inner fold (ref_extra_0.jpg & ref_0.jpg) --------
+    blob(-R * 0.78, -R * 0.05, R * 0.20, R * 0.27, -0.12, skin, ink * 0.9);
+    ctx.strokeStyle = shade('#5a6b54', dim); ctx.lineWidth = 1.4 * s;
+    ctx.beginPath(); ctx.arc(-R * 0.78, -R * 0.05, R * 0.10, -1.2, 1.4); ctx.stroke();
 
-    // Shambler exposed brain dome on top of head
-    if (z.kind === 'shambler' && z.look <= 1) {
-        blob(-R * 0.10, -R * 0.88, R * 0.52, R * 0.28, -0.1, shade('#e07a96', dim), ink * 0.75);
-        ctx.strokeStyle = shade('#9e3b56', dim); ctx.lineWidth = 1.6 * s;
+    // --- 4. Bruised Mauve Muzzle & Arched Groan Mouth with Crisp White Rectangular Teeth
+    const mouthX = R * 0.24;
+    const mouthY = jawDrop * 0.68 + R * 0.15;
+    const mouthW = panicked ? R * 0.44 : R * 0.45;
+    const mouthH = panicked ? R * 0.34 : R * 0.28;
+
+    // Soft reddish-mauve bruised mouth shadow (ref_0.jpg & ref_extra_1.jpg)
+    blob(mouthX, mouthY, mouthW * 1.22, mouthH * 1.25, 0.04, shade('#784552', dim), 0);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(mouthX - mouthW, mouthY + mouthH * 0.55);
+    ctx.quadraticCurveTo(mouthX - mouthW, mouthY - mouthH * 0.98, mouthX, mouthY - mouthH * 0.98);
+    ctx.quadraticCurveTo(mouthX + mouthW, mouthY - mouthH * 0.98, mouthX + mouthW, mouthY + mouthH * 0.55);
+    ctx.quadraticCurveTo(mouthX, mouthY + mouthH * 0.80, mouthX - mouthW, mouthY + mouthH * 0.55);
+    ctx.closePath();
+    ctx.fillStyle = '#381217'; ctx.fill();
+
+    ctx.clip();
+    // Bright white-cream rectangular upper & lower teeth (ref_0.jpg & ref_extra_0.jpg)
+    ctx.fillStyle = '#f2f4e1'; ctx.strokeStyle = INK; ctx.lineWidth = 1.25 * s;
+    const topY = mouthY - mouthH * 0.98, th = mouthH * 0.62;
+    ctx.fillRect(mouthX - mouthW * 0.88, topY, mouthW * 1.76, th);
+    ctx.strokeRect(mouthX - mouthW * 0.88, topY, mouthW * 1.76, th);
+    const botY = mouthY + mouthH * 0.24;
+    ctx.fillRect(mouthX - mouthW * 0.88, botY, mouthW * 1.76, th);
+    ctx.strokeRect(mouthX - mouthW * 0.88, botY, mouthW * 1.76, th);
+    for (let i = -2; i <= 2; i++) {
+        const tx = mouthX + i * (mouthW * 0.35);
         ctx.beginPath();
-        ctx.arc(-R * 0.22, -R * 0.88, R * 0.16, 0, 4.5);
-        ctx.arc(R * 0.06, -R * 0.88, R * 0.16, 0, 4.5);
+        ctx.moveTo(tx, topY); ctx.lineTo(tx, topY + th);
+        ctx.moveTo(tx, botY); ctx.lineTo(tx, botY + th);
         ctx.stroke();
     }
+    ctx.restore();
 
-    // Deep bruised eye sockets (ZombieSmash! signature purple/olive bags)
-    ctx.fillStyle = shade('#261e2e', dim);
-    ctx.beginPath(); ctx.ellipse(R * 0.36, -R * 0.24, R * 0.34, R * 0.38, 0.15, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(-R * 0.22, -R * 0.26, R * 0.30, R * 0.34, -0.15, 0, 7); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(mouthX - mouthW, mouthY + mouthH * 0.55);
+    ctx.quadraticCurveTo(mouthX - mouthW, mouthY - mouthH * 0.98, mouthX, mouthY - mouthH * 0.98);
+    ctx.quadraticCurveTo(mouthX + mouthW, mouthY - mouthH * 0.98, mouthX + mouthW, mouthY + mouthH * 0.55);
+    ctx.quadraticCurveTo(mouthX, mouthY + mouthH * 0.80, mouthX - mouthW, mouthY + mouthH * 0.55);
+    ctx.closePath();
+    ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.88; ctx.stroke();
 
-    // --- EYES (Dynamic by state!) -----------------------------------------
+    // --- 5. Bruised Reddish-Mauve Eye Sockets & Crazed ZombieSmash! HD Eyes (ref_0.jpg & ref_extra_0.jpg)
+    const ex1 = -R * 0.12, ey1 = -R * 0.18;
+    const ex2 =  R * 0.44, ey2 = -R * 0.21;
+
+    // Dark mauve under-eye bruise rings
+    blob(ex1, ey1 + R * 0.04, R * 0.34, R * 0.35, -0.08, shade('#693542', dim), 0);
+    blob(ex2, ey2 + R * 0.04, R * 0.28, R * 0.29, 0.08, shade('#693542', dim), 0);
+
     if (dead) {
-        ctx.strokeStyle = '#f4ffd0'; ctx.lineWidth = 2.6 * s;
-        for (const ex of [R * 0.36, -R * 0.22]) {
+        ctx.strokeStyle = '#232620'; ctx.lineWidth = 2.4 * s;
+        for (const [ex, ey, er] of [[ex1, ey1, R * 0.16], [ex2, ey2, R * 0.13]]) {
+            blob(ex, ey, er * 1.45, er * 1.45, 0, '#dcdab8', ink * 0.7);
             ctx.beginPath();
-            ctx.moveTo(ex - R * 0.17, -R * 0.40); ctx.lineTo(ex + R * 0.17, -R * 0.10);
-            ctx.moveTo(ex + R * 0.17, -R * 0.40); ctx.lineTo(ex - R * 0.17, -R * 0.10);
-            ctx.stroke();
-        }
-    } else if (t.boss) {
-        // Warden glowing red visor eyes
-        ctx.fillStyle = '#ff2a1f';
-        ctx.beginPath(); ctx.ellipse(R * 0.38, -R * 0.24, R * 0.22, R * 0.13, -0.12, 0, 7); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(-R * 0.18, -R * 0.26, R * 0.19, R * 0.12, 0.12, 0, 7); ctx.fill();
-        ctx.fillStyle = '#fff5a8';
-        ctx.beginPath(); ctx.arc(R * 0.40, -R * 0.24, R * 0.06, 0, 7); ctx.fill();
-        ctx.beginPath(); ctx.arc(-R * 0.16, -R * 0.26, R * 0.05, 0, 7); ctx.fill();
-    } else {
-        // Big bulging mismatched cartoon eyeballs!
-        const eyeScale = panicked ? 1.32 : 1.0;
-        const rBig = R * 0.29 * eyeScale;
-        const rSml = R * 0.23 * eyeScale;
-        const eyeTint = z.kind === 'screamer' ? '#ffd6ff' : '#fff8c4';
-
-        blob(R * 0.38, -R * 0.24, rBig, rBig * 1.08, 0, eyeTint, ink * 0.82);
-        blob(-R * 0.20, -R * 0.26, rSml, rSml * 1.06, 0, '#fffde0', ink * 0.82);
-
-        // Bloodshot capillaries on big eye
-        ctx.strokeStyle = 'rgba(210,45,45,0.55)'; ctx.lineWidth = 1.1 * s;
-        ctx.beginPath();
-        ctx.moveTo(R * 0.38 - rBig * 0.8, -R * 0.24); ctx.lineTo(R * 0.38 - rBig * 0.3, -R * 0.24 - rBig * 0.2);
-        ctx.stroke();
-
-        // Pupils: tiny pinpoint looking down when panicked, spinning when dizzy, tracking shack when walking
-        let px1 = R * 0.44, py1 = -R * 0.23, px2 = -R * 0.15, py2 = -R * 0.25;
-        if (panicked) {
-            py1 = -R * 0.14; py2 = -R * 0.16;
-        } else if (dizzy) {
-            const sp = perf * 0.015 + z.id;
-            px1 = R * 0.38 + Math.cos(sp) * R * 0.10;
-            py1 = -R * 0.24 + Math.sin(sp) * R * 0.10;
-            px2 = -R * 0.20 - Math.cos(sp) * R * 0.08;
-            py2 = -R * 0.26 + Math.sin(sp) * R * 0.08;
-        }
-        const pr = panicked ? R * 0.055 : R * 0.085;
-        ctx.fillStyle = z.kind === 'screamer' ? '#b81fd6' : '#c8281e';
-        ctx.beginPath(); ctx.arc(px1, py1, pr * 1.35, 0, 7); ctx.fill();
-        ctx.beginPath(); ctx.arc(px2, py2, pr * 1.15, 0, 7); ctx.fill();
-        ctx.fillStyle = '#111508';
-        ctx.beginPath(); ctx.arc(px1, py1, pr * 0.75, 0, 7); ctx.fill();
-        ctx.beginPath(); ctx.arc(px2, py2, pr * 0.65, 0, 7); ctx.fill();
-        // Glossy eye catchlight
-        ctx.fillStyle = '#fff';
-        ctx.beginPath(); ctx.arc(px1 - R * 0.04, py1 - R * 0.04, R * 0.035, 0, 7); ctx.fill();
-        ctx.beginPath(); ctx.arc(px2 - R * 0.03, py2 - R * 0.03, R * 0.03, 0, 7); ctx.fill();
-
-        // Popped-out dangling eyeball on look===1
-        if (z.look === 1 && !panicked) {
-            ctx.strokeStyle = '#a83232'; ctx.lineWidth = 2.0 * s;
-            ctx.beginPath(); ctx.moveTo(-R * 0.20, -R * 0.18); ctx.lineTo(-R * 0.34, R * 0.26); ctx.stroke();
-            blob(-R * 0.36, R * 0.32, R * 0.17, R * 0.17, 0, '#fff8c4', ink * 0.65);
-            ctx.fillStyle = '#111508';
-            ctx.beginPath(); ctx.arc(-R * 0.34, R * 0.34, R * 0.06, 0, 7); ctx.fill();
-        }
-
-        // Expressive cartoon eyebrows (raised high in panic, furrowed in anger otherwise)
-        ctx.strokeStyle = INK; ctx.lineWidth = 3.2 * s;
-        ctx.beginPath();
-        if (panicked) {
-            ctx.moveTo(R * 0.12, -R * 0.62); ctx.quadraticCurveTo(R * 0.38, -R * 0.78, R * 0.62, -R * 0.58);
-            ctx.moveTo(-R * 0.44, -R * 0.56); ctx.quadraticCurveTo(-R * 0.20, -R * 0.74, 0, -R * 0.60);
-        } else {
-            ctx.moveTo(R * 0.64, -R * 0.50); ctx.lineTo(R * 0.12, -R * 0.36);
-            ctx.moveTo(-R * 0.02, -R * 0.36); ctx.lineTo(-R * 0.46, -R * 0.48);
-        }
-        ctx.stroke();
-    }
-
-    // Cartoon upturned snout / nostrils
-    ctx.fillStyle = shade('#3a481e', dim);
-    ctx.beginPath(); ctx.ellipse(R * 0.52, -R * 0.02, R * 0.06, R * 0.09, -0.2, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(R * 0.38, 0, R * 0.05, R * 0.08, -0.2, 0, 7); ctx.fill();
-
-    // Brute brass bull nose-ring
-    if (z.kind === 'brute') {
-        ctx.strokeStyle = '#ffd83d'; ctx.lineWidth = 2.2 * s;
-        ctx.beginPath(); ctx.arc(R * 0.46, R * 0.10, R * 0.12, -0.4, 3.8); ctx.stroke();
-    }
-
-    // --- MOUTH, TEETH & TONGUE --------------------------------------------
-    const mouthY = jawDrop * 0.76 + R * 0.08;
-    const mouthRx = panicked ? R * 0.36 : R * 0.48;
-    const mouthRy = panicked ? R * 0.34 : R * 0.26;
-    ctx.fillStyle = '#381216';
-    ctx.beginPath();
-    ctx.ellipse(R * 0.22, mouthY, mouthRx, mouthRy, 0, 0, 7);
-    ctx.fill();
-    ctx.strokeStyle = INK; ctx.lineWidth = 2.0 * s; ctx.stroke();
-
-    // Pink cartoon tongue / uvula
-    ctx.fillStyle = z.t.bloat ? '#9eff4a' : '#d95b72';
-    ctx.beginPath();
-    if (panicked) {
-        ctx.arc(R * 0.16, mouthY + mouthRy * 0.35, R * 0.18, 0, Math.PI, true);
-    } else {
-        const flop = Math.sin(z.phase * 2) * R * 0.08;
-        ctx.ellipse(R * 0.32, mouthY + mouthRy * 0.55 + flop, R * 0.16, R * 0.24, 0.3, 0, 7);
-    }
-    ctx.fill();
-
-    // Crooked cartoon teeth (upper + lower underbite fangs)
-    for (let i = -1; i <= 1; i++) {
-        if (i === 0 && z.look === 2) continue;
-        const tx = R * 0.22 + i * R * 0.22;
-        ctx.fillStyle = (z.kind === 'brute' && i === 1) ? '#ffd83d' : '#f7fadc';
-        ctx.strokeStyle = INK; ctx.lineWidth = 1.4 * s;
-        ctx.beginPath();
-        ctx.rect(tx - R * 0.08, mouthY - mouthRy * 0.92, R * 0.15, R * 0.24);
-        ctx.fill(); ctx.stroke();
-    }
-    if (z.kind === 'brute' || z.kind === 'titan' || t.boss) {
-        // Underbite tusks jutting up
-        ctx.fillStyle = '#f7fadc'; ctx.strokeStyle = INK; ctx.lineWidth = 1.5 * s;
-        for (const side of [-1, 1]) {
-            const tx = R * 0.24 + side * R * 0.28;
-            ctx.beginPath();
-            ctx.moveTo(tx - R * 0.08, mouthY + mouthRy * 0.78);
-            ctx.lineTo(tx + R * 0.08, mouthY + mouthRy * 0.78);
-            ctx.lineTo(tx, mouthY + mouthRy * 0.10);
-            ctx.closePath(); ctx.fill(); ctx.stroke();
-        }
-    }
-
-    // Hardhat bushy construction mustache
-    if (z.kind === 'hardhat') {
-        blob(R * 0.32, R * 0.15, R * 0.42, R * 0.15, 0.08, shade('#4a3219', dim), ink * 0.7);
-    }
-
-    // Bloater toxic respirator nozzle on chin
-    if (z.kind === 'bloater') {
-        blob(R * 0.42, jawDrop, R * 0.24, R * 0.22, 0.2, shade('#3a4532', dim), ink * 0.8);
-        ctx.fillStyle = '#b6ff4a';
-        ctx.fillRect(R * 0.34, jawDrop + R * 0.14, 3.2 * s, R * 0.52);
-    } else if (!panicked) {
-        // Drool strand
-        ctx.fillStyle = 'rgba(150,210,60,0.75)';
-        ctx.fillRect(R * 0.34, mouthY + mouthRy * 0.6, 2.5 * s, R * 0.42);
-    }
-
-    // Butcher riveted iron face-guard mask
-    if (z.kind === 'butcher') {
-        ctx.fillStyle = shade('#7c8590', dim);
-        ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.85;
-        ctx.beginPath();
-        ctx.roundRect ? ctx.roundRect(-R * 0.45, -R * 0.08, R * 1.12, R * 0.88, 4 * s)
-                      : ctx.rect(-R * 0.45, -R * 0.08, R * 1.12, R * 0.88);
-        ctx.fill(); ctx.stroke();
-        ctx.fillStyle = '#1b2024';
-        for (let i = 0; i < 3; i++) {
-            ctx.fillRect(R * (0.0 + i * 0.20), R * 0.12, 3 * s, R * 0.48);
-        }
-    }
-
-    // --- HELMETS, HAIR & HEADGEAR -----------------------------------------
-    if (t.helmet && z.helmetHp > 0) {
-        if (t.boss) {
-            // Warden Dark Riot Juggernaut Helmet + central spike
-            ctx.beginPath();
-            ctx.ellipse(0, -R * 0.56, R * 1.12, R * 0.72, 0, Math.PI, 0);
-            ctx.fillStyle = shade('#353c44', dim); ctx.fill();
-            ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
-            // Center spike
-            ctx.fillStyle = shade('#cfd8e2', dim);
-            ctx.beginPath();
-            ctx.moveTo(-R * 0.18, -R * 1.22);
-            ctx.lineTo(0, -R * 1.72);
-            ctx.lineTo(R * 0.18, -R * 1.22);
-            ctx.closePath(); ctx.fill(); ctx.stroke();
-            // Steel helmet brim + crimson visor strip
-            ctx.strokeStyle = INK; ctx.lineWidth = 5.4 * s;
-            ctx.beginPath(); ctx.moveTo(-R * 1.14, -R * 0.52); ctx.lineTo(R * 1.18, -R * 0.52); ctx.stroke();
-            ctx.strokeStyle = '#ff382b'; ctx.lineWidth = 2.6 * s;
-            ctx.beginPath(); ctx.moveTo(-R * 0.55, -R * 0.52); ctx.lineTo(R * 0.78, -R * 0.52); ctx.stroke();
-        } else {
-            // Hardhat ribbed yellow safety helmet + headlamp
-            ctx.beginPath();
-            ctx.ellipse(0, -R * 0.58, R * 1.14, R * 0.68, 0, Math.PI, 0);
-            ctx.fillStyle = shade('#f5b01b', dim); ctx.fill();
-            ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(-R * 1.24, -R * 0.56); ctx.lineTo(R * 1.34, -R * 0.56);
-            ctx.strokeStyle = INK; ctx.lineWidth = 5.2 * s; ctx.stroke();
-            ctx.strokeStyle = shade('#d99216', dim); ctx.lineWidth = 3.2 * s; ctx.stroke();
-            // Headlamp on front of helmet
-            blob(R * 0.88, -R * 0.82, R * 0.20, R * 0.22, 0, '#fff6a8', ink * 0.7);
-        }
-    } else if (z.kind === 'screamer') {
-        // Screamer neon magenta punk mohawk
-        ctx.fillStyle = shade('#e639d8', dim);
-        ctx.strokeStyle = INK; ctx.lineWidth = 2.2 * s;
-        for (let i = 0; i < 4; i++) {
-            const a = -2.3 + i * 0.38;
-            ctx.beginPath();
-            ctx.moveTo(Math.cos(a - 0.16) * R * 0.85, -R * 0.18 + Math.sin(a - 0.16) * R * 0.85);
-            ctx.lineTo(Math.cos(a) * R * 1.62, -R * 0.18 + Math.sin(a) * R * 1.62);
-            ctx.lineTo(Math.cos(a + 0.16) * R * 0.85, -R * 0.18 + Math.sin(a + 0.16) * R * 0.85);
-            ctx.closePath(); ctx.fill(); ctx.stroke();
-        }
-    } else if (z.kind === 'runner') {
-        // Runner wild electrocuted lunatic hair tufts
-        ctx.strokeStyle = shade('#d8e2c4', dim); ctx.lineWidth = 2.6 * s;
-        for (let i = 0; i < 6; i++) {
-            const a = -2.7 + i * 0.36;
-            ctx.beginPath();
-            ctx.moveTo(Math.cos(a) * R * 0.85, -R * 0.16 + Math.sin(a) * R * 0.9);
-            ctx.lineTo(Math.cos(a) * R * 1.55, -R * 0.16 + Math.sin(a) * R * 1.55);
+            ctx.moveTo(ex - er, ey - er); ctx.lineTo(ex + er, ey + er);
+            ctx.moveTo(ex + er, ey - er); ctx.lineTo(ex - er, ey + er);
             ctx.stroke();
         }
     } else {
-        // Scruffy hair tufts + Frankenstein forehead stitches
-        ctx.strokeStyle = shade('#3f4d20', dim); ctx.lineWidth = 2.4 * s;
-        for (let i = 0; i < 4; i++) {
-            const a = -2.5 + i * 0.42 + (z.look * 0.15);
-            ctx.beginPath();
-            ctx.moveTo(Math.cos(a) * R * 0.85, -R * 0.16 + Math.sin(a) * R * 0.9);
-            ctx.lineTo(Math.cos(a) * R * 1.3, -R * 0.16 + Math.sin(a) * R * 1.4);
-            ctx.stroke();
-        }
-        if (z.look === 0 || z.kind === 'titan') {
-            ctx.strokeStyle = '#2f2016'; ctx.lineWidth = 1.8 * s;
-            ctx.beginPath(); ctx.moveTo(-R * 0.5, -R * 0.72); ctx.lineTo(R * 0.35, -R * 0.86); ctx.stroke();
-            for (let i = 0; i < 4; i++) {
-                const u = i / 3;
+        const eyeScale = panicked ? 1.18 : 1.0;
+        const r1 = R * 0.29 * eyeScale;
+        const r2 = R * 0.24 * eyeScale;
+
+        // Large bright creamy-yellow eyeballs (#f8f6c8) so eyes pop cleanly at all zoom levels!
+        blob(ex1, ey1, r1, r1 * 1.06, 0, '#f8f6c8', ink * 0.85);
+        blob(ex2, ey2, r2, r2 * 1.05, 0, '#f8f6c8', ink * 0.85);
+
+        if (isGiant && !panicked) {
+            // Exact Giant Overalls Boss look from ref_extra_0.jpg:
+            // Large blank milky-yellow eyes (no pupils) with clipped angled sage-green upper eyelids (zero top gap!)
+            for (const [ex, ey, er, tilt] of [[ex1, ey1, r1, 0.24], [ex2, ey2, r2, -0.24]]) {
+                ctx.save();
                 ctx.beginPath();
-                ctx.moveTo(lerp(-R * 0.5, R * 0.35, u), -R * 0.72 - R * 0.12 + lerp(0, -R * 0.14, u));
-                ctx.lineTo(lerp(-R * 0.5, R * 0.35, u), -R * 0.72 + R * 0.12 + lerp(0, -R * 0.14, u));
+                ctx.ellipse(ex, ey, er, er * 1.06, 0, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.translate(ex, ey);
+                ctx.rotate(tilt);
+                ctx.fillStyle = skinD;
+                ctx.fillRect(-er * 1.4, -er * 1.4, er * 2.8, er * 1.08);
+                ctx.strokeStyle = INK;
+                ctx.lineWidth = ink * 0.85;
+                ctx.beginPath();
+                ctx.moveTo(-er * 1.3, -er * 0.32);
+                ctx.lineTo(er * 1.3, -er * 0.32);
+                ctx.stroke();
+                ctx.restore();
+
+                // Clean outer eye ring
+                ctx.strokeStyle = INK;
+                ctx.lineWidth = ink * 0.85;
+                ctx.beginPath();
+                ctx.ellipse(ex, ey, er, er * 1.06, 0, 0, Math.PI * 2);
                 ctx.stroke();
             }
+        } else {
+            // Standard ZombieSmash! HD crazed eyes (ref_0.jpg & ref_extra_2.jpg):
+            // Bold crimson-red iris circle (#c92a22) with tiny pale/dark pinpoint center!
+            let px1 = ex1 + R * 0.04, py1 = ey1, px2 = ex2 + R * 0.04, py2 = ey2;
+            if (panicked) {
+                py1 = ey1 + R * 0.04; py2 = ey2 + R * 0.04;
+            } else if (dizzy) {
+                const sp = perf * 0.015 + z.id;
+                px1 = ex1 + Math.cos(sp) * R * 0.08;
+                py1 = ey1 + Math.sin(sp) * R * 0.08;
+                px2 = ex2 - Math.cos(sp) * R * 0.07;
+                py2 = ey2 + Math.sin(sp) * R * 0.07;
+            }
+            // Near eye: bold crimson-red iris disc + pinpoint center
+            ctx.fillStyle = '#c92a22';
+            ctx.beginPath(); ctx.arc(px1, py1, r1 * 0.48, 0, 7); ctx.fill();
+            ctx.fillStyle = '#f8f6c8';
+            ctx.beginPath(); ctx.arc(px1, py1, r1 * 0.15, 0, 7); ctx.fill();
+
+            // Far eye: slightly smaller crimson-red iris disc + pinpoint center (exact ref_0.jpg!)
+            ctx.fillStyle = '#bd2820';
+            ctx.beginPath(); ctx.arc(px2, py2, r2 * 0.42, 0, 7); ctx.fill();
+            ctx.fillStyle = '#1e1412';
+            ctx.beginPath(); ctx.arc(px2, py2, r2 * 0.16, 0, 7); ctx.fill();
+
+            // Expressive angled zombie brow lines on standard zombies
+            ctx.strokeStyle = INK; ctx.lineWidth = 2.2 * s;
+            ctx.beginPath();
+            if (panicked) {
+                ctx.moveTo(ex1 - r1, ey1 - r1 * 1.25);
+                ctx.quadraticCurveTo(ex1, ey1 - r1 * 1.6, ex1 + r1, ey1 - r1 * 1.2);
+                ctx.moveTo(ex2 - r2, ey2 - r2 * 1.2);
+                ctx.quadraticCurveTo(ex2, ey2 - r2 * 1.55, ex2 + r2, ey2 - r2 * 1.2);
+            } else {
+                ctx.moveTo(ex1 - r1 * 0.95, ey1 - r1 * 1.15);
+                ctx.lineTo(ex1 + r1 * 0.95, ey1 - r1 * 0.82);
+                ctx.moveTo(ex2 - r2 * 0.85, ey2 - r2 * 0.82);
+                ctx.moveTo(ex2 - r2 * 0.85, ey2 - r2 * 0.82);
+                ctx.lineTo(ex2 + r2 * 0.95, ey2 - r2 * 1.15);
+            }
+            ctx.stroke();
         }
     }
 
-    // Dizzy stars orbiting head when knocked down!
+    // Dark nostril slits between eyes and mouth (ref_extra_0.jpg)
+    ctx.fillStyle = '#3d1c24';
+    ctx.beginPath();
+    ctx.ellipse(R * 0.22, -R * 0.01, R * 0.04, R * 0.07, -0.2, 0, 7);
+    ctx.ellipse(R * 0.31, -R * 0.02, R * 0.035, R * 0.06, 0.2, 0, 7);
+    ctx.fill();
+
+    // --- 6. HAIR & HEADGEAR (Exact ZombieSmash! HD styles) ----------------
+    if (t.helmet && z.helmetHp > 0 && !t.boss) {
+        // Hardhat / Soldier: Dark Olive M1 Army Helmet with Playing Card in band (ref_extra_2.jpg!)
+        ctx.beginPath();
+        ctx.ellipse(-R * 0.04, -R * 0.48, R * 1.08, R * 0.68, -0.06, Math.PI * 0.98, 0.04);
+        ctx.closePath();
+        ctx.fillStyle = shade('#3a4a2b', dim); ctx.fill();
+        ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
+        ctx.strokeStyle = shade('#222b18', dim); ctx.lineWidth = 3.2 * s;
+        ctx.beginPath();
+        ctx.moveTo(-R * 1.06, -R * 0.44);
+        ctx.quadraticCurveTo(0, -R * 0.56, R * 1.02, -R * 0.50);
+        ctx.stroke();
+        ctx.save();
+        ctx.translate(-R * 0.35, -R * 0.68);
+        ctx.rotate(-0.18);
+        ctx.fillStyle = '#f2f0e6'; ctx.strokeStyle = INK; ctx.lineWidth = 1.2 * s;
+        ctx.fillRect(-R * 0.16, -R * 0.22, R * 0.32, R * 0.40);
+        ctx.strokeRect(-R * 0.16, -R * 0.22, R * 0.32, R * 0.40);
+        ctx.fillStyle = '#c92a2a';
+        ctx.beginPath(); ctx.arc(0, -R * 0.02, R * 0.06, 0, 7); ctx.fill();
+        ctx.restore();
+    } else if (isFemale) {
+        // Long straight dark auburn (Runner) or black (Screamer) hair framing face (ref_0.jpg & ref_extra_2.jpg)
+        const hairCol = shade(z.kind === 'runner' ? '#6e241b' : '#1b1f24', dim);
+        ctx.fillStyle = hairCol; ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.85;
+        ctx.beginPath();
+        ctx.arc(-R * 0.06, -R * 0.18, R * 0.96, Math.PI * 0.72, -Math.PI * 0.15, false);
+        ctx.quadraticCurveTo(R * 0.65, -R * 0.10, R * 0.48, R * 0.55);
+        ctx.lineTo(R * 0.32, R * 0.45);
+        ctx.quadraticCurveTo(R * 0.42, -R * 0.25, 0, -R * 0.62);
+        ctx.quadraticCurveTo(-R * 0.55, -R * 0.45, -R * 0.52, R * 0.85);
+        ctx.lineTo(-R * 0.95, R * 0.78);
+        ctx.quadraticCurveTo(-R * 1.04, 0, -R * 0.78, -R * 0.35);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+    } else if (isGiant) {
+        // Sparse brown comb-over hair tufts on Giant Overalls Behemoth (ref_extra_0.jpg)
+        ctx.fillStyle = shade('#4d3820', dim); ctx.strokeStyle = INK; ctx.lineWidth = 1.6 * s;
+        ctx.beginPath();
+        ctx.moveTo(-R * 0.72, -R * 0.48);
+        ctx.quadraticCurveTo(-R * 0.25, -R * 1.12, R * 0.28, -R * 0.96);
+        ctx.lineTo(R * 0.12, -R * 0.82);
+        ctx.quadraticCurveTo(-R * 0.25, -R * 0.92, -R * 0.58, -R * 0.38);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+    } else {
+        // Spiky messy brown hair (shambler), blonde hair (bloater), or black hair (butcher)
+        const hairCol = z.kind === 'bloater' ? shade('#dec659', dim)
+                      : z.kind === 'butcher' ? shade('#1f2226', dim)
+                      : shade('#543922', dim);
+        ctx.fillStyle = hairCol; ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.85;
+        ctx.beginPath();
+        ctx.moveTo(-R * 0.82, -R * 0.22);
+        ctx.quadraticCurveTo(-R * 0.88, -R * 0.88, -R * 0.15, -R * 1.02);
+        ctx.lineTo(-R * 0.05, -R * 1.14);
+        ctx.lineTo(R * 0.14, -R * 0.98);
+        ctx.lineTo(R * 0.32, -R * 1.08);
+        ctx.quadraticCurveTo(R * 0.68, -R * 0.85, R * 0.72, -R * 0.45);
+        ctx.lineTo(R * 0.42, -R * 0.58);
+        ctx.lineTo(R * 0.28, -R * 0.42);
+        ctx.lineTo(R * 0.05, -R * 0.60);
+        ctx.lineTo(-R * 0.18, -R * 0.44);
+        ctx.lineTo(-R * 0.42, -R * 0.62);
+        ctx.lineTo(-R * 0.62, -R * 0.35);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+    }
+
     if (dizzy) {
-        ctx.fillStyle = '#ffd83d';
         for (let i = 0; i < 3; i++) {
             const a = perf * 0.008 + i * 2.09;
-            const sx = Math.cos(a) * R * 0.85;
-            const sy = -R * 1.25 + Math.sin(a) * R * 0.22;
-            ctx.beginPath(); ctx.arc(sx, sy, 3.2 * s, 0, 7); ctx.fill();
+            const sx = Math.cos(a) * R * 0.92;
+            const sy = -R * 1.25 + Math.sin(a) * R * 0.24;
+            const fill = i % 2 === 0 ? '#e8eef5' : '#ffd84a';
+            drawStar5(sx, sy, 6.2 * s, 2.8 * s, fill, '#232620', 1.4 * s);
         }
     }
 
@@ -2561,277 +2601,683 @@ const bg = document.createElement('canvas');
 bg.width = W; bg.height = H;
 const bctx = bg.getContext('2d');
 
+// Painted moonlit cloud with unified opaque layers (no internal Venn-diagram circle seams!)
+function drawFluffyCloud(c, cx, cy, scale) {
+    c.save();
+    c.translate(cx, cy);
+    c.scale(scale, scale);
+
+    const puffs = [
+        [-62, 10, 46, 20],
+        [-26, -6, 48, 25],
+        [18, -8, 52, 26],
+        [60, 8, 44, 19],
+        [0, 10, 68, 22]
+    ];
+    // 1. Deep slate-blue cloud base
+    c.fillStyle = '#2d4e68';
+    c.beginPath();
+    for (const [ox, oy, rx, ry] of puffs) {
+        c.moveTo(ox + rx, oy + 5);
+        c.ellipse(ox, oy + 5, rx, ry, 0, 0, Math.PI * 2);
+    }
+    c.fill();
+
+    // 2. Soft mid slate-blue cloud body
+    c.fillStyle = '#476e8a';
+    c.beginPath();
+    for (const [ox, oy, rx, ry] of puffs) {
+        c.moveTo(ox + rx * 0.95, oy);
+        c.ellipse(ox, oy, rx * 0.95, ry * 0.92, 0, 0, Math.PI * 2);
+    }
+    c.fill();
+
+    // 3. Moonlit silver-blue top puffs (ref_0.jpg & ref_2.jpg)
+    c.fillStyle = '#6c92ad';
+    c.beginPath();
+    for (let i = 0; i < 4; i++) {
+        const [ox, oy, rx, ry] = puffs[i];
+        const rxi = rx * 0.78, ryi = ry * 0.68;
+        c.moveTo(ox - 3 + rxi, oy - 5);
+        c.ellipse(ox - 3, oy - 5, rxi, ryi, 0, 0, Math.PI * 2);
+    }
+    c.fill();
+
+    c.restore();
+}
+
+// Richly detailed scalloped oak tree canopy matching ref_0.jpg & ref_extra_0.jpg
+function drawLeafyOak(c, tx, ty, scale, flip) {
+    c.save();
+    c.translate(tx, ty);
+    c.scale(scale * (flip ? -1 : 1), scale);
+
+    // Gnarled bark trunk & spreading branches (ref_0.jpg right tree!)
+    c.fillStyle = '#121d28';
+    c.strokeStyle = '#091017';
+    c.lineWidth = 3;
+    c.beginPath();
+    c.moveTo(-32, 15);
+    c.quadraticCurveTo(-18, -42, -22, -102);
+    c.lineTo(-64, -148);
+    c.lineTo(-46, -156);
+    c.lineTo(-10, -116);
+    c.lineTo(-4, -162);
+    c.lineTo(14, -160);
+    c.lineTo(12, -114);
+    c.lineTo(54, -148);
+    c.lineTo(66, -138);
+    c.lineTo(22, -96);
+    c.quadraticCurveTo(22, -42, 34, 15);
+    c.closePath();
+    c.fill(); c.stroke();
+
+    // Bark ridges
+    c.strokeStyle = '#1f3142'; c.lineWidth = 2.2;
+    for (const ox of [-11, -2, 8]) {
+        c.beginPath(); c.moveTo(ox, 8); c.quadraticCurveTo(ox - 3, -48, ox - 1, -96); c.stroke();
+    }
+
+    // Scalloped multi-layered dark-blue leaf clusters (looks like real foliage, not smooth balloons!)
+    const drawLeafCluster = (cx, cy, r, col) => {
+        c.fillStyle = col;
+        c.beginPath();
+        const lobes = 7;
+        for (let i = 0; i < lobes; i++) {
+            const a = (i / lobes) * Math.PI * 2;
+            const lx = cx + Math.cos(a) * r * 0.62;
+            const ly = cy + Math.sin(a) * r * 0.46;
+            const lr = r * (0.48 + (i % 2) * 0.08);
+            c.moveTo(lx + lr, ly);
+            c.arc(lx, ly, lr, 0, Math.PI * 2);
+        }
+        c.fill();
+    };
+
+    const canopy = [
+        [-82, -142, 46], [80, -138, 44], [-52, -178, 50], [52, -175, 48],
+        [-18, -206, 52], [22, -204, 50], [-42, -138, 48], [40, -136, 48],
+        [0, -166, 58], [0, -222, 44]
+    ];
+    // Deep shadow leaf layer
+    for (const [cx, cy, r] of canopy) drawLeafCluster(cx, cy + 8, r * 1.04, '#0c1822');
+    // Mid dark-slate leaf layer
+    for (const [cx, cy, r] of canopy) drawLeafCluster(cx - 2, cy, r * 0.94, '#162b3d');
+    // Upper slate-blue leaf layer
+    for (const [cx, cy, r] of canopy) drawLeafCluster(cx - 6, cy - 6, r * 0.74, '#244259');
+    // Moonlit rim leaf highlights
+    for (const [cx, cy, r] of canopy) drawLeafCluster(cx - 10, cy - 12, r * 0.44, '#385f7a');
+
+    c.restore();
+}
+
 function paintBg() {
     const c = bctx;
+    // Authentic ZombieSmash! HD Slate-Blue Moonlit Night Sky (ref_0.jpg & ref_3.jpg)
     const sky = c.createLinearGradient(0, 0, 0, GROUND);
-    sky.addColorStop(0, '#070d19');
-    sky.addColorStop(0.48, '#162838');
-    sky.addColorStop(0.82, '#2d4436');
-    sky.addColorStop(1, '#4c6134');
+    sky.addColorStop(0, '#091d30');
+    sky.addColorStop(0.45, '#173a56');
+    sky.addColorStop(0.78, '#2b5573');
+    sky.addColorStop(1, '#3d6885');
     c.fillStyle = sky; c.fillRect(0, 0, W, GROUND);
 
-    // Moon + outer atmospheric glow
-    for (const [r, a] of [[150, 0.05], [105, 0.09], [72, 0.14]]) {
-        c.fillStyle = `rgba(226,246,185,${a})`;
-        c.beginPath(); c.arc(1070, 116, r, 0, 7); c.fill();
-    }
-    c.fillStyle = '#eef8cf';
-    c.beginPath(); c.arc(1070, 116, 48, 0, 7); c.fill();
-    c.fillStyle = 'rgba(182,202,140,0.52)';
-    c.beginPath(); c.arc(1052, 102, 10, 0, 7); c.fill();
-    c.beginPath(); c.arc(1088, 128, 7, 0, 7); c.fill();
-    c.beginPath(); c.arc(1066, 136, 5, 0, 7); c.fill();
-
-    // Twinkling stars
-    c.fillStyle = 'rgba(255,255,240,0.58)';
-    for (let i = 0; i < 85; i++) c.fillRect(rand(0, W), rand(0, 330), (i % 3 === 0) ? 2.5 : 1.6, (i % 3 === 0) ? 2.5 : 1.6);
-
-    // Drifting eerie moonlit clouds
-    c.fillStyle = 'rgba(180,210,165,0.06)';
-    for (const [cx, cy, rw, rh] of [[240, 130, 150, 26], [620, 95, 190, 30], [980, 150, 160, 24]]) {
-        c.beginPath(); c.ellipse(cx, cy, rw, rh, 0, 0, 7); c.fill();
+    // Subtle stars in upper sky
+    c.fillStyle = 'rgba(235,248,255,0.65)';
+    for (let i = 0; i < 55; i++) {
+        const sx = (i * 173 + 41) % W, sy = (i * 97 + 19) % 260;
+        const sz = (i % 4 === 0) ? 2.2 : 1.4;
+        c.fillRect(sx, sy, sz, sz);
     }
 
-    // Far hills & distant cemetery ridge
-    c.fillStyle = '#122019';
-    c.beginPath(); c.moveTo(0, 465);
-    for (let x = 0; x <= W; x += 32) c.lineTo(x, 465 - Math.sin(x * 0.0055) * 48 - Math.sin(x * 0.019) * 16);
+    // Bright glowing full moon above the house & windmill (ref_0.jpg & ref_3.jpg)
+    const mx = 745, my = 112;
+    for (const [r, a] of [[155, 0.06], [110, 0.11], [74, 0.18]]) {
+        c.fillStyle = `rgba(135,205,245,${a})`;
+        c.beginPath(); c.arc(mx, my, r, 0, 7); c.fill();
+    }
+    c.fillStyle = '#fdfce6';
+    c.beginPath(); c.arc(mx, my, 46, 0, 7); c.fill();
+    c.fillStyle = 'rgba(210,220,195,0.45)';
+    c.beginPath(); c.arc(mx - 14, my - 10, 9, 0, 7); c.fill();
+    c.beginPath(); c.arc(mx + 16, my + 12, 7, 0, 7); c.fill();
+    c.beginPath(); c.arc(mx - 4, my + 18, 5, 0, 7); c.fill();
+
+    // Seamless painted moonlit clouds (ref_0.jpg & ref_extra_0.jpg)
+    drawFluffyCloud(c, 190, 145, 1.15);
+    drawFluffyCloud(c, 520, 185, 0.85);
+    drawFluffyCloud(c, 920, 128, 1.25);
+    drawFluffyCloud(c, 1180, 195, 0.90);
+
+    // Distant dark slate hills & rounded bush silhouettes (ref_0.jpg & ref_extra_0.jpg)
+    c.fillStyle = '#233b4d';
+    c.beginPath(); c.moveTo(0, 435);
+    for (let x = 0; x <= W; x += 32) {
+        c.lineTo(x, 435 - Math.sin(x * 0.0045) * 38 - Math.cos(x * 0.012) * 14);
+    }
     c.lineTo(W, GROUND); c.lineTo(0, GROUND); c.fill();
 
-    // Midground rolling hills + mist layer
-    c.fillStyle = '#192b21';
-    c.beginPath(); c.moveTo(0, 515);
-    for (let x = 0; x <= W; x += 32) c.lineTo(x, 515 - Math.cos(x * 0.007) * 26 - Math.sin(x * 0.022) * 10);
+    // Dark bush clusters along hill ridge
+    c.fillStyle = '#152634';
+    for (const [bx, by, br] of [[180, 425, 22], [210, 422, 28], [245, 426, 20], [380, 402, 26], [415, 398, 32], [450, 404, 24], [840, 412, 28], [880, 408, 34], [920, 415, 24]]) {
+        c.beginPath(); c.arc(bx, by, br, 0, 7); c.fill();
+    }
+
+    // Sloping moonlit blue-grey tall grass / wheat field (ref_0.jpg & ref_3.jpg)
+    const fieldGrad = c.createLinearGradient(0, 410, 0, GROUND - 35);
+    fieldGrad.addColorStop(0, '#536d80');
+    fieldGrad.addColorStop(1, '#384e5e');
+    c.fillStyle = fieldGrad;
+    c.beginPath();
+    c.moveTo(0, 455);
+    c.quadraticCurveTo(W * 0.5, 410, W, 395);
     c.lineTo(W, GROUND); c.lineTo(0, GROUND); c.fill();
 
-    // Gnarled dead oak trees
-    for (const [tx, ts] of [[105, 1.08], [305, 0.88], [975, 0.94], [1205, 1.12]]) {
-        c.save(); c.translate(tx, 540); c.scale(ts, ts);
-        c.strokeStyle = '#0e1710'; c.lineCap = 'round';
-        c.lineWidth = 13; c.beginPath(); c.moveTo(0, 20); c.quadraticCurveTo(8, -45, 4, -125); c.stroke();
-        c.lineWidth = 7;
+    // Hundreds of vertical moonlit blue-grey wheat/grass strokes across the field
+    c.strokeStyle = 'rgba(130,162,184,0.42)';
+    c.lineWidth = 1.6;
+    for (let i = 0; i < 420; i++) {
+        const gx = (i * 73) % W;
+        const topLim = 445 - (gx / W) * 45;
+        const gy = topLim + ((i * 41) % Math.max(10, (GROUND - 42 - topLim)));
         c.beginPath();
-        c.moveTo(4, -85); c.quadraticCurveTo(-22, -100, -42, -130);
-        c.moveTo(5, -70); c.quadraticCurveTo(28, -90, 48, -118);
-        c.moveTo(-18, -102); c.lineTo(-26, -132);
-        c.moveTo(24, -88); c.lineTo(34, -120);
+        c.moveTo(gx, gy);
+        c.lineTo(gx + ((i % 3) - 1) * 2.5, gy - 10 - (i % 7));
         c.stroke();
-        c.restore();
     }
 
-    // Crooked graveyard fence
-    c.fillStyle = '#1b2919'; c.strokeStyle = '#0c140d'; c.lineWidth = 2;
-    for (let x = -10; x < W + 20; x += 26) {
+    // Large Scalloped Leafy Dark-Blue Oak Trees on Left & Right (exact ref_0.jpg & ref_3.jpg!)
+    drawLeafyOak(c, 75, 548, 0.95, false);
+    drawLeafyOak(c, 1145, 552, 1.15, true);
+
+    // Weathered Two-Rail Wooden Ranch Fence across the field (exact ref_0.jpg & ref_3.jpg!)
+    const fenceY = GROUND - 42;
+    c.fillStyle = '#1e303d';
+    c.fillRect(0, fenceY - 6, W, 16);
+
+    for (let x = 18; x < W; x += 92) {
+        c.fillStyle = '#3d4d59'; c.strokeStyle = '#182229'; c.lineWidth = 2.2;
+        c.fillRect(x - 6, fenceY - 46, 13, 52);
+        c.strokeRect(x - 6, fenceY - 46, 13, 52);
+        c.fillStyle = '#687d8c';
+        c.fillRect(x - 5, fenceY - 46, 11, 4);
+    }
+    for (const ry of [fenceY - 38, fenceY - 18]) {
+        c.fillStyle = '#4c5f6e'; c.strokeStyle = '#182229'; c.lineWidth = 2;
+        c.fillRect(0, ry, W, 9);
+        c.strokeRect(0, ry, W, 9);
+        c.fillStyle = '#6e8494';
+        c.fillRect(0, ry + 1, W, 2.5);
+    }
+
+    // Moonlit Dusty Slate-Blue Ground (exact ref_0.jpg, ref_3.jpg, ref_extra_0.jpg!)
+    const groundGrad = c.createLinearGradient(0, GROUND - 38, 0, H);
+    groundGrad.addColorStop(0, '#5a7182');
+    groundGrad.addColorStop(0.28, '#4a5f6e');
+    groundGrad.addColorStop(0.75, '#394b58');
+    groundGrad.addColorStop(1, '#26333d');
+    c.fillStyle = groundGrad;
+    c.fillRect(0, GROUND - 38, W, H - GROUND + 38);
+
+    // Dark slate-blue grass silhouette tufts along the fence base
+    c.fillStyle = '#293c4a';
+    for (let x = 0; x < W; x += 9) {
+        const gh = 10 + (x * 13) % 14;
         c.beginPath();
-        c.moveTo(x, 550); c.lineTo(x + 7, 538); c.lineTo(x + 14, 550);
-        c.lineTo(x + 14, 596); c.lineTo(x, 596); c.closePath();
-        c.fill(); c.stroke();
+        c.moveTo(x, GROUND - 34);
+        c.lineTo(x + 4, GROUND - 34 - gh);
+        c.lineTo(x + 9, GROUND - 34);
+        c.fill();
     }
-    c.fillStyle = '#162214'; c.fillRect(0, 558, W, 6); c.fillRect(0, 582, W, 6);
 
-    // Tombstones with RIP crosses
-    for (const [gx, gs, tilt] of [[195, 1.02, -0.06], [415, 0.84, 0.05], [865, 0.92, -0.04], [1125, 1.06, 0.07]]) {
-        c.save(); c.translate(gx, 590); c.scale(gs, gs); c.rotate(tilt);
-        c.fillStyle = '#3f4942'; c.strokeStyle = '#141915'; c.lineWidth = 3;
+    // Subtle ground pebbles & moonlit soil texture
+    for (let i = 0; i < 220; i++) {
+        const px = (i * 97 + 13) % W;
+        const py = GROUND - 30 + ((i * 53) % (H - GROUND + 26));
+        c.fillStyle = (i % 3 === 0) ? 'rgba(130,158,178,0.22)' : 'rgba(20,32,42,0.25)';
         c.beginPath();
-        c.moveTo(-20, 0); c.lineTo(-20, -32); c.arc(0, -32, 20, Math.PI, 0); c.lineTo(20, 0);
-        c.closePath(); c.fill(); c.stroke();
-        c.fillStyle = '#29312b'; c.fillRect(-7, -40, 14, 4); c.fillRect(-2.5, -47, 5, 18);
-        c.restore();
-    }
-
-    // Ground mist ribbon
-    const mist = c.createLinearGradient(0, GROUND - 85, 0, GROUND - 25);
-    mist.addColorStop(0, 'rgba(170,210,150,0)');
-    mist.addColorStop(0.5, 'rgba(170,210,150,0.09)');
-    mist.addColorStop(1, 'rgba(170,210,150,0)');
-    c.fillStyle = mist; c.fillRect(0, GROUND - 85, W, 60);
-
-    // Rich layered dirt & turf
-    const dirt = c.createLinearGradient(0, GROUND - 6, 0, H);
-    dirt.addColorStop(0, '#5f5130');
-    dirt.addColorStop(0.16, '#483d23');
-    dirt.addColorStop(1, '#1e190f');
-    c.fillStyle = dirt; c.fillRect(0, GROUND - 40, W, H - GROUND + 40);
-    c.fillStyle = '#436123';
-    c.fillRect(0, GROUND - 43, W, 10);
-    for (let i = 0; i < 280; i++) {
-        const x = rand(0, W), y = rand(GROUND - 38, H);
-        c.fillStyle = 'rgba(0,0,0,' + rand(0.06, 0.20).toFixed(2) + ')';
-        c.fillRect(x, y, rand(3, 14), rand(2, 4));
-    }
-    c.strokeStyle = 'rgba(98,136,52,0.62)'; c.lineWidth = 2;
-    for (let i = 0; i < 110; i++) {
-        const x = rand(0, W), y = rand(GROUND - 44, GROUND + 28);
-        c.beginPath(); c.moveTo(x, y); c.lineTo(x + rand(-4, 4), y - rand(6, 13)); c.stroke();
+        c.ellipse(px, py, 2 + (i % 5), 1.2 + (i % 2), 0, 0, 7);
+        c.fill();
     }
 }
 paintBg();
 
-// Joey's fortified ZombieSmash! HD country house
-function drawHouse() {
-    const f = clamp(game.hp / game.maxHp, 0, 1);
-    const x = HOUSE.x, y = HOUSE.y, w = HOUSE.w, h = HOUSE.h;
+// The Iconic ZombieSmash! HD Wooden Lattice Windmill (ref_2.jpg, ref_3.jpg, ref_extra_0.jpg!)
+function drawWindmill() {
+    const wx = HOUSE.x - 68, wy = GROUND - 36;
+    ctx.save();
 
-    // Ground shadow
-    ctx.globalAlpha = 0.42;
-    blob(HOUSE.cx, GROUND + 6, w * 0.68, 13, 0, '#000', 0);
-    ctx.globalAlpha = 1;
-
-    // Brick chimney on right roof slope + rising smoke puff
-    ctx.fillStyle = '#6e2e23'; ctx.strokeStyle = INK; ctx.lineWidth = 3.5;
-    ctx.fillRect(x + w - 42, y - 56, 26, 44);
-    ctx.strokeRect(x + w - 42, y - 56, 26, 44);
-    ctx.fillStyle = '#522118';
-    ctx.fillRect(x + w - 46, y - 62, 34, 8);
-    ctx.strokeRect(x + w - 46, y - 62, 34, 8);
-
-    // Timber walls + clapboard siding
-    ctx.fillStyle = '#7e5c35'; ctx.strokeStyle = INK; ctx.lineWidth = 4;
-    ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
-
-    // Corner trim pillars
-    ctx.fillStyle = '#5c4122';
-    ctx.fillRect(x, y, 10, h); ctx.fillRect(x + w - 10, y, 10, h);
-
-    ctx.strokeStyle = 'rgba(42,26,10,0.6)'; ctx.lineWidth = 2;
-    for (let i = 1; i < 8; i++) {
-        ctx.beginPath(); ctx.moveTo(x, y + (h / 8) * i); ctx.lineTo(x + w, y + (h / 8) * i); ctx.stroke();
-    }
-
-    // Stone foundation base
-    ctx.fillStyle = '#4a4e48'; ctx.strokeStyle = INK; ctx.lineWidth = 3;
-    ctx.fillRect(x - 4, y + h - 16, w + 8, 16);
-    ctx.strokeRect(x - 4, y + h - 16, w + 8, 16);
-
-    // Pitched shingled roof
+    // Ground shadow cast by windmill tower (ref_extra_0.jpg)
+    ctx.strokeStyle = 'rgba(22,36,46,0.45)';
+    ctx.lineWidth = 8;
     ctx.beginPath();
-    ctx.moveTo(x - 28, y + 6); ctx.lineTo(HOUSE.cx, y - 58); ctx.lineTo(x + w + 28, y + 6);
-    ctx.closePath();
-    ctx.fillStyle = '#8f3d2a'; ctx.fill();
-    ctx.strokeStyle = INK; ctx.lineWidth = 4; ctx.stroke();
-    // Roof shingle ridges
-    ctx.strokeStyle = 'rgba(45,16,10,0.45)'; ctx.lineWidth = 2;
-    for (let r = 1; r <= 3; r++) {
-        const ry = y + 6 - r * 14;
-        const rw = (w * 0.5 + 28) * (1 - r * 0.22);
-        ctx.beginPath(); ctx.moveTo(HOUSE.cx - rw, ry); ctx.lineTo(HOUSE.cx + rw, ry); ctx.stroke();
+    ctx.moveTo(wx - 28, wy); ctx.lineTo(wx - 44, GROUND + 85);
+    ctx.moveTo(wx + 28, wy); ctx.lineTo(wx + 18, GROUND + 85);
+    ctx.lineWidth = 5;
+    ctx.moveTo(wx - 34, GROUND + 25); ctx.lineTo(wx + 24, GROUND + 25);
+    ctx.moveTo(wx - 39, GROUND + 58); ctx.lineTo(wx + 20, GROUND + 58);
+    ctx.stroke();
+
+    // Tapered wooden A-frame lattice tower
+    const topY = wy - 265;
+    ctx.strokeStyle = '#1b2834';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 6.5;
+    ctx.beginPath();
+    ctx.moveTo(wx - 32, wy); ctx.lineTo(wx - 5, topY);
+    ctx.moveTo(wx + 32, wy); ctx.lineTo(wx + 5, topY);
+    ctx.stroke();
+
+    // Horizontal & X-braces up the tower
+    ctx.lineWidth = 3.5;
+    const levels = [0.18, 0.38, 0.58, 0.78, 0.92];
+    for (let i = 0; i < levels.length; i++) {
+        const u = levels[i];
+        const y = lerp(wy, topY, u);
+        const hw = lerp(32, 5, u);
+        ctx.beginPath();
+        ctx.moveTo(wx - hw, y); ctx.lineTo(wx + hw, y);
+        if (i < levels.length - 1) {
+            const u2 = levels[i + 1];
+            const y2 = lerp(wy, topY, u2);
+            const hw2 = lerp(32, 5, u2);
+            ctx.moveTo(wx - hw, y); ctx.lineTo(wx + hw2, y2);
+            ctx.moveTo(wx + hw, y); ctx.lineTo(wx - hw2, y2);
+        }
+        ctx.stroke();
     }
 
-    // Reinforced oak door with iron bands
-    const dx = HOUSE.cx - 23, dy = y + h - 68;
-    ctx.fillStyle = '#4a331d'; ctx.strokeStyle = INK; ctx.lineWidth = 3.5;
-    ctx.fillRect(dx, dy, 46, 54); ctx.strokeRect(dx, dy, 46, 54);
-    ctx.fillStyle = '#32383d';
-    ctx.fillRect(dx + 3, dy + 10, 40, 5);
-    ctx.fillRect(dx + 3, dy + 36, 40, 5);
-    ctx.fillStyle = '#ffd83d';
-    ctx.beginPath(); ctx.arc(dx + 36, dy + 26, 3.5, 0, 7); ctx.fill();
+    // Windmill tail vane sticking out to the right (ref_3.jpg & ref_extra_0.jpg)
+    ctx.strokeStyle = '#1b2834'; ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(wx, topY + 6); ctx.lineTo(wx + 68, topY - 12);
+    ctx.stroke();
+    ctx.fillStyle = '#233442'; ctx.strokeStyle = '#141f29'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(wx + 48, topY - 8);
+    ctx.lineTo(wx + 86, topY - 24);
+    ctx.lineTo(wx + 78, topY + 4);
+    ctx.lineTo(wx + 46, topY + 2);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
 
-    // Left & Right Glowing Windows with Barricade Planks + Joey's Shotgun!
-    for (const [wx, wy, hasGun] of [[x + 16, y + 24, true], [x + w - 58, y + 24, false]]) {
-        ctx.fillStyle = f > 0.25 ? '#ffcf5c' : '#6b3820';
-        ctx.strokeStyle = INK; ctx.lineWidth = 3.2;
-        ctx.fillRect(wx, wy, 42, 36); ctx.strokeRect(wx, wy, 42, 36);
-        // Window muntins
+    // Rotating 8-blade wooden rotor hub
+    ctx.translate(wx, topY + 4);
+    ctx.rotate(perf * 0.00035);
+    const numBlades = 8;
+    for (let i = 0; i < numBlades; i++) {
+        ctx.save();
+        ctx.rotate((i * Math.PI * 2) / numBlades);
+        ctx.strokeStyle = '#18242e'; ctx.lineWidth = 2.8;
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -76); ctx.stroke();
+        ctx.fillStyle = '#243545'; ctx.strokeStyle = '#141f29'; ctx.lineWidth = 1.8;
         ctx.beginPath();
-        ctx.moveTo(wx + 21, wy); ctx.lineTo(wx + 21, wy + 36);
-        ctx.moveTo(wx, wy + 18); ctx.lineTo(wx + 42, wy + 18);
-        ctx.stroke();
-
-        if (hasGun) {
-            // Joey's double-barrel shotgun barrel peeking out the left window!
-            ctx.save();
-            ctx.translate(wx + 12, wy + 22);
-            ctx.rotate(-0.18 + Math.sin(perf * 0.004) * 0.08);
-            ctx.fillStyle = '#2d3338'; ctx.strokeStyle = INK; ctx.lineWidth = 2.2;
-            ctx.fillRect(-26, -3, 28, 6); ctx.strokeRect(-26, -3, 28, 6);
-            ctx.restore();
-        }
-
-        // Crossed wooden barricade planks nailed over window
-        ctx.fillStyle = '#a37b45'; ctx.strokeStyle = INK; ctx.lineWidth = 2.6;
-        ctx.save(); ctx.translate(wx + 21, wy + 18); ctx.rotate(0.22);
-        ctx.fillRect(-26, -5, 52, 9); ctx.strokeRect(-26, -5, 52, 9);
-        ctx.rotate(-0.44);
-        ctx.fillRect(-26, -5, 52, 9); ctx.strokeRect(-26, -5, 52, 9);
+        ctx.moveTo(-3, -24);
+        ctx.lineTo(-13, -74);
+        ctx.lineTo(5, -76);
+        ctx.lineTo(3, -24);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
         ctx.restore();
     }
+    ctx.fillStyle = '#141f29';
+    ctx.beginPath(); ctx.arc(0, 0, 11, 0, 7); ctx.fill();
+    ctx.fillStyle = '#364d61';
+    ctx.beginPath(); ctx.arc(-2, -2, 6, 0, 7); ctx.fill();
 
-    // Swinging warm porch lantern above door
-    const lx = HOUSE.cx, ly = dy - 10;
-    ctx.fillStyle = 'rgba(255,215,90,0.18)';
-    ctx.beginPath(); ctx.arc(lx, ly, 28 + Math.sin(perf * 0.01) * 3, 0, 7); ctx.fill();
-    ctx.fillStyle = '#ffe678'; ctx.strokeStyle = INK; ctx.lineWidth = 2.2;
-    ctx.beginPath(); ctx.arc(lx, ly, 6, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.restore();
+}
 
-    // Structural damage cracks as HP drops
-    if (f < 0.98) {
-        ctx.strokeStyle = 'rgba(20,12,6,0.85)';
-        const cracks = Math.round((1 - f) * 10);
-        for (let i = 0; i < cracks; i++) {
-            const sx = x + ((i * 53) % (w - 16)) + 8;
-            const sy = y + 12 + ((i * 37) % (h - 32));
-            ctx.lineWidth = 2 + (i % 3);
-            ctx.beginPath();
-            ctx.moveTo(sx, sy);
-            ctx.lineTo(sx + (i % 2 ? 14 : -12), sy + 20);
-            ctx.lineTo(sx + (i % 2 ? 4 : -2), sy + 44);
-            ctx.stroke();
+// Helper to draw link-by-link silver iron chains across windows & doors (exact ref_extra_0.jpg!)
+function drawIronChainLinks(x1, y1, x2, y2) {
+    const dist = Math.hypot(x2 - x1, y2 - y1);
+    const steps = Math.max(4, Math.floor(dist / 6.5));
+    const ang = Math.atan2(y2 - y1, x2 - x1);
+    for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const cx = lerp(x1, x2, t);
+        const cy = lerp(y1, y2, t);
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(ang + (i % 2 === 0 ? 0.24 : -0.24));
+        ctx.fillStyle = (i % 2 === 0) ? '#b2C0ce' : '#7f90a0';
+        ctx.strokeStyle = '#161c22';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 4.4, 2.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+// Joey's Iconic ZombieSmash! HD 3/4-Perspective Cross-Gable Farmhouse (1-to-1 with ref_0.jpg, ref_2.jpg, ref_extra_0.jpg!)
+function drawHouse() {
+    const f = clamp(game.hp / game.maxHp, 0, 1);
+    const x = HOUSE.x - 30, r = HOUSE.r + 30, w = r - x;
+    const g = GROUND - 20;
+    // Authentic proportions: compact downstairs timber wall (102px) + massive steep 3/4 slate roof (132px)!
+    const wallH = 102;
+    const wallTop = g - wallH;
+    const splitX = HOUSE.cx - 10;     // Interior corner where right wing projects forward
+    const rightFaceX = splitX + 52;   // Front corner of the projecting right wing
+
+    ctx.save();
+
+    // Ground shadow under farmhouse
+    ctx.globalAlpha = 0.48;
+    blob(HOUSE.cx, g + 6, w * 0.58, 15, 0, '#0d1720', 0);
+    ctx.globalAlpha = 1;
+
+    // --- 1. Tall Grey-Stone & Red-Brick Chimney rising above main roof ridge (ref_0.jpg & ref_extra_0.jpg!)
+    const chX = x + 76, chY = wallTop - 168, chW = 46, chH = 74;
+    ctx.fillStyle = '#6c7a87'; ctx.strokeStyle = '#182026'; ctx.lineWidth = 3;
+    ctx.fillRect(chX, chY, chW, chH);
+    ctx.strokeRect(chX, chY, chW, chH);
+    ctx.fillStyle = '#6e3a3f';
+    for (const [bx, by, bw, bh] of [
+        [chX + 5, chY + 8, 16, 9], [chX + 25, chY + 8, 15, 9],
+        [chX + 8, chY + 21, 18, 9], [chX + 30, chY + 21, 11, 9],
+        [chX + 4, chY + 34, 15, 9], [chX + 23, chY + 34, 17, 9],
+        [chX + 7, chY + 47, 20, 9]
+    ]) {
+        ctx.fillRect(bx, by, bw, bh);
+    }
+    // Overhanging stone chimney cap
+    ctx.fillStyle = '#8493a0';
+    ctx.beginPath();
+    ctx.roundRect(chX - 5, chY - 10, chW + 10, 12, 3);
+    ctx.fill(); ctx.stroke();
+
+    // --- 2. Downstairs 3/4-Perspective Timber Walls (4 distinct shaded planes like ref_0.jpg!)
+    // Plane A: Left door wall (x to x+58)
+    ctx.fillStyle = '#433340'; ctx.strokeStyle = '#181218'; ctx.lineWidth = 3;
+    ctx.fillRect(x, wallTop, 58, wallH);
+    ctx.strokeRect(x, wallTop, 58, wallH);
+    // Plane B: Center-left window wall (x+58 to splitX)
+    ctx.fillStyle = '#392b36';
+    ctx.fillRect(x + 58, wallTop, splitX - (x + 58), wallH);
+    ctx.strokeRect(x + 58, wallTop, splitX - (x + 58), wallH);
+    // Plane C: Projecting wing angled side-wall (splitX to rightFaceX, drops 8px lower in 3/4 perspective!)
+    ctx.fillStyle = '#473644';
+    ctx.beginPath();
+    ctx.moveTo(splitX, wallTop);
+    ctx.lineTo(rightFaceX, wallTop + 6);
+    ctx.lineTo(rightFaceX, g + 8);
+    ctx.lineTo(splitX, g);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // Plane D: Projecting wing front wall (rightFaceX to r)
+    ctx.fillStyle = '#523f4e';
+    ctx.beginPath();
+    ctx.moveTo(rightFaceX, wallTop + 6);
+    ctx.lineTo(r, wallTop + 2);
+    ctx.lineTo(r, g + 4);
+    ctx.lineTo(rightFaceX, g + 8);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Vertical wood plank seams across all downstairs walls
+    ctx.strokeStyle = 'rgba(20, 12, 20, 0.55)'; ctx.lineWidth = 2;
+    for (let px = x + 10; px < r; px += 11) {
+        ctx.beginPath(); ctx.moveTo(px, wallTop); ctx.lineTo(px, g + 4); ctx.stroke();
+    }
+
+    // Heavy weathered horizontal fascia beam under the eaves (ref_0.jpg)
+    ctx.fillStyle = '#5e4c59'; ctx.strokeStyle = '#181218'; ctx.lineWidth = 2.5;
+    ctx.fillRect(x - 4, wallTop - 4, splitX - x + 8, 10);
+    ctx.strokeRect(x - 4, wallTop - 4, splitX - x + 8, 10);
+
+    // --- 3. Massive Steep Dark Blue-Slate Main Roof (ref_0.jpg & ref_extra_0.jpg!)
+    const mainPeakX = x + 44, mainPeakY = wallTop - 122;
+    const mainRidgeRightX = r - 34, mainRidgeRightY = wallTop - 134;
+
+    // Left gable recessed timber triangle
+    ctx.fillStyle = '#362734'; ctx.strokeStyle = '#161016'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x - 8, wallTop);
+    ctx.lineTo(mainPeakX, mainPeakY + 6);
+    ctx.lineTo(x + 98, wallTop);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Upstairs Left Gable Window with Joey aiming his shotgun (ref_2.jpg & ref_0.jpg!)
+    const gx = mainPeakX - 16, gy = wallTop - 54, gw = 34, gh = 40;
+    ctx.fillStyle = '#1b151c'; ctx.strokeStyle = '#594856'; ctx.lineWidth = 2.6;
+    ctx.fillRect(gx, gy, gw, gh);
+    ctx.strokeRect(gx, gy, gw, gh);
+
+    // Joey inside upstairs gable window
+    ctx.save();
+    ctx.beginPath(); ctx.rect(gx + 2, gy + 2, gw - 4, gh - 2); ctx.clip();
+    ctx.fillStyle = '#c95b27';
+    ctx.fillRect(gx + 7, gy + 23, 20, 17);
+    blob(gx + 17, gy + 15, 8.5, 9, 0, '#f2cfb6', 1.8);
+    ctx.fillStyle = '#4a3219';
+    ctx.beginPath();
+    ctx.moveTo(gx + 8, gy + 12); ctx.lineTo(gx + 11, gy + 4);
+    ctx.lineTo(gx + 17, gy + 6); ctx.lineTo(gx + 23, gy + 3);
+    ctx.lineTo(gx + 26, gy + 12); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(gx + 12, gy + 12, 4, 3.5); ctx.fillRect(gx + 19, gy + 12, 4, 3.5);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(gx + 14, gy + 13, 2, 2); ctx.fillRect(gx + 20, gy + 13, 2, 2);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(gx + 13, gy + 19, 8, 2.5);
+    ctx.restore();
+    // Shotgun barrel poking out
+    ctx.save();
+    ctx.translate(gx + 23, gy + 26);
+    ctx.rotate(-0.22 + Math.sin(perf * 0.003) * 0.08);
+    ctx.fillStyle = '#242a30'; ctx.strokeStyle = '#0e1214'; ctx.lineWidth = 2;
+    ctx.fillRect(-3, -3, 22, 5);
+    ctx.strokeRect(-3, -3, 22, 5);
+    ctx.restore();
+
+    // Main Roof Sloping Shingle Plane (from mainPeakX -> mainRidgeRightX down to wallTop)
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(mainPeakX, mainPeakY);
+    ctx.lineTo(mainRidgeRightX, mainRidgeRightY);
+    ctx.lineTo(r - 6, wallTop + 2);
+    ctx.lineTo(x + 86, wallTop + 2);
+    ctx.closePath();
+    ctx.fillStyle = '#1c2f3e';
+    ctx.fill();
+    ctx.clip();
+
+    // Dense overlapping slate-blue roof tiles (exact ref_0.jpg & ref_extra_0.jpg texture!)
+    const rows = 6;
+    for (let row = 0; row < rows; row++) {
+        const u0 = row / rows, u1 = (row + 1) / rows;
+        const y0 = lerp(mainRidgeRightY, wallTop + 2, u0);
+        const y1 = lerp(mainRidgeRightY, wallTop + 2, u1);
+        for (let col = -2; col < 12; col++) {
+            const sx = x + 36 + col * 22 + (row % 2) * 11 + row * 6;
+            ctx.fillStyle = (col + row) % 3 === 0 ? '#294257' : (col % 2 ? '#182836' : '#213647');
+            ctx.strokeStyle = '#0f1922'; ctx.lineWidth = 1.8;
+            ctx.fillRect(sx, y0, 22, y1 - y0 + 1);
+            ctx.strokeRect(sx, y0, 22, y1 - y0 + 1);
         }
     }
-    if (f < 0.4) {
-        ctx.fillStyle = 'rgba(0,0,0,0.58)';
-        ctx.fillRect(x + w - 48, y + 66, 28, 22);
-        ctx.fillRect(x + 12, y + h - 88, 24, 20);
+    ctx.restore();
+
+    // Main roof outline & thick slate-blue left gable bargeboard trim
+    ctx.strokeStyle = '#101a24'; ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.moveTo(mainPeakX, mainPeakY);
+    ctx.lineTo(mainRidgeRightX, mainRidgeRightY);
+    ctx.lineTo(r - 6, wallTop + 2);
+    ctx.lineTo(x + 86, wallTop + 2);
+    ctx.closePath();
+    ctx.stroke();
+
+    ctx.fillStyle = '#385066'; ctx.strokeStyle = '#111b24'; ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.moveTo(x - 14, wallTop + 4);
+    ctx.lineTo(mainPeakX, mainPeakY - 6);
+    ctx.lineTo(x + 92, wallTop + 4);
+    ctx.lineTo(x + 84, wallTop + 10);
+    ctx.lineTo(mainPeakX, mainPeakY + 4);
+    ctx.lineTo(x - 8, wallTop + 10);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // --- 4. Right Projecting Cross-Gable Roof & Front Gable Triangle (exact ref_0.jpg & ref_extra_0.jpg!)
+    const rightPeakX = lerp(rightFaceX, r, 0.52), rightPeakY = wallTop - 96;
+    const backRidgeX = splitX + 24, backRidgeY = wallTop - 106;
+
+    // Right wing's left-sloping tiled roof plane (overlaps the main roof in 3/4 perspective!)
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(backRidgeX, backRidgeY);
+    ctx.lineTo(rightPeakX, rightPeakY);
+    ctx.lineTo(rightFaceX - 4, wallTop + 12);
+    ctx.lineTo(splitX - 18, wallTop + 4);
+    ctx.closePath();
+    ctx.fillStyle = '#22384a';
+    ctx.fill();
+    ctx.clip();
+
+    for (let row = 0; row < 5; row++) {
+        const u0 = row / 5, u1 = (row + 1) / 5;
+        const y0 = lerp(backRidgeY, wallTop + 12, u0);
+        const y1 = lerp(backRidgeY, wallTop + 12, u1);
+        for (let col = -2; col < 8; col++) {
+            const sx = splitX - 24 + col * 20 + (row % 2) * 10;
+            ctx.fillStyle = (col + row) % 2 === 0 ? '#2c465c' : '#1b2e3d';
+            ctx.strokeStyle = '#0f1922'; ctx.lineWidth = 1.8;
+            ctx.fillRect(sx, y0, 20, y1 - y0 + 1);
+            ctx.strokeRect(sx, y0, 20, y1 - y0 + 1);
+        }
+    }
+    ctx.restore();
+
+    ctx.strokeStyle = '#101a24'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(backRidgeX, backRidgeY);
+    ctx.lineTo(rightPeakX, rightPeakY);
+    ctx.lineTo(rightFaceX - 4, wallTop + 12);
+    ctx.lineTo(splitX - 18, wallTop + 4);
+    ctx.closePath();
+    ctx.stroke();
+
+    // Right wing front-facing gable triangle wall + shuttered attic window (ref_0.jpg)
+    ctx.fillStyle = '#3f2e3d'; ctx.strokeStyle = '#181218'; ctx.lineWidth = 2.8;
+    ctx.beginPath();
+    ctx.moveTo(rightFaceX - 2, wallTop + 8);
+    ctx.lineTo(rightPeakX, rightPeakY + 4);
+    ctx.lineTo(r + 8, wallTop + 4);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Shuttered attic window in right gable
+    ctx.fillStyle = '#2d212b'; ctx.strokeStyle = '#161016'; ctx.lineWidth = 2.2;
+    ctx.fillRect(rightPeakX - 12, wallTop - 42, 24, 30);
+    ctx.strokeRect(rightPeakX - 12, wallTop - 42, 24, 30);
+    ctx.beginPath();
+    ctx.moveTo(rightPeakX, wallTop - 42); ctx.lineTo(rightPeakX, wallTop - 12);
+    ctx.moveTo(rightPeakX - 12, wallTop - 27); ctx.lineTo(rightPeakX + 12, wallTop - 27);
+    ctx.stroke();
+
+    // Thick blue-slate bargeboard trim on right projecting gable
+    ctx.fillStyle = '#415c75'; ctx.strokeStyle = '#111b24'; ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.moveTo(rightFaceX - 8, wallTop + 12);
+    ctx.lineTo(rightPeakX, rightPeakY - 4);
+    ctx.lineTo(r + 14, wallTop + 4);
+    ctx.lineTo(r + 8, wallTop + 11);
+    ctx.lineTo(rightPeakX, rightPeakY + 6);
+    ctx.lineTo(rightFaceX - 2, wallTop + 18);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // --- 5. Downstairs Left Wooden Plank Door (ref_0.jpg & ref_extra_0.jpg!)
+    const dx = x + 12, dy = g - 72, dw = 36, dh = 72;
+    ctx.fillStyle = '#5e4c59'; ctx.strokeStyle = '#181218'; ctx.lineWidth = 2.5;
+    ctx.fillRect(dx - 5, dy - 6, dw + 10, dh + 6);
+    ctx.strokeRect(dx - 5, dy - 6, dw + 10, dh + 6);
+    ctx.fillStyle = '#30222e';
+    ctx.fillRect(dx, dy, dw, dh);
+    ctx.strokeRect(dx, dy, dw, dh);
+    ctx.strokeStyle = '#1a1219'; ctx.lineWidth = 2;
+    for (let i = 1; i <= 3; i++) {
+        ctx.beginPath(); ctx.moveTo(dx + (dw / 4) * i, dy); ctx.lineTo(dx + (dw / 4) * i, dy + dh); ctx.stroke();
+    }
+    ctx.fillStyle = '#423140';
+    ctx.fillRect(dx + 2, dy + 14, dw - 4, 6);
+    ctx.fillRect(dx + 2, dy + 46, dw - 4, 6);
+    ctx.fillStyle = '#b8c4d0';
+    ctx.fillRect(dx + dw - 9, dy + 34, 5, 3);
+
+    // Criss-crossed silver iron chains on the front door too (ref_extra_0.jpg!)
+    drawIronChainLinks(dx - 4, dy + 4, dx + dw + 4, dy + dh - 4);
+    drawIronChainLinks(dx + dw + 4, dy + 4, dx - 4, dy + dh - 4);
+
+    // --- 6. Three Glowing Multi-Pane Windows + Criss-Crossed Silver Iron Chains (ref_0.jpg & ref_extra_0.jpg!)
+    const winList = [
+        [x + 66, g - 66, 34, 44],
+        [splitX + 10, g - 63, 34, 44],
+        [rightFaceX + 12, g - 62, 42, 44]
+    ];
+    for (let wi = 0; wi < winList.length; wi++) {
+        const [wx, wy, ww, wh] = winList[wi];
+        // Outer timber window frame
+        ctx.fillStyle = '#63525e'; ctx.strokeStyle = '#181218'; ctx.lineWidth = 2.5;
+        ctx.fillRect(wx - 4, wy - 4, ww + 8, wh + 8);
+        ctx.strokeRect(wx - 4, wy - 4, ww + 8, wh + 8);
+
+        // Glowing warm cream-yellow interior glass (or boarded shutter when damaged)
+        const glow = ctx.createLinearGradient(wx, wy, wx, wy + wh);
+        glow.addColorStop(0, f > 0.25 ? '#fcfad2' : '#7a4532');
+        glow.addColorStop(1, f > 0.25 ? '#d2e3c5' : '#4a261b');
+        ctx.fillStyle = glow;
+        ctx.fillRect(wx, wy, ww, wh);
+        ctx.strokeRect(wx, wy, ww, wh);
+
+        // 2x3 window muntin bars
+        ctx.strokeStyle = '#4a3b46'; ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(wx + ww * 0.5, wy); ctx.lineTo(wx + ww * 0.5, wy + wh);
+        ctx.moveTo(wx, wy + wh * 0.33); ctx.lineTo(wx + ww, wy + wh * 0.33);
+        ctx.moveTo(wx, wy + wh * 0.66); ctx.lineTo(wx + ww, wy + wh * 0.66);
+        ctx.stroke();
+
+        // Dark wooden shutter planks behind chains when upgraded or damaged (ref_extra_0.jpg)
+        if (upgrades.shack.lvl > 0 || f < 0.75) {
+            ctx.fillStyle = 'rgba(52, 38, 48, 0.72)';
+            ctx.fillRect(wx, wy, ww, wh);
+        }
+
+        // Iconic ZombieSmash! HD link-by-link criss-crossed silver iron chains over windows (ref_extra_0.jpg!)
+        drawIronChainLinks(wx - 4, wy - 2, wx + ww + 4, wy + wh + 2);
+        drawIronChainLinks(wx + ww + 4, wy - 2, wx - 4, wy + wh + 2);
     }
 
-    // HP bar on the roof
-    const bw = w + 44, bx = HOUSE.cx - bw / 2, by = y - 82;
-    ctx.fillStyle = 'rgba(0,0,0,0.72)'; ctx.fillRect(bx - 3, by - 3, bw + 6, 20);
-    ctx.fillStyle = f > 0.5 ? '#8fd63f' : f > 0.25 ? '#ffd83d' : '#ff5b47';
-    ctx.fillRect(bx, by, bw * f, 14);
-    ctx.strokeStyle = '#0c1206'; ctx.lineWidth = 2; ctx.strokeRect(bx, by, bw, 14);
-    ctx.fillStyle = '#eafbd2'; ctx.font = 'bold 12px Trebuchet MS'; ctx.textAlign = 'center';
-    ctx.fillText('JOEY\'S SHACK ' + Math.ceil(game.hp) + '/' + game.maxHp, HOUSE.cx, by + 11);
+    // Dark blue-grey grass tufts overlapping the base of the farmhouse walls (ref_0.jpg!)
+    ctx.fillStyle = '#2b404f';
+    for (let gx2 = x - 12; gx2 < r + 12; gx2 += 8) {
+        const h2 = 8 + ((gx2 * 17) % 12);
+        ctx.beginPath();
+        ctx.moveTo(gx2, g + 8);
+        ctx.lineTo(gx2 + 4, g + 8 - h2);
+        ctx.lineTo(gx2 + 8, g + 8);
+        ctx.fill();
+    }
+
+    ctx.restore();
 }
 
-// ============================================================== HUD
+// ============================================================== HUD (ZOMBIESMASH! HD)
 const BELT = [
-    { tool: 'hand',    icon: '🖐', label: 'HAND' },
-    { tool: 'grenade', icon: '💣', label: 'NADE' },
-    { tool: 'spike',   icon: '🔺', label: 'SPIKE' },
-    { tool: 'saw',     icon: '🪚', label: 'SAW' }
+    { tool: 'hand',    label: 'HAND' },
+    { tool: 'grenade', label: 'NADE' },
+    { tool: 'spike',   label: 'MINE' },
+    { tool: 'saw',     label: 'SAW'  }
 ];
-const BW = 82, BH = 60, BGAP = 10;
-const BELT_Y = H - 76;
-const BELT_X = W / 2 - (BELT.length * (BW + BGAP) - BGAP) / 2;
+const BW = 66, BH = 66, BGAP = 10;
+const BELT_Y = 16;
+const BELT_X = 18;
 const beltRect = i => ({ x: BELT_X + i * (BW + BGAP), y: BELT_Y, w: BW, h: BH });
-
-function drawBelt() {
-    ctx.textAlign = 'center';
-    for (let i = 0; i < BELT.length; i++) {
-        const b = BELT[i], r = beltRect(i);
-        const n = b.tool === 'hand' ? -1 : ammo[b.tool];
-        const on = game.tool === b.tool;
-        const usable = n !== 0;
-
-        ctx.globalAlpha = usable ? 1 : 0.4;
-        ctx.fillStyle = on ? '#4d7a1e' : 'rgba(18,24,12,0.82)';
-        ctx.strokeStyle = on ? '#d3ff8a' : '#5c7a33';
-        ctx.lineWidth = on ? 4 : 3;
-        roundRect(r.x, r.y, r.w, r.h, 10);
-        ctx.fill(); ctx.stroke();
-
-        ctx.font = '24px serif';
-        ctx.fillStyle = '#fff';
-        ctx.fillText(b.icon, r.x + r.w / 2, r.y + 30);
-        ctx.font = 'bold 11px Trebuchet MS';
-        ctx.fillStyle = '#cfe6ad';
-        ctx.fillText(b.label + (n >= 0 ? ' x' + n : ''), r.x + r.w / 2, r.y + 49);
-        ctx.globalAlpha = 1;
-    }
-}
 
 function roundRect(x, y, w, h, r) {
     ctx.beginPath();
@@ -2843,71 +3289,182 @@ function roundRect(x, y, w, h, r) {
     ctx.closePath();
 }
 
+function drawBeltIcon(tool, cx, cy) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    if (tool === 'hand') {
+        blob(0, 4, 11, 10, 0, '#f5d2b8', 2.2);
+        for (const [fx, fy, rot] of [[-9, -6, -0.25], [-3, -10, -0.05], [4, -10, 0.1], [10, -5, 0.3]]) {
+            blob(fx, fy, 3.5, 8, rot, '#f5d2b8', 2);
+        }
+    } else if (tool === 'grenade') {
+        blob(0, 3, 14, 14, 0, '#262b30', 2.5);
+        ctx.fillStyle = '#5a6570'; ctx.fillRect(-4, -14, 8, 5);
+        ctx.strokeStyle = '#ffd83d'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, -14); ctx.quadraticCurveTo(8, -20, 12, -14); ctx.stroke();
+        drawStar5(12, -14, 5, 2, '#ff9d2e', '#fff', 0.8);
+    } else if (tool === 'spike') {
+        ctx.rotate(-0.22);
+        blob(0, 3, 19, 10, 0, '#5a6570', 2.5);
+        blob(0, 0, 16, 8, 0, '#9aa8b5', 2);
+        blob(0, -3, 7, 3.5, 0, '#7fe3a0', 1.8);
+    } else if (tool === 'saw') {
+        ctx.fillStyle = '#d0dae3'; ctx.strokeStyle = '#1e242b'; ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i < 12; i++) {
+            const a = (i / 12) * 6.283;
+            const rr = i % 2 ? 17 : 12;
+            ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * rr, Math.sin(a) * rr);
+        }
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#4a5560';
+        ctx.beginPath(); ctx.arc(0, 0, 5, 0, 7); ctx.fill();
+    }
+    ctx.restore();
+}
+
+function drawBelt() {
+    ctx.textAlign = 'center';
+    for (let i = 0; i < BELT.length; i++) {
+        const b = BELT[i], r = beltRect(i);
+        const n = b.tool === 'hand' ? -1 : ammo[b.tool];
+        const on = game.tool === b.tool;
+        const usable = n !== 0;
+
+        ctx.save();
+        ctx.globalAlpha = usable ? 1 : 0.48;
+
+        const grad = ctx.createRadialGradient(r.x + r.w / 2, r.y + r.h / 2, 4, r.x + r.w / 2, r.y + r.h / 2, r.w * 0.7);
+        if (on) {
+            grad.addColorStop(0, '#fff6b0');
+            grad.addColorStop(0.55, '#d4882a');
+            grad.addColorStop(1, '#5e2c14');
+        } else if (usable) {
+            grad.addColorStop(0, '#42b8e8');
+            grad.addColorStop(0.65, '#1b648a');
+            grad.addColorStop(1, '#0e334a');
+        } else {
+            grad.addColorStop(0, '#3a5266');
+            grad.addColorStop(1, '#1c2c38');
+        }
+
+        roundRect(r.x, r.y, r.w, r.h, 9);
+        ctx.fillStyle = grad; ctx.fill();
+        ctx.lineWidth = on ? 4 : 3.2;
+        ctx.strokeStyle = on ? '#ffea4a' : (usable ? '#78d4ff' : '#6c8599');
+        ctx.stroke();
+
+        drawBeltIcon(b.tool, r.x + r.w / 2, r.y + r.h / 2 - 4);
+
+        ctx.font = 'bold 11px Trebuchet MS';
+        ctx.lineWidth = 3; ctx.strokeStyle = '#0e171f';
+        const txt = b.label + (n >= 0 ? ' x' + n : '');
+        ctx.strokeText(txt, r.x + r.w / 2, r.y + r.h - 7);
+        ctx.fillStyle = on ? '#fff9c4' : '#e4f2fc';
+        ctx.fillText(txt, r.x + r.w / 2, r.y + r.h - 7);
+
+        ctx.restore();
+    }
+}
+
 function drawHUD() {
-    ctx.textAlign = 'left';
-    ctx.font = 'bold 26px Trebuchet MS';
-    ctx.fillStyle = '#0c1206';
-    ctx.fillText('WAVE ' + game.wave, 22, 40);
-    ctx.fillStyle = '#b6ff4a';
-    ctx.fillText('WAVE ' + game.wave, 20, 38);
+    // --- Top-Right Authentic ZombieSmash! HD Status Box (ref_0.jpg, ref_3.jpg, ref_extra_0.jpg!)
+    const pw = 286, ph = 84, px = W - pw - 16, py = 14;
+    ctx.save();
+    roundRect(px, py, pw, ph, 10);
+    ctx.fillStyle = 'rgba(14, 34, 50, 0.82)';
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(138, 168, 190, 0.85)';
+    ctx.stroke();
 
-    ctx.font = 'bold 20px Trebuchet MS';
-    ctx.fillStyle = '#ffd83d';
-    ctx.fillText('⛁ ' + game.gold, 22, 68);
-    ctx.fillStyle = '#cfe6ad';
-    ctx.fillText('Score ' + game.score, 22, 92);
-
+    const starX = px + pw - 28, starY = py + 28;
+    drawStar5(starX, starY, 17, 7.5, '#ffd83d', '#4a2c0a', 2.5);
     ctx.textAlign = 'right';
+    ctx.font = 'bold 34px Trebuchet MS';
+    ctx.lineWidth = 5; ctx.strokeStyle = '#101c26';
+    ctx.strokeText(String(game.gold), starX - 24, py + 39);
+    ctx.fillStyle = '#ffd83d';
+    ctx.fillText(String(game.gold), starX - 24, py + 39);
+
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 16px Trebuchet MS';
+    ctx.lineWidth = 3.5; ctx.strokeStyle = '#0d1821';
+    ctx.strokeText('WAVE ' + game.wave, px + 14, py + 26);
+    ctx.fillStyle = '#9ad8ff';
+    ctx.fillText('WAVE ' + game.wave, px + 14, py + 26);
+
     const left = game.alive + game.pending;
-    ctx.font = 'bold 20px Trebuchet MS';
-    ctx.fillStyle = '#eafbd2';
-    ctx.fillText('Zombies left: ' + left, W - 22, 40);
-    ctx.fillText('Killed: ' + game.kills, W - 22, 66);
+    ctx.font = 'bold 12px Trebuchet MS';
+    ctx.strokeText('Left: ' + left + ' · Kills: ' + game.kills, px + 14, py + 44);
+    ctx.fillStyle = '#c8deed';
+    ctx.fillText('Left: ' + left + ' · Kills: ' + game.kills, px + 14, py + 44);
+
+    // Bottom row inside panel: Cyan-Blue House Health Bar + Pink/Red House Icon (exact ref_0.jpg!)
+    const barX = px + 14, barY = py + 55, barW = pw - 64, barH = 16;
+    ctx.fillStyle = '#0a141c';
+    ctx.fillRect(barX, barY, barW, barH);
+    const hpFrac = clamp(game.hp / game.maxHp, 0, 1);
+    const barGrad = ctx.createLinearGradient(barX, barY, barX, barY + barH);
+    barGrad.addColorStop(0, hpFrac > 0.28 ? '#4ad4ff' : '#ff6b5e');
+    barGrad.addColorStop(0.5, hpFrac > 0.28 ? '#0098e6' : '#d93226');
+    barGrad.addColorStop(1, hpFrac > 0.28 ? '#006bb3' : '#961b12');
+    ctx.fillStyle = barGrad;
+    ctx.fillRect(barX + 2, barY + 2, (barW - 4) * hpFrac, barH - 4);
+    ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 2;
+    ctx.strokeRect(barX, barY, barW, barH);
+
+    const hx = px + pw - 28, hy = barY + 8;
+    ctx.fillStyle = '#ff4a72'; ctx.strokeStyle = '#38101c'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(hx - 13, hy - 1); ctx.lineTo(hx, hy - 13); ctx.lineTo(hx + 13, hy - 1);
+    ctx.lineTo(hx + 9, hy - 1); ctx.lineTo(hx + 9, hy + 10); ctx.lineTo(hx - 9, hy + 10);
+    ctx.lineTo(hx - 9, hy - 1); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#38101c';
+    ctx.fillRect(hx - 3, hy + 2, 6, 8);
+    ctx.restore();
 
     if (game.combo > 1 && game.comboTimer > 0) {
         ctx.textAlign = 'center';
-        ctx.font = 'bold 34px Trebuchet MS';
-        ctx.fillStyle = '#ff9de0';
+        ctx.font = 'bold 32px Trebuchet MS';
+        ctx.lineWidth = 5; ctx.strokeStyle = '#0e171f';
         ctx.globalAlpha = clamp(game.comboTimer, 0, 1);
-        ctx.fillText('x' + game.combo + ' COMBO', W / 2, 54);
+        ctx.strokeText('x' + game.combo + ' COMBO!', W / 2, 52);
+        ctx.fillStyle = '#ffd83d';
+        ctx.fillText('x' + game.combo + ' COMBO!', W / 2, 52);
         ctx.globalAlpha = 1;
     }
 
-    // Boss bar
     let boss = null;
     for (const z of zombies) {
         if (z.t.boss && z.state !== 'dead' && z.fade > 0 && (!boss || z.hp > boss.hp)) boss = z;
     }
     if (boss) {
         const bw = 520, bx = (W - bw) / 2, by = 92;
-        ctx.fillStyle = 'rgba(0,0,0,0.62)';
+        ctx.fillStyle = 'rgba(10,22,32,0.75)';
         ctx.fillRect(bx - 3, by - 3, bw + 6, 26);
-        ctx.fillStyle = '#3a1414';
+        ctx.fillStyle = '#2b1216';
         ctx.fillRect(bx, by, bw, 20);
         ctx.fillStyle = '#d63b2f';
         ctx.fillRect(bx, by, bw * clamp(boss.hp / boss.maxHp, 0, 1), 20);
-        if (boss.plateHp > 0) {
-            ctx.fillStyle = 'rgba(157,224,255,0.8)';
-            ctx.fillRect(bx, by, bw * clamp(boss.plateHp / (60 + game.wave * 8), 0, 1), 5);
-        }
-        ctx.strokeStyle = '#eafbd2'; ctx.lineWidth = 2;
+        ctx.strokeStyle = '#9ab8cc'; ctx.lineWidth = 2;
         ctx.strokeRect(bx, by, bw, 20);
         ctx.textAlign = 'center';
         ctx.font = 'bold 13px Trebuchet MS';
-        ctx.fillStyle = '#eafbd2';
-        ctx.fillText('THE WARDEN — BOWL ZOMBIES, TRIP LEGS, OR CATCH ROCKS!', W / 2, by + 15);
+        ctx.fillStyle = '#eaf4fc';
+        ctx.fillText('GIANT BOSS — BOWL ZOMBIES, TRIP LEGS, OR CATCH ROCKS!', W / 2, by + 15);
     }
 
-    // Wave banner
     if (bannerT > 0) {
         const k = bannerT > 1.9 ? (2.2 - bannerT) / 0.3 : Math.min(1, bannerT / 0.6);
         ctx.globalAlpha = clamp(k, 0, 1);
         ctx.textAlign = 'center';
-        ctx.font = 'bold 62px Trebuchet MS';
-        ctx.lineWidth = 7; ctx.strokeStyle = INK;
-        ctx.strokeText(bannerText, W / 2, 200);
+        ctx.font = 'bold 58px Trebuchet MS';
+        ctx.lineWidth = 7; ctx.strokeStyle = '#121c24';
+        ctx.strokeText(bannerText, W / 2, 195);
         ctx.fillStyle = bannerColor;
-        ctx.fillText(bannerText, W / 2, 200);
+        ctx.fillText(bannerText, W / 2, 195);
         ctx.globalAlpha = 1;
     }
 
@@ -2924,35 +3481,32 @@ function draw() {
     if (game.shake > 0.2) ctx.translate(rand(-game.shake, game.shake), rand(-game.shake, game.shake) * 0.6);
 
     ctx.drawImage(bg, 0, 0);
+    drawWindmill();
     ctx.drawImage(decal, 0, 0);
 
-    // Spike traps on the dirt
     for (const sp of spikes) {
-        ctx.fillStyle = '#8f979f'; ctx.strokeStyle = INK; ctx.lineWidth = 3;
+        ctx.fillStyle = '#6c7a86'; ctx.strokeStyle = INK; ctx.lineWidth = 2.5;
         for (let i = -3; i <= 3; i++) {
             ctx.beginPath();
             ctx.moveTo(sp.x + i * 11 - 6, GROUND);
-            ctx.lineTo(sp.x + i * 11, GROUND - 26);
+            ctx.lineTo(sp.x + i * 11, GROUND - 24);
             ctx.lineTo(sp.x + i * 11 + 6, GROUND);
             ctx.closePath(); ctx.fill(); ctx.stroke();
         }
-        ctx.fillStyle = '#4a4038';
-        ctx.fillRect(sp.x - sp.w / 2, GROUND - 4, sp.w, 9);
-        ctx.strokeRect(sp.x - sp.w / 2, GROUND - 4, sp.w, 9);
+        blob(sp.x, GROUND - 2, sp.w * 0.5, 6, 0, '#495661', 2.5);
+        blob(sp.x, GROUND - 5, 10, 3.5, 0, '#7fe3a0', 1.5);
     }
 
     drawHouse();
 
-    // Back lanes first
     const order = zombies.slice().sort((a, b) => b.lane - a.lane || a.hips.y - b.hips.y);
     for (const z of order) if (z.fade > 0) drawZombie(z);
 
-    // Interactive Boulders (hurled by bosses/titans, catchable with cursor!)
     for (const b of boulders) {
         ctx.save();
         ctx.translate(b.x, b.y);
         ctx.rotate(b.rot);
-        ctx.fillStyle = '#6f6554'; ctx.strokeStyle = INK; ctx.lineWidth = 3.5;
+        ctx.fillStyle = '#53626e'; ctx.strokeStyle = INK; ctx.lineWidth = 3;
         ctx.beginPath();
         for (let i = 0; i < 8; i++) {
             const a = (i / 8) * 6.283;
@@ -2960,8 +3514,7 @@ function draw() {
             ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * rr, Math.sin(a) * rr);
         }
         ctx.closePath(); ctx.fill(); ctx.stroke();
-        // Rock facet highlight
-        ctx.fillStyle = '#948872';
+        ctx.fillStyle = '#758896';
         ctx.beginPath(); ctx.arc(-b.r * 0.25, -b.r * 0.25, b.r * 0.38, 0, 7); ctx.fill();
         ctx.restore();
 
@@ -2978,8 +3531,8 @@ function draw() {
         ctx.save();
         ctx.translate(g.x, g.y); ctx.rotate(g.rot);
         ctx.globalAlpha = clamp(g.life, 0, 1);
-        blob(0, 0, g.r * 2.1, g.r * 0.95, 0, g.color, 3);
-        ctx.fillStyle = '#7a1a1a';
+        blob(0, 0, g.r * 2.1, g.r * 0.95, 0, g.color, 2.2);
+        ctx.fillStyle = '#8a1111';
         ctx.beginPath(); ctx.arc(g.r * 1.6, 0, g.r * 0.7, 0, 7); ctx.fill();
         ctx.restore();
     }
@@ -2987,7 +3540,7 @@ function draw() {
 
     for (const s of saws) {
         ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot);
-        ctx.fillStyle = '#c9d2da'; ctx.strokeStyle = INK; ctx.lineWidth = 3;
+        ctx.fillStyle = '#c9d2da'; ctx.strokeStyle = INK; ctx.lineWidth = 2.5;
         ctx.beginPath();
         for (let i = 0; i < 12; i++) {
             const a = (i / 12) * 6.283;
@@ -3002,8 +3555,8 @@ function draw() {
 
     for (const n of nades) {
         ctx.save(); ctx.translate(n.x, n.y); ctx.rotate(n.spin);
-        blob(0, 0, 11, 9, 0, '#3b4a26', 3);
-        ctx.fillStyle = '#8a8375'; ctx.fillRect(-3, -14, 6, 6);
+        blob(0, 0, 11, 11, 0, '#23282c', 2.5);
+        ctx.fillStyle = '#68737d'; ctx.fillRect(-3, -14, 6, 5);
         ctx.restore();
         if (n.fuse < 0.45 && ((n.fuse * 14) | 0) % 2 === 0) {
             ctx.fillStyle = 'rgba(255,90,40,0.75)';
@@ -3018,9 +3571,8 @@ function draw() {
     }
     ctx.globalAlpha = 1;
 
-    // Grab tether
     if (grab.z) {
-        ctx.strokeStyle = 'rgba(214,255,150,0.38)';
+        ctx.strokeStyle = 'rgba(130,220,255,0.42)';
         ctx.lineWidth = 2.2; ctx.setLineDash([6, 6]);
         ctx.beginPath(); ctx.moveTo(grab.z.chest.x, grab.z.chest.y); ctx.lineTo(grab.x, grab.y); ctx.stroke();
         ctx.setLineDash([]);
@@ -3035,7 +3587,7 @@ function draw() {
     for (const p of popups) {
         ctx.globalAlpha = clamp(p.life, 0, 1);
         ctx.font = 'bold ' + p.size + 'px Trebuchet MS';
-        ctx.lineWidth = 4; ctx.strokeStyle = '#131a08';
+        ctx.lineWidth = 4; ctx.strokeStyle = '#0e161d';
         ctx.strokeText(p.text, p.x, p.y);
         ctx.fillStyle = p.color;
         ctx.fillText(p.text, p.x, p.y);
