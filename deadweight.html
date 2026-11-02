@@ -2030,19 +2030,14 @@ function endGame() {
 // ============================================================== ART HELPERS
 function shade(hex, k) {
     const n = parseInt(hex.slice(1), 16);
-    const m = 1 - k;
-    return 'rgb(' + (((n >> 16) & 255) * m | 0) + ','
-                  + (((n >> 8) & 255) * m | 0) + ','
-                  + ((n & 255) * m | 0) + ')';
+    const m = clamp(1 - k, 0, 2.2);
+    return 'rgb(' + Math.min(255, ((n >> 16) & 255) * m | 0) + ','
+                  + Math.min(255, ((n >> 8) & 255) * m | 0) + ','
+                  + Math.min(255, (n & 255) * m | 0) + ')';
 }
 
-// Cartoon limb: heavy ink pass under a flat colour pass, both segments at once
-// so the outline never cuts through the middle of the arm.
 function limb(a, j, b, w, color, ink) {
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(j.x, j.y); ctx.lineTo(b.x, b.y);
-    ctx.strokeStyle = INK; ctx.lineWidth = w + ink; ctx.stroke();
-    ctx.strokeStyle = color; ctx.lineWidth = w; ctx.stroke();
+    drawTaperedLimb(a, j, b, w * 0.56, w * 0.48, w * 0.38, color, shade('#1a2418', 0), ink * 0.5);
 }
 
 function blob(x, y, rx, ry, rot, fill, ink) {
@@ -2051,7 +2046,7 @@ function blob(x, y, rx, ry, rot, fill, ink) {
     if (ink > 0) { ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke(); }
 }
 
-// ============================================================== ZOMBIE ART (ZOMBIESMASH! HD STYLE)
+// ============================================================== ZOMBIE ART (ZOMBIESMASH! HD ILLUSTRATED STYLE)
 function drawStar5(x, y, rOuter, rInner, fill, stroke, lw) {
     ctx.beginPath();
     for (let i = 0; i < 10; i++) {
@@ -2064,30 +2059,317 @@ function drawStar5(x, y, rOuter, rInner, fill, stroke, lw) {
     if (lw > 0) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
 }
 
-// Helper to draw authentic ZombieSmash! HD 3-fingered reaching zombie hand (ref_0.jpg & ref_extra_0.jpg)
-function drawZSHand(hx, hy, d, s, skinCol, ink) {
-    blob(hx, hy, 4.8 * s, 4.2 * s, 0, skinCol, ink * 0.85);
-    ctx.fillStyle = skinCol;
+// Sculpted anatomical tapered limb polygon (shoulder/hip -> elbow/knee -> wrist/ankle)
+// Replaces uniform stick-capsule strokes with real tapered 2D character geometry & shading!
+function drawTaperedLimb(a, j, b, rA, rJ, rB, col, darkCol, ink) {
+    let ux1 = j.x - a.x, uy1 = j.y - a.y;
+    const l1 = Math.hypot(ux1, uy1) || 1;
+    ux1 /= l1; uy1 /= l1;
+    const nx1 = -uy1, ny1 = ux1;
+
+    let ux2 = b.x - j.x, uy2 = b.y - j.y;
+    const l2 = Math.hypot(ux2, uy2) || 1;
+    ux2 /= l2; uy2 /= l2;
+    const nx2 = -uy2, ny2 = ux2;
+
+    let nxJ = nx1 + nx2, nyJ = ny1 + ny2;
+    const lJ = Math.hypot(nxJ, nyJ) || 1;
+    nxJ /= lJ; nyJ /= lJ;
+
+    ctx.beginPath();
+    ctx.moveTo(a.x + nx1 * rA, a.y + ny1 * rA);
+    ctx.quadraticCurveTo(
+        lerp(a.x, j.x, 0.55) + nx1 * lerp(rA, rJ, 0.5),
+        lerp(a.y, j.y, 0.55) + ny1 * lerp(rA, rJ, 0.5),
+        j.x + nxJ * rJ, j.y + nyJ * rJ
+    );
+    ctx.quadraticCurveTo(
+        lerp(j.x, b.x, 0.5) + nx2 * lerp(rJ, rB, 0.5),
+        lerp(j.y, b.y, 0.5) + ny2 * lerp(rJ, rB, 0.5),
+        b.x + nx2 * rB, b.y + ny2 * rB
+    );
+    ctx.arc(b.x, b.y, rB, Math.atan2(ny2, nx2), Math.atan2(-ny2, -nx2), false);
+    ctx.quadraticCurveTo(
+        lerp(b.x, j.x, 0.5) - nx2 * lerp(rB, rJ, 0.5),
+        lerp(b.y, j.y, 0.5) - ny2 * lerp(rB, rJ, 0.5),
+        j.x - nxJ * rJ, j.y - nyJ * rJ
+    );
+    ctx.quadraticCurveTo(
+        lerp(j.x, a.x, 0.45) - nx1 * lerp(rJ, rA, 0.5),
+        lerp(j.y, a.y, 0.45) - ny1 * lerp(rJ, rA, 0.5),
+        a.x - nx1 * rA, a.y - ny1 * rA
+    );
+    ctx.arc(a.x, a.y, rA, Math.atan2(-ny1, -nx1), Math.atan2(ny1, nx1), false);
+    ctx.closePath();
+
+    const grad = ctx.createLinearGradient(a.x + nx1 * rA, a.y + ny1 * rA, a.x - nx1 * rA, a.y - ny1 * rA);
+    grad.addColorStop(0, col);
+    grad.addColorStop(0.65, col);
+    grad.addColorStop(1, darkCol);
+    ctx.fillStyle = grad;
+    ctx.fill();
     ctx.strokeStyle = INK;
-    ctx.lineWidth = ink * 0.78;
-    for (let i = -1; i <= 1; i++) {
-        const fx = hx + d * (4.2 + (i === 0 ? 1.2 : 0)) * s;
-        const fy = hy + (i * 2.8 + 0.6) * s;
+    ctx.lineWidth = ink;
+    ctx.stroke();
+}
+
+// Sculpted fabric sleeve that drapes from shoulder through elbow and ends in a JAGGED TORN CUFF (no round caps!)
+function drawTornSleeve(a, j, b, reach, rA, rJ, rCuff, col, darkCol, ink) {
+    const c = { x: lerp(j.x, b.x, reach), y: lerp(j.y, b.y, reach) };
+    let ux1 = j.x - a.x, uy1 = j.y - a.y;
+    const l1 = Math.hypot(ux1, uy1) || 1;
+    ux1 /= l1; uy1 /= l1;
+    const nx1 = -uy1, ny1 = ux1;
+
+    let ux2 = c.x - j.x, uy2 = c.y - j.y;
+    const l2 = Math.hypot(ux2, uy2) || 1;
+    ux2 /= l2; uy2 /= l2;
+    const nx2 = -uy2, ny2 = ux2;
+
+    let nxJ = (nx1 + nx2) * 0.5, nyJ = (ny1 + ny2) * 0.5;
+    const lJ = Math.hypot(nxJ, nyJ) || 1;
+    nxJ /= lJ; nyJ /= lJ;
+
+    ctx.beginPath();
+    ctx.moveTo(a.x + nx1 * rA, a.y + ny1 * rA);
+    ctx.quadraticCurveTo(j.x + nxJ * rJ, j.y + nyJ * rJ, c.x + nx2 * rCuff, c.y + ny2 * rCuff);
+    // Jagged 3-point torn sleeve cuff
+    ctx.lineTo(c.x + nx2 * rCuff * 0.35 - ux2 * rCuff * 0.65, c.y + ny2 * rCuff * 0.35 - uy2 * rCuff * 0.65);
+    ctx.lineTo(c.x + ux2 * rCuff * 0.25, c.y + uy2 * rCuff * 0.25);
+    ctx.lineTo(c.x - nx2 * rCuff * 0.45 - ux2 * rCuff * 0.60, c.y - ny2 * rCuff * 0.45 - uy2 * rCuff * 0.60);
+    ctx.lineTo(c.x - nx2 * rCuff, c.y - ny2 * rCuff);
+    ctx.quadraticCurveTo(j.x - nxJ * rJ, j.y - nyJ * rJ, a.x - nx1 * rA, a.y - ny1 * rA);
+    ctx.arc(a.x, a.y, rA, Math.atan2(-ny1, -nx1), Math.atan2(ny1, nx1), false);
+    ctx.closePath();
+
+    const grad = ctx.createLinearGradient(a.x + nx1 * rA, a.y + ny1 * rA, a.x - nx1 * rA, a.y - ny1 * rA);
+    grad.addColorStop(0, col);
+    grad.addColorStop(0.68, col);
+    grad.addColorStop(1, darkCol);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = ink;
+    ctx.stroke();
+}
+
+// Sculpted trouser leg with jagged torn ankle cuff and torn knee patch (exact ref_0.jpg & ref_extra_0.jpg!)
+function drawTornPant(a, j, b, rHip, rKnee, rAnkle, col, darkCol, ink, kneeSkinCol, patchCol) {
+    let ux1 = j.x - a.x, uy1 = j.y - a.y;
+    const l1 = Math.hypot(ux1, uy1) || 1;
+    ux1 /= l1; uy1 /= l1;
+    const nx1 = -uy1, ny1 = ux1;
+
+    let ux2 = b.x - j.x, uy2 = b.y - j.y;
+    const l2 = Math.hypot(ux2, uy2) || 1;
+    ux2 /= l2; uy2 /= l2;
+    const nx2 = -uy2, ny2 = ux2;
+
+    let nxJ = (nx1 + nx2) * 0.5, nyJ = (ny1 + ny2) * 0.5;
+    const lJ = Math.hypot(nxJ, nyJ) || 1;
+    nxJ /= lJ; nyJ /= lJ;
+
+    const c = { x: lerp(j.x, b.x, 0.88), y: lerp(j.y, b.y, 0.88) };
+
+    ctx.beginPath();
+    ctx.moveTo(a.x + nx1 * rHip, a.y + ny1 * rHip);
+    ctx.quadraticCurveTo(j.x + nxJ * rKnee, j.y + nyJ * rKnee, c.x + nx2 * rAnkle, c.y + ny2 * rAnkle);
+    // Jagged torn bottom pant cuff
+    ctx.lineTo(c.x + nx2 * rAnkle * 0.35 - ux2 * rAnkle * 0.55, c.y + ny2 * rAnkle * 0.35 - uy2 * rAnkle * 0.55);
+    ctx.lineTo(c.x + ux2 * rAnkle * 0.20, c.y + uy2 * rAnkle * 0.20);
+    ctx.lineTo(c.x - nx2 * rAnkle * 0.40 - ux2 * rAnkle * 0.50, c.y - ny2 * rAnkle * 0.40 - uy2 * rAnkle * 0.50);
+    ctx.lineTo(c.x - nx2 * rAnkle, c.y - ny2 * rAnkle);
+    ctx.quadraticCurveTo(j.x - nxJ * rKnee, j.y - nyJ * rKnee, a.x - nx1 * rHip, a.y - ny1 * rHip);
+    ctx.closePath();
+
+    const grad = ctx.createLinearGradient(a.x + nx1 * rHip, a.y, a.x - nx1 * rHip, a.y);
+    grad.addColorStop(0, col);
+    grad.addColorStop(0.65, col);
+    grad.addColorStop(1, darkCol);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = ink;
+    ctx.stroke();
+
+    // Jagged torn knee hole (ref_0.jpg) or stitched denim knee patch (ref_extra_0.jpg)
+    if (kneeSkinCol) {
+        ctx.fillStyle = kneeSkinCol;
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = ink * 0.72;
         ctx.beginPath();
-        ctx.ellipse(fx, fy, 3.2 * s, 1.7 * s, d * (0.18 + i * 0.22), 0, 7);
+        ctx.moveTo(j.x - rKnee * 0.45, j.y - rKnee * 0.42);
+        ctx.lineTo(j.x + rKnee * 0.58, j.y - rKnee * 0.18);
+        ctx.lineTo(j.x + rKnee * 0.42, j.y + rKnee * 0.48);
+        ctx.lineTo(j.x - rKnee * 0.38, j.y + rKnee * 0.28);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+    } else if (patchCol) {
+        ctx.fillStyle = patchCol;
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = ink * 0.65;
+        ctx.beginPath();
+        ctx.roundRect(j.x - rKnee * 0.48, j.y - rKnee * 0.52, rKnee * 0.96, rKnee * 1.04, 2.5);
         ctx.fill();
         ctx.stroke();
     }
+}
+
+// Sculpted ZombieSmash! HD shoe / sneaker / bare clawed foot (NO oval pill blobs!)
+function drawZSFoot(fx, fy, d, s, kind, skinCol, skinDark, dim, ink) {
+    ctx.save();
+    ctx.translate(fx, fy + 1.5 * s);
+    ctx.scale(d, 1);
+
+    const isBare = kind === 'runner' || kind === 'screamer' || kind === 'warden' || kind === 'titan' || kind === 'brute';
+    if (isBare) {
+        // Sculpted bare zombie foot with heel, arch, instep, and gnarled toes (ref_0.jpg & ref_extra_0.jpg)
+        ctx.beginPath();
+        ctx.moveTo(-4.8 * s, -3.2 * s);
+        ctx.quadraticCurveTo(-6.2 * s, 1.5 * s, -4.2 * s, 3.6 * s);
+        ctx.lineTo(2.0 * s, 3.4 * s);
+        ctx.quadraticCurveTo(5.5 * s, 3.8 * s, 9.8 * s, 3.4 * s);
+        ctx.quadraticCurveTo(11.6 * s, 1.8 * s, 9.6 * s, -0.4 * s);
+        ctx.quadraticCurveTo(4.2 * s, -1.6 * s, 1.2 * s, -3.8 * s);
+        ctx.closePath();
+        const fg = ctx.createLinearGradient(0, -4 * s, 0, 4 * s);
+        fg.addColorStop(0, skinCol);
+        fg.addColorStop(1, skinDark);
+        ctx.fillStyle = fg;
+        ctx.fill();
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = ink * 0.85;
+        ctx.stroke();
+
+        // Toe cleft lines & dark toenail tips
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = ink * 0.55;
+        ctx.beginPath();
+        ctx.moveTo(6.5 * s, 1.2 * s); ctx.lineTo(9.8 * s, 1.4 * s);
+        ctx.moveTo(6.2 * s, 2.5 * s); ctx.lineTo(9.4 * s, 2.6 * s);
+        ctx.stroke();
+    } else {
+        // Sculpted cartoon sneaker / work boot (ref_0.jpg white bloodied sneaker or dark leather boot)
+        const isSneaker = kind === 'shambler';
+        const upperCol = isSneaker ? shade('#e6ebe0', dim) : shade('#302620', dim);
+        const upperDark = isSneaker ? shade('#b4bdb0', dim) : shade('#1a1410', dim);
+        const soleCol = isSneaker ? shade('#f4f7f0', dim) : shade('#120e0c', dim);
+
+        ctx.beginPath();
+        ctx.moveTo(-5.2 * s, -3.8 * s);
+        ctx.lineTo(-5.8 * s, 2.2 * s);
+        ctx.quadraticCurveTo(-5.6 * s, 4.0 * s, -3.5 * s, 4.0 * s);
+        ctx.lineTo(8.8 * s, 4.0 * s);
+        ctx.quadraticCurveTo(12.2 * s, 3.8 * s, 11.8 * s, 0.6 * s);
+        ctx.quadraticCurveTo(11.2 * s, -2.0 * s, 6.2 * s, -2.2 * s);
+        ctx.lineTo(1.8 * s, -4.2 * s);
+        ctx.closePath();
+
+        const sg = ctx.createLinearGradient(0, -4 * s, 0, 4 * s);
+        sg.addColorStop(0, upperCol);
+        sg.addColorStop(1, upperDark);
+        ctx.fillStyle = sg;
+        ctx.fill();
+
+        // Blood scuff on shambler white sneaker (exact ref_0.jpg detail!)
+        if (isSneaker) {
+            ctx.save();
+            ctx.clip();
+            ctx.fillStyle = shade('#961e1e', dim);
+            ctx.beginPath();
+            ctx.arc(-2.2 * s, 2.2 * s, 3.4 * s, 0, 7);
+            ctx.arc(7.8 * s, 1.8 * s, 2.4 * s, 0, 7);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // Rubber sole stripe & shoe outline
+        ctx.strokeStyle = soleCol;
+        ctx.lineWidth = 1.6 * s;
+        ctx.beginPath();
+        ctx.moveTo(-5.2 * s, 2.8 * s); ctx.lineTo(10.8 * s, 2.8 * s);
+        ctx.stroke();
+
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = ink * 0.85;
+        ctx.beginPath();
+        ctx.moveTo(-5.2 * s, -3.8 * s);
+        ctx.lineTo(-5.8 * s, 2.2 * s);
+        ctx.quadraticCurveTo(-5.6 * s, 4.0 * s, -3.5 * s, 4.0 * s);
+        ctx.lineTo(8.8 * s, 4.0 * s);
+        ctx.quadraticCurveTo(12.2 * s, 3.8 * s, 11.8 * s, 0.6 * s);
+        ctx.quadraticCurveTo(11.2 * s, -2.0 * s, 6.2 * s, -2.2 * s);
+        ctx.lineTo(1.8 * s, -4.2 * s);
+        ctx.closePath();
+        ctx.stroke();
+
+        // Shoe laces
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 1.2 * s;
+        ctx.beginPath();
+        ctx.moveTo(2.5 * s, -2.6 * s); ctx.lineTo(4.2 * s, -0.8 * s);
+        ctx.moveTo(4.5 * s, -2.2 * s); ctx.lineTo(6.0 * s, -0.5 * s);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+// Unified Continuous Bezier Zombie Hand (ref_0.jpg & ref_extra_2.jpg!)
+// Drawn as ONE single continuous path from wrist -> 3 hooked fingers -> thumb -> wrist (ZERO overlapping ovals!)
+function drawZSHand(hx, hy, ex, ey, d, s, skinCol, skinDark, ink) {
+    ctx.save();
+    ctx.translate(hx, hy);
+    const forearmAng = Math.atan2(hy - ey, hx - ex);
+    ctx.rotate(forearmAng);
+    if (d < 0) ctx.scale(1, -1);
+
+    ctx.beginPath();
+    // Start at top of wrist
+    ctx.moveTo(-2.5 * s, -2.6 * s);
+    // Back of hand arching toward top hooked finger
+    ctx.quadraticCurveTo(2.5 * s, -3.6 * s, 6.8 * s, -3.4 * s);
+    // Finger 1 (top index claw)
+    ctx.quadraticCurveTo(9.6 * s, -3.0 * s, 9.2 * s, -1.2 * s);
+    ctx.quadraticCurveTo(7.0 * s, -1.2 * s, 4.6 * s, -1.3 * s);
+    // Finger 2 (middle reaching claw, longest)
+    ctx.quadraticCurveTo(8.6 * s, -0.8 * s, 10.4 * s, 0.8 * s);
+    ctx.quadraticCurveTo(10.0 * s, 2.4 * s, 7.6 * s, 1.8 * s);
+    ctx.quadraticCurveTo(5.6 * s, 1.2 * s, 4.2 * s, 0.8 * s);
+    // Finger 3 (lower ring claw)
+    ctx.quadraticCurveTo(7.4 * s, 2.2 * s, 8.2 * s, 3.8 * s);
+    ctx.quadraticCurveTo(7.2 * s, 5.0 * s, 5.2 * s, 3.6 * s);
+    ctx.quadraticCurveTo(3.6 * s, 2.5 * s, 2.2 * s, 2.0 * s);
+    // Opposing lower thumb & palm heel
+    ctx.quadraticCurveTo(3.2 * s, 4.2 * s, 1.6 * s, 5.4 * s);
+    ctx.quadraticCurveTo(-0.4 * s, 5.2 * s, -1.0 * s, 2.8 * s);
+    ctx.quadraticCurveTo(-2.2 * s, 2.4 * s, -2.8 * s, 2.0 * s);
+    ctx.closePath();
+
+    const hg = ctx.createLinearGradient(-2 * s, -3 * s, 8 * s, 4 * s);
+    hg.addColorStop(0, skinCol);
+    hg.addColorStop(1, skinDark);
+    ctx.fillStyle = hg;
+    ctx.fill();
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = ink * 0.82;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    ctx.restore();
 }
 
 function drawZombie(z) {
     const t = z.t, s = z.s, d = z.dir;
     const dim = z.lane * 0.08;
     const skin = shade(t.skin, dim), skinD = shade(t.skinDark, dim);
-    const blotch = shade('#7e6387', dim);
-    const shirt = shade(t.shirt, dim), pants = shade(t.pants, dim);
-    const bSkin = shade(t.skin, dim + 0.16), bShirt = shade(t.shirt, dim + 0.16);
-    const bPants = shade(t.pants, dim + 0.16);
+    const skinLit = shade(t.skin, dim - 0.10);
+    const blotch = shade('#785682', dim);
+    const shirt = shade(t.shirt, dim), shirtD = shade(t.shirt, dim + 0.22), shirtLit = shade(t.shirt, dim - 0.10);
+    const pants = shade(t.pants, dim), pantsD = shade(t.pants, dim + 0.22);
+    const bSkin = shade(t.skin, dim + 0.16), bSkinD = shade(t.skinDark, dim + 0.18);
+    const bShirt = shade(t.shirt, dim + 0.16), bShirtD = shade(t.shirt, dim + 0.30);
+    const bPants = shade(t.pants, dim + 0.16), bPantsD = shade(t.pants, dim + 0.30);
 
     const isFemale = z.kind === 'runner' || z.kind === 'screamer';
     const isGiant = z.kind === 'warden' || z.kind === 'titan' || z.kind === 'brute';
@@ -2095,13 +2377,16 @@ function drawZombie(z) {
     const isLongSleeve = z.kind === 'shambler' || z.kind === 'hardhat' || z.kind === 'butcher';
 
     const hd = z.head, ch = z.chest, hp = z.hips;
-    const ink = Math.max(1.8, 2.15 * s);
+    const ink = Math.max(1.7, 2.05 * s);
     ctx.globalAlpha = clamp(z.fade, 0, 1);
 
-    // Contact shadow on the moonlit ground
-    ctx.globalAlpha *= 0.44;
-    blob(hp.x, z.gy + 2, (isGiant ? 32 : 25) * s, (isGiant ? 8 : 6.2) * s, 0, '#0d1821', 0);
-    ctx.globalAlpha = clamp(z.fade, 0, 1);
+    // Soft feathered ground contact shadow
+    ctx.save();
+    ctx.globalAlpha *= 0.46;
+    const shR_x = (isGiant ? 31 : 23) * s, shR_y = (isGiant ? 7.5 : 5.6) * s;
+    ctx.fillStyle = '#0a141c';
+    ctx.beginPath(); ctx.ellipse(hp.x, z.gy + 2, shR_x, shR_y, 0, 0, 7); ctx.fill();
+    ctx.restore();
 
     // Screamer sonic ring
     if (t.howl && z.state !== 'dead') {
@@ -2121,22 +2406,23 @@ function drawZombie(z) {
         const hairCol = shade(z.kind === 'runner' ? '#69231a' : '#1b1f24', dim + 0.08);
         ctx.fillStyle = hairCol; ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.85;
         ctx.beginPath();
-        ctx.moveTo(hd.x - d * 8 * s, hd.y - 3 * s);
-        ctx.quadraticCurveTo(ch.x - d * 18 * s, ch.y + 4 * s, ch.x - d * 14 * s, ch.y + 19 * s);
-        ctx.lineTo(ch.x - d * 3 * s, ch.y + 12 * s);
+        ctx.moveTo(hd.x - d * 7 * s, hd.y - 2 * s);
+        ctx.quadraticCurveTo(ch.x - d * 18 * s, ch.y + 4 * s, ch.x - d * 15 * s, ch.y + 20 * s);
+        ctx.lineTo(ch.x - d * 9 * s, ch.y + 15 * s);
+        ctx.lineTo(ch.x - d * 5 * s, ch.y + 21 * s);
+        ctx.lineTo(ch.x - d * 2 * s, ch.y + 11 * s);
         ctx.closePath();
         ctx.fill(); ctx.stroke();
     }
 
-    // Torso coordinate frame — directional so near/far shoulders & hips are symmetric on BOTH left & right sides!
+    // Torso coordinate frame — directional so near/far shoulders & hips are symmetric on BOTH left & right sides
     let ax = ch.x - hp.x, ay = ch.y - hp.y;
     const al = Math.hypot(ax, ay) || 1;
     const nx = -ay / al, ny = ax / al;
     const hw = t.torsoW * 0.54 * s, hipW = t.torsoW * 0.45 * s;
 
-    // shL/shR are torso silhouette edges; shNear/shFar are anatomical shoulder joints oriented by facing dir (d)
-    const shL = { x: ch.x - nx * hw * 0.90, y: ch.y - ny * hw * 0.90 };
-    const shR = { x: ch.x + nx * hw * 0.90, y: ch.y + ny * hw * 0.90 };
+    const shL = { x: ch.x - nx * hw * 0.92, y: ch.y - ny * hw * 0.92 };
+    const shR = { x: ch.x + nx * hw * 0.92, y: ch.y + ny * hw * 0.92 };
     const hipL = { x: hp.x - nx * hipW, y: hp.y - ny * hipW };
     const hipR = { x: hp.x + nx * hipW, y: hp.y + ny * hipW };
 
@@ -2148,49 +2434,55 @@ function drawZombie(z) {
     const legB = (SK.hips - SK.foot) * 0.64 * s;
     const armB = (isGiant ? 13.5 : 11.2) * s;
     const near = d > 0 ? 1 : -1;
+    const lw = t.limb * s;
 
-    // --- 1. Far arm + far leg (behind torso) -------------------------------
+    // --- 1. Far arm + far leg (behind torso, sculpted tapered polygons!) ---
     if (z.limbOn(z.rhand)) {
         const el = ik(shFar.x, shFar.y, z.rhand.x, z.rhand.y, armB, armB, -near);
-        limb(shFar, el, z.rhand, t.limb * 0.84 * s, bSkin, ink);
+        drawTaperedLimb(shFar, el, z.rhand, lw * 0.48, lw * 0.40, lw * 0.32, bSkin, bSkinD, ink * 0.9);
         if (!isFemale) {
-            const slvEnd = isLongSleeve ? 0.76 : 0.42;
-            limb(shFar, el, { x: lerp(el.x, z.rhand.x, slvEnd), y: lerp(el.y, z.rhand.y, slvEnd) },
-                 t.limb * 1.04 * s, bShirt, ink * 0.78);
+            drawTornSleeve(shFar, el, z.rhand, isLongSleeve ? 0.72 : 0.36, lw * 0.58, lw * 0.50, lw * 0.46, bShirt, bShirtD, ink * 0.82);
         }
-        drawZSHand(z.rhand.x, z.rhand.y, d, s * 0.9, bSkin, ink);
+        drawZSHand(z.rhand.x, z.rhand.y, el.x, el.y, d, s * 0.90, bSkin, bSkinD, ink);
     }
     if (z.limbOn(z.rfoot)) {
         const kn = ik(hipFar.x, hipFar.y, z.rfoot.x, z.rfoot.y, legB, legB, near);
         if (isFemale) {
-            limb(hipFar, kn, z.rfoot, t.limb * 0.88 * s, bSkin, ink);
-            blob(z.rfoot.x + d * 3 * s, z.rfoot.y + 2 * s, 7.2 * s, 3.8 * s, 0, bSkin, ink * 0.8);
+            drawTaperedLimb(hipFar, kn, z.rfoot, lw * 0.52, lw * 0.42, lw * 0.32, bSkin, bSkinD, ink * 0.9);
         } else {
-            limb(hipFar, kn, z.rfoot, t.limb * 1.06 * s, bPants, ink);
-            const shoeCol = z.kind === 'shambler' ? shade('#d4d8ce', dim + 0.1)
-                          : isOveralls ? bSkin : shade('#2a231d', dim);
-            blob(z.rfoot.x + d * 3.2 * s, z.rfoot.y + 2 * s, 8.4 * s, 4.4 * s, 0, shoeCol, ink * 0.8);
+            drawTornPant(hipFar, kn, z.rfoot, lw * 0.62, lw * 0.54, lw * 0.48, bPants, bPantsD, ink * 0.9, null, null);
         }
+        drawZSFoot(z.rfoot.x, z.rfoot.y, d, s * 0.92, z.kind, bSkin, bSkinD, dim + 0.12, ink);
     }
 
-    // --- 2 & 3. Torso Silhouette (with seamless hunched upper back on Giant Overalls Bosses!)
+    // --- 2 & 3. Sculpted Torso Silhouette with 3D Shading Gradient ---------
     ctx.beginPath();
     ctx.moveTo(shL.x, shL.y);
-    ctx.quadraticCurveTo(ch.x - d * hw * 0.18, ch.y - (isGiant ? 14 : 3) * s, shR.x, shR.y);
-    ctx.quadraticCurveTo(hipR.x + nx * t.gut * s * 0.45, hipR.y, hipR.x, hipR.y);
+    ctx.quadraticCurveTo(ch.x - d * hw * 0.18, ch.y - (isGiant ? 13 : 3) * s, shR.x, shR.y);
+    ctx.quadraticCurveTo(hipR.x + nx * t.gut * s * 0.46, lerp(shR.y, hipR.y, 0.55), hipR.x, hipR.y);
     ctx.lineTo(hipL.x, hipL.y);
-    ctx.quadraticCurveTo(hipL.x - nx * t.gut * s * 0.45, lerp(hipL.y, shL.y, 0.5), shL.x, shL.y);
+    ctx.quadraticCurveTo(hipL.x - nx * t.gut * s * 0.42, lerp(hipL.y, shL.y, 0.5), shL.x, shL.y);
     ctx.closePath();
-    ctx.fillStyle = shirt; ctx.fill();
+
+    const torsoGrad = ctx.createLinearGradient(shL.x, shL.y, hipR.x, hipR.y);
+    torsoGrad.addColorStop(0, shirtLit);
+    torsoGrad.addColorStop(0.55, shirt);
+    torsoGrad.addColorStop(1, shirtD);
+    ctx.fillStyle = torsoGrad;
+    ctx.fill();
     ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
 
-    // Inner torso details (Blue denim overalls with yellow brass buttons, tattered dress, suit & tie, green sweater)
+    // Inner torso clothing details (clipped to torso contour)
     ctx.save();
     ctx.clip();
 
     if (isOveralls) {
-        // Faded blue/brown bib overalls over cream/beige shirt (exact ref_extra_0.jpg & ref_3.jpg!)
-        ctx.fillStyle = pants;
+        // Shaded denim/brown bib overalls over undershirt (exact ref_extra_0.jpg & ref_3.jpg!)
+        const ovGrad = ctx.createLinearGradient(hipL.x, ch.y, hipR.x, hp.y);
+        ovGrad.addColorStop(0, shade(t.pants, dim - 0.08));
+        ovGrad.addColorStop(0.6, pants);
+        ovGrad.addColorStop(1, pantsD);
+        ctx.fillStyle = ovGrad;
         ctx.beginPath();
         ctx.moveTo(hipL.x - nx * 14 * s, lerp(ch.y, hp.y, 0.24));
         ctx.lineTo(hipR.x + nx * 14 * s, lerp(ch.y, hp.y, 0.24));
@@ -2202,68 +2494,93 @@ function drawZombie(z) {
         // Two overall shoulder straps coming down to the chest bib
         const st1X = ch.x - d * hw * 0.18, st2X = ch.x + d * hw * 0.42;
         const bibY = lerp(ch.y, hp.y, 0.30);
-        ctx.strokeStyle = INK; ctx.lineWidth = 7.2 * s;
+        ctx.strokeStyle = INK; ctx.lineWidth = 6.8 * s;
         ctx.beginPath();
         ctx.moveTo(st1X - d * 3 * s, ch.y - 12 * s); ctx.lineTo(st1X, bibY);
         ctx.moveTo(st2X - d * 2 * s, ch.y - 10 * s); ctx.lineTo(st2X, bibY);
         ctx.stroke();
-        ctx.strokeStyle = pants; ctx.lineWidth = 5.0 * s;
+        ctx.strokeStyle = pants; ctx.lineWidth = 4.6 * s;
         ctx.beginPath();
         ctx.moveTo(st1X - d * 3 * s, ch.y - 12 * s); ctx.lineTo(st1X, bibY);
         ctx.moveTo(st2X - d * 2 * s, ch.y - 10 * s); ctx.lineTo(st2X, bibY);
         ctx.stroke();
 
-        // Two bright yellow brass overall buttons on the bib (ref_extra_0.jpg!)
-        ctx.fillStyle = '#f5d742'; ctx.strokeStyle = INK; ctx.lineWidth = 1.6 * s;
+        // 3D brass overall buttons with specular dot
         for (const bx of [st1X, st2X]) {
-            ctx.beginPath(); ctx.arc(bx, bibY + 1 * s, 3.1 * s, 0, 7); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#f5d742'; ctx.strokeStyle = INK; ctx.lineWidth = 1.5 * s;
+            ctx.beginPath(); ctx.arc(bx, bibY + 1 * s, 2.9 * s, 0, 7); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#fff9c4';
+            ctx.beginPath(); ctx.arc(bx - 0.8 * s, bibY + 0.2 * s, 0.9 * s, 0, 7); ctx.fill();
         }
-        // Dark denim stain patch on overalls belly
-        blob(hp.x + d * 4 * s, hp.y - 3 * s, 6.5 * s, 4.2 * s, 0.2, shade(t.pants, dim + 0.26), 0);
+        // Irregular grease/dirt stain patch on overalls belly
+        ctx.fillStyle = shade(t.pants, dim + 0.28);
+        ctx.beginPath();
+        ctx.moveTo(hp.x, hp.y - 5 * s);
+        ctx.quadraticCurveTo(hp.x + d * 8 * s, hp.y - 6 * s, hp.x + d * 7 * s, hp.y - 1 * s);
+        ctx.quadraticCurveTo(hp.x + d * 2 * s, hp.y + 2 * s, hp.x, hp.y - 5 * s);
+        ctx.fill();
     } else if (isFemale) {
-        // Tattered sleeveless dress (ref_0.jpg & ref_extra_2.jpg)
+        // Tattered sleeveless dress with fabric folds & rips (ref_0.jpg & ref_extra_2.jpg)
+        ctx.strokeStyle = shirtD; ctx.lineWidth = 1.5 * s;
+        ctx.beginPath();
+        ctx.moveTo(ch.x - 2 * s, ch.y + 4 * s); ctx.quadraticCurveTo(hp.x - 3 * s, lerp(ch.y, hp.y, 0.5), hp.x - 4 * s, hp.y);
+        ctx.moveTo(ch.x + 3 * s, ch.y + 5 * s); ctx.quadraticCurveTo(hp.x + 4 * s, lerp(ch.y, hp.y, 0.5), hp.x + 3 * s, hp.y);
+        ctx.stroke();
         if (z.kind === 'runner') {
-            blob(ch.x - 2 * s, lerp(ch.y, hp.y, 0.4), 5 * s, 3.5 * s, 0.2, shade('#826a4b', dim), 0);
-            blob(ch.x + 4 * s, lerp(ch.y, hp.y, 0.75), 4.5 * s, 3 * s, -0.3, shade('#826a4b', dim), 0);
+            ctx.fillStyle = shade('#7d6445', dim);
+            ctx.beginPath();
+            ctx.moveTo(ch.x - 4 * s, lerp(ch.y, hp.y, 0.35));
+            ctx.lineTo(ch.x + 2 * s, lerp(ch.y, hp.y, 0.42));
+            ctx.lineTo(ch.x - 1 * s, lerp(ch.y, hp.y, 0.54));
+            ctx.closePath(); ctx.fill();
         } else {
             // Screamer dark dress with white collar & apron trim (ref_extra_2.jpg)
             ctx.fillStyle = shade('#e6e8e1', dim);
             ctx.beginPath();
-            ctx.arc(ch.x + d * 2 * s, ch.y - 4 * s, 9.5 * s, 0, Math.PI);
+            ctx.arc(ch.x + d * 2 * s, ch.y - 4 * s, 9.0 * s, 0, Math.PI);
             ctx.fill();
-            ctx.fillRect(hipL.x - 10 * s, hp.y - 5 * s, 36 * s, 5 * s);
+            ctx.fillRect(hipL.x - 10 * s, hp.y - 5 * s, 36 * s, 4.5 * s);
         }
     } else if (z.kind === 'butcher') {
-        // Business Suit Zombie (ref_extra_2.jpg): white dress shirt V-neck + crimson/dark tie
+        // Business Suit Zombie (ref_extra_2.jpg): white dress shirt V-neck + lapels + crimson tie
         ctx.fillStyle = shade('#e8e6dc', dim);
         ctx.beginPath();
         ctx.moveTo(ch.x - 6 * s, ch.y - 10 * s);
         ctx.lineTo(ch.x + d * 9 * s, ch.y - 10 * s);
         ctx.lineTo(ch.x + d * 3 * s, lerp(ch.y, hp.y, 0.68));
         ctx.closePath(); ctx.fill();
-        ctx.strokeStyle = INK; ctx.lineWidth = 1.2 * s; ctx.stroke();
-        ctx.fillStyle = shade('#7a1c1c', dim);
+        ctx.strokeStyle = INK; ctx.lineWidth = 1.3 * s; ctx.stroke();
+        ctx.fillStyle = shade('#851919', dim);
         ctx.beginPath();
         ctx.moveTo(ch.x + d * 2 * s, ch.y - 5 * s);
-        ctx.lineTo(ch.x + d * 5.5 * s, lerp(ch.y, hp.y, 0.62));
-        ctx.lineTo(ch.x + d * 1.0 * s, lerp(ch.y, hp.y, 0.62));
+        ctx.lineTo(ch.x + d * 5.5 * s, lerp(ch.y, hp.y, 0.56));
+        ctx.lineTo(ch.x + d * 2.5 * s, lerp(ch.y, hp.y, 0.68));
+        ctx.lineTo(ch.x + d * 0.5 * s, lerp(ch.y, hp.y, 0.56));
         ctx.closePath(); ctx.fill();
     } else {
-        // Classic Male Neighbor Zombie (shambler / hardhat): torn brown waist & white sweater stitches (ref_0.jpg)
+        // Classic Male Neighbor Zombie (shambler / hardhat): jagged ripped sweater hem & white stitches (ref_0.jpg)
         ctx.fillStyle = pants;
         ctx.beginPath();
         ctx.moveTo(hipL.x - nx * 10 * s, lerp(hipL.y, shL.y, 0.22));
         for (let i = 0; i <= 6; i++) {
             const u = i / 6;
             const bx = lerp(hipL.x, hipR.x, u), by = lerp(hipL.y, hipR.y, u);
-            ctx.lineTo(bx, by - (i % 2 ? 4 : 0) * s - 3 * s);
+            ctx.lineTo(bx, by - (i % 2 ? 4.5 : 0) * s - 2.5 * s);
         }
         ctx.lineTo(hipR.x + nx * 10 * s, hipR.y + 20 * s);
         ctx.lineTo(hipL.x - nx * 10 * s, hipL.y + 20 * s);
         ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.72; ctx.stroke();
 
-        // White stitch mark on green sweater shoulder/chest (exact ref_0.jpg detail!)
-        ctx.strokeStyle = shade('#e6ebd8', dim); ctx.lineWidth = 1.7 * s;
+        // Dark V-neck collar shadow + white stitch mark on green sweater (exact ref_0.jpg detail!)
+        ctx.fillStyle = shirtD;
+        ctx.beginPath();
+        ctx.moveTo(ch.x - 4 * s, ch.y - 6 * s);
+        ctx.lineTo(ch.x + d * 6 * s, ch.y - 5 * s);
+        ctx.lineTo(ch.x + d * 2 * s, ch.y + 3 * s);
+        ctx.closePath(); ctx.fill();
+
+        ctx.strokeStyle = shade('#e6ebd8', dim); ctx.lineWidth = 1.6 * s;
         const sx = ch.x - d * 2 * s, sy = lerp(ch.y, hp.y, 0.36);
         ctx.beginPath();
         ctx.moveTo(sx - 3.5 * s, sy - 2 * s); ctx.lineTo(sx + 3.5 * s, sy + 2 * s);
@@ -2275,137 +2592,136 @@ function drawZombie(z) {
     }
     ctx.restore();
 
-    // Jagged skirt hem over hips for female dress zombies (ref_0.jpg)
+    // Jagged multi-point tattered skirt hem over hips for female dress zombies (ref_0.jpg)
     if (isFemale) {
         ctx.fillStyle = shirt; ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.85;
         ctx.beginPath();
         ctx.moveTo(hipL.x - 2 * s, hipL.y - 2 * s);
-        ctx.lineTo(hipL.x - 4 * s, hipL.y + 11 * s);
-        ctx.lineTo(hp.x, hipL.y + 7 * s);
-        ctx.lineTo(hipR.x + 3 * s, hipR.y + 12 * s);
+        ctx.lineTo(hipL.x - 5 * s, hipL.y + 10 * s);
+        ctx.lineTo(lerp(hipL.x, hp.x, 0.5), hipL.y + 5 * s);
+        ctx.lineTo(hp.x, hipL.y + 11 * s);
+        ctx.lineTo(lerp(hp.x, hipR.x, 0.5), hipR.y + 5 * s);
+        ctx.lineTo(hipR.x + 4 * s, hipR.y + 11 * s);
         ctx.lineTo(hipR.x + 2 * s, hipR.y - 2 * s);
         ctx.closePath(); ctx.fill(); ctx.stroke();
     }
 
-    // --- 4. Near leg + authentic ZombieSmash! HD footwear/rips -------------
+    // --- 4. Near leg + sculpted trouser & footwear (NO oval blobs!) --------
     if (z.limbOn(z.lfoot)) {
         const kn = ik(hipNear.x, hipNear.y, z.lfoot.x, z.lfoot.y, legB, legB, near);
         if (isFemale) {
-            limb(hipNear, kn, z.lfoot, t.limb * 0.92 * s, skin, ink);
-            blob(z.lfoot.x + d * 3.5 * s, z.lfoot.y + 2 * s, 7.6 * s, 3.8 * s, 0, skin, ink * 0.85);
+            drawTaperedLimb(hipNear, kn, z.lfoot, lw * 0.56, lw * 0.45, lw * 0.34, skin, skinD, ink);
         } else {
-            limb(hipNear, kn, z.lfoot, t.limb * 1.14 * s, pants, ink);
-            // Exposed knee rip on shambler/hardhat (ref_0.jpg) or dark denim patch on overalls (ref_extra_0.jpg)
-            if (z.kind === 'shambler' || z.kind === 'hardhat') {
-                blob(kn.x + d * 1.5 * s, kn.y + 1 * s, 3.8 * s, 4.8 * s, 0.1, skin, ink * 0.65);
-            } else if (isOveralls) {
-                blob(kn.x + d * 1 * s, kn.y, 4.8 * s, 6.0 * s, 0.1, shade('#223345', dim), 0);
-            }
-            const footCol = z.kind === 'shambler' ? shade('#e8ece2', dim)
-                          : isOveralls ? skin
-                          : shade('#26201b', dim);
-            blob(z.lfoot.x + d * 3.8 * s, z.lfoot.y + 2 * s, 8.8 * s, 4.6 * s, 0, footCol, ink * 0.85);
-            if (z.kind === 'shambler') {
-                blob(z.lfoot.x - d * 2 * s, z.lfoot.y + 2.2 * s, 3.2 * s, 2.0 * s, 0, '#8a2b2b', 0);
-            }
+            const kneeSkin = (z.kind === 'shambler' || z.kind === 'hardhat') ? skin : null;
+            const kneePatch = isOveralls ? shade('#223345', dim) : null;
+            drawTornPant(hipNear, kn, z.lfoot, lw * 0.66, lw * 0.58, lw * 0.50, pants, pantsD, ink, kneeSkin, kneePatch);
         }
+        drawZSFoot(z.lfoot.x, z.lfoot.y, d, s, z.kind, skin, skinD, dim, ink);
     }
 
     // For Giant Overalls Behemoths (ref_extra_0.jpg), draw the forward-hunched head BEFORE the massive foreground arm!
     if (isGiant) {
-        drawHead(z, skin, skinD, blotch, ink, dim);
+        drawHead(z, skin, skinD, skinLit, blotch, ink, dim);
     }
 
-    // --- 5. Near arm (sweeping from near shoulder across torso with purple blotches & props)
+    // --- 5. Near arm (sculpted tapered forearm + jagged ripped sleeve + unified claw hand!)
     if (z.limbOn(z.lhand)) {
         const el = ik(shNear.x, shNear.y, z.lhand.x, z.lhand.y, armB, armB, -near);
-        limb(shNear, el, z.lhand, t.limb * 0.94 * s, skin, ink);
+        drawTaperedLimb(shNear, el, z.lhand, lw * 0.54, lw * 0.46, lw * 0.36, skin, skinD, ink);
 
         if (isLongSleeve) {
-            limb(shNear, el, { x: lerp(el.x, z.lhand.x, 0.72), y: lerp(el.y, z.lhand.y, 0.72) },
-                 t.limb * 1.15 * s, shirt, ink * 0.84);
+            drawTornSleeve(shNear, el, z.lhand, 0.68, lw * 0.64, lw * 0.56, lw * 0.50, shirt, shirtD, ink * 0.88);
             if (z.kind === 'shambler') {
-                ctx.strokeStyle = shade('#e6ebd8', dim); ctx.lineWidth = 1.6 * s;
+                ctx.strokeStyle = shade('#e6ebd8', dim); ctx.lineWidth = 1.5 * s;
                 ctx.beginPath();
-                ctx.moveTo(shNear.x - 3 * s, shNear.y + 4 * s);
-                ctx.lineTo(shNear.x + 4 * s, shNear.y + 6 * s);
+                ctx.moveTo(shNear.x - 3 * s, shNear.y + 3 * s);
+                ctx.lineTo(shNear.x + 3 * s, shNear.y + 5 * s);
                 ctx.stroke();
             }
         } else if (isOveralls) {
-            // Torn short beige sleeve on upper arm + 3 neat purple zombie spots on forearm (exact ref_extra_0.jpg!)
-            limb(shNear, { x: lerp(shNear.x, el.x, 0.52), y: lerp(shNear.y, el.y, 0.52) },
-                 { x: lerp(shNear.x, el.x, 0.88), y: lerp(shNear.y, el.y, 0.88) },
-                 t.limb * 1.18 * s, shirt, ink * 0.84);
-            blob(lerp(el.x, z.lhand.x, 0.28), lerp(el.y, z.lhand.y, 0.28),
-                 3.2 * s, 2.2 * s, 0.25, blotch, 0);
-            blob(lerp(el.x, z.lhand.x, 0.55), lerp(el.y, z.lhand.y, 0.55) + 1.2 * s,
-                 2.4 * s, 1.7 * s, -0.2, blotch, 0);
-            blob(lerp(shNear.x, el.x, 0.85), lerp(shNear.y, el.y, 0.85),
-                 2.8 * s, 2.0 * s, -0.15, blotch, 0);
+            // Torn short beige sleeve on upper arm + organic necrotic patches on forearm (exact ref_extra_0.jpg!)
+            drawTornSleeve(shNear, el, z.lhand, 0.05, lw * 0.66, lw * 0.58, lw * 0.54, shirt, shirtD, ink * 0.88);
+            ctx.fillStyle = blotch;
+            for (const [u, rSpot] of [[0.30, 2.6 * s], [0.58, 2.0 * s]]) {
+                const sx = lerp(el.x, z.lhand.x, u), sy = lerp(el.y, z.lhand.y, u);
+                ctx.beginPath();
+                ctx.moveTo(sx - rSpot, sy);
+                ctx.quadraticCurveTo(sx, sy - rSpot * 0.9, sx + rSpot * 1.1, sy + rSpot * 0.2);
+                ctx.quadraticCurveTo(sx, sy + rSpot * 0.9, sx - rSpot, sy);
+                ctx.fill();
+            }
         }
 
-        // Bloater carrying round black bomb with sparking fuse (exact ref_3.jpg bottom-left!)
+        // Bloater carrying 3D shaded cast-iron bomb with sparking fuse (ref_3.jpg)
         if (z.kind === 'bloater' && z.state !== 'dead') {
-            const bx = z.lhand.x + d * 6 * s, by = z.lhand.y + 4 * s;
-            blob(bx, by, 10.5 * s, 10.5 * s, 0, '#1e2226', ink);
-            ctx.strokeStyle = '#3e464f'; ctx.lineWidth = 1.4 * s;
-            ctx.beginPath();
-            ctx.arc(bx, by, 10 * s, -0.6, 0.6);
-            ctx.moveTo(bx - 9 * s, by); ctx.lineTo(bx + 9 * s, by);
-            ctx.stroke();
+            const bx = z.lhand.x + d * 6 * s, by = z.lhand.y + 4 * s, br = 9.8 * s;
+            const bg = ctx.createRadialGradient(bx - 3 * s, by - 3 * s, 1 * s, bx, by, br);
+            bg.addColorStop(0, '#5a6672');
+            bg.addColorStop(0.55, '#22282e');
+            bg.addColorStop(1, '#0d1014');
+            ctx.fillStyle = bg; ctx.strokeStyle = INK; ctx.lineWidth = ink;
+            ctx.beginPath(); ctx.arc(bx, by, br, 0, 7); ctx.fill(); ctx.stroke();
             const spk = (Math.sin(perf * 0.025) * 0.5 + 0.5);
-            ctx.fillStyle = '#ff9d2e';
-            ctx.beginPath(); ctx.arc(bx + d * 3 * s, by - 12 * s, (2.5 + spk * 2) * s, 0, 7); ctx.fill();
+            drawStar5(bx + d * 3 * s, by - 12 * s, (3.5 + spk * 2) * s, 1.5 * s, '#ffea4a', '#ff6b1a', 1 * s);
         }
 
-        // Butcher meat cleaver
+        // Butcher steel meat cleaver with wood handle & blood edge
         if (z.kind === 'butcher' && z.state !== 'dead') {
             ctx.save();
-            ctx.translate(z.lhand.x + d * 4 * s, z.lhand.y);
+            ctx.translate(z.lhand.x + d * 3 * s, z.lhand.y);
             ctx.rotate(d * (0.28 - z.swing * 0.8));
-            ctx.fillStyle = '#c4cdd6'; ctx.strokeStyle = INK; ctx.lineWidth = 2.0 * s;
-            ctx.fillRect(0, -13 * s, d * 17 * s, 10 * s);
-            ctx.strokeRect(0, -13 * s, d * 17 * s, 10 * s);
-            ctx.fillStyle = '#8a1414';
-            ctx.fillRect(d * 7 * s, -13 * s, d * 9 * s, 3.8 * s);
+            ctx.fillStyle = '#5c381c'; ctx.strokeStyle = INK; ctx.lineWidth = 1.6 * s;
+            ctx.fillRect(-d * 4 * s, -3 * s, d * 7 * s, 4 * s);
+            ctx.strokeRect(-d * 4 * s, -3 * s, d * 7 * s, 4 * s);
+            const cg = ctx.createLinearGradient(0, -13 * s, 0, -2 * s);
+            cg.addColorStop(0, '#eef5fa'); cg.addColorStop(1, '#8c9aa8');
+            ctx.fillStyle = cg; ctx.lineWidth = 1.8 * s;
+            ctx.beginPath();
+            ctx.moveTo(d * 2 * s, -2 * s);
+            ctx.lineTo(d * 18 * s, -2 * s);
+            ctx.quadraticCurveTo(d * 19 * s, -8 * s, d * 17 * s, -13 * s);
+            ctx.lineTo(d * 2 * s, -11 * s);
+            ctx.closePath();
+            ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#961414';
+            ctx.fillRect(d * 6 * s, -12.5 * s, d * 10 * s, 3.2 * s);
             ctx.restore();
         }
 
-        drawZSHand(z.lhand.x, z.lhand.y, d, s, skin, ink);
+        drawZSHand(z.lhand.x, z.lhand.y, el.x, el.y, d, s, skin, skinD, ink);
     }
 
     // For normal zombies, draw the head on top of the shoulders/arms
     if (!isGiant) {
-        drawHead(z, skin, skinD, blotch, ink, dim);
+        drawHead(z, skin, skinD, skinLit, blotch, ink, dim);
     }
 
     if (z.elite && z.state !== 'dead') {
-        drawStar5(hd.x - d * 18 * s, hd.y - t.headR * s - 2 * s, 7 * s, 3.2 * s, '#ffd83d', INK, 1.5 * s);
+        drawStar5(hd.x - d * 16 * s, hd.y - t.headR * s - 2 * s, 6.5 * s, 3.0 * s, '#ffd83d', INK, 1.4 * s);
     }
 
     if (z.hp < z.maxHp && z.state !== 'dead' && !t.boss) {
-        const bw = 40 * s, bx = hd.x - bw / 2, by = hd.y - t.headR * s - 12 * s;
-        ctx.fillStyle = 'rgba(10,20,30,0.75)'; ctx.fillRect(bx - 1, by - 1, bw + 2, 5.5 * s + 2);
+        const bw = 38 * s, bx = hd.x - bw / 2, by = hd.y - t.headR * s - 11 * s;
+        ctx.fillStyle = 'rgba(10,20,30,0.75)'; ctx.fillRect(bx - 1, by - 1, bw + 2, 5 * s + 2);
         const f = clamp(z.hp / z.maxHp, 0, 1);
         ctx.fillStyle = f > 0.5 ? '#28b8ff' : f > 0.22 ? '#ffd83d' : '#ff4d4d';
-        ctx.fillRect(bx, by, bw * f, 5.5 * s);
+        ctx.fillRect(bx, by, bw * f, 5 * s);
     }
 
     if (z.grabbed) {
         ctx.strokeStyle = 'rgba(120,220,255,0.85)';
         ctx.lineWidth = 2.4;
-        ctx.beginPath(); ctx.arc(grab.x, grab.y, 19 + Math.sin(perf * 0.014) * 3, 0, 7); ctx.stroke();
+        ctx.beginPath(); ctx.arc(grab.x, grab.y, 18 + Math.sin(perf * 0.014) * 3, 0, 7); ctx.stroke();
     }
     ctx.globalAlpha = 1;
 }
 
-function drawHead(z, skin, skinD, blotch, ink, dim) {
+function drawHead(z, skin, skinD, skinLit, blotch, ink, dim) {
     const t = z.t, s = z.s, d = z.dir;
     const hd = z.head, ch = z.chest;
     const isFemale = z.kind === 'runner' || z.kind === 'screamer';
     const isGiant = z.kind === 'warden' || z.kind === 'titan' || z.kind === 'brute';
 
-    // Compact, sleek ZombieSmash! HD head scale matching smaller body proportions
     const R = t.headR * s;
 
     const dead = z.state === 'dead';
@@ -2413,8 +2729,6 @@ function drawHead(z, skin, skinD, blotch, ink, dim) {
     const panicked = !dead && (z.grabbed || airborne);
     const dizzy = !dead && !panicked && (z.state === 'ragdoll' || z.state === 'rise');
 
-    // Anchor head LOW and FORWARD onto the hunched shoulders (eliminates the long giraffe neck!)
-    // For Giant Overalls Behemoth (ref_extra_0.jpg), head sits low & forward on the hunched shoulders!
     const hx = isGiant
         ? lerp(ch.x, hd.x, 0.58) + d * 7.5 * s
         : lerp(ch.x, hd.x, 0.65) + d * 3.5 * s;
@@ -2422,265 +2736,374 @@ function drawHead(z, skin, skinD, blotch, ink, dim) {
         ? lerp(ch.y, hd.y, 0.52) + 1.5 * s
         : lerp(ch.y, hd.y, 0.64) + 2.5 * s;
 
-    // Short, thick hunched neck connection
-    ctx.beginPath();
-    ctx.moveTo(ch.x + d * 2 * s, ch.y - 2 * s);
-    ctx.lineTo(hx - d * 2 * s, hy + R * 0.15);
-    ctx.strokeStyle = INK; ctx.lineWidth = (isGiant ? 12 : 8.5) * s + ink; ctx.lineCap = 'round'; ctx.stroke();
-    ctx.strokeStyle = skinD; ctx.lineWidth = (isGiant ? 12 : 8.5) * s; ctx.stroke();
+    // Sculpted muscular/hunched neck polygon
+    drawTaperedLimb(
+        { x: ch.x + d * 1.5 * s, y: ch.y - 1.5 * s },
+        { x: lerp(ch.x, hx, 0.5), y: lerp(ch.y, hy, 0.5) },
+        { x: hx - d * 2 * s, y: hy + R * 0.15 },
+        (isGiant ? 6.5 : 4.5) * s, (isGiant ? 5.8 : 4.0) * s, (isGiant ? 5.2 : 3.6) * s,
+        skinD, shade(t.skinDark, dim + 0.18), ink * 0.9
+    );
 
     ctx.save();
     ctx.translate(hx, hy);
     ctx.rotate(clamp(Math.atan2(hd.x - ch.x, ch.y - hd.y), -0.85, 0.85) + d * (isGiant ? 0.10 : 0.06));
     ctx.scale(d, 1);
 
-    // --- 1. Sculpted 3/4-profile ZombieSmash! HD head shape (ref_0.jpg & ref_extra_0.jpg)
-    const jawDrop = dead ? R * 0.26
-                  : panicked ? R * 0.44
-                  : (t.howl ? R * (0.42 + Math.sin(perf * 0.02) * 0.07)
-                            : R * (0.32 + z.swing * 0.14 + Math.sin(z.phase * 2) * 0.03));
+    // --- 1. Authentic Sculpted 3/4 Skull + Cheekbone + Protruding Jaw Silhouette (NO Circle Heads!)
+    // Matches ref_0.jpg, ref_extra_0.jpg & ref_extra_2.jpg: cranium -> brow dip -> cheekbone flare -> jaw drop -> chin -> nape!
+    const jawDrop = dead ? R * 0.24
+                  : panicked ? R * 0.42
+                  : (t.howl ? R * (0.40 + Math.sin(perf * 0.02) * 0.06)
+                            : R * (0.28 + z.swing * 0.12 + Math.sin(z.phase * 2) * 0.03));
 
+    const traceHeadSilhouette = () => {
+        ctx.beginPath();
+        // Top-back of cranium
+        ctx.moveTo(-R * 0.68, -R * 0.58);
+        // Upper forehead dome
+        ctx.bezierCurveTo(-R * 0.22, -R * 1.08, R * 0.58, -R * 0.98, R * 0.78, -R * 0.48);
+        // Brow ridge dip into eye socket
+        ctx.quadraticCurveTo(R * 0.84, -R * 0.26, R * 0.72, -R * 0.10);
+        // 3/4 Cheekbone flare (key ZombieSmash! HD silhouette feature!)
+        ctx.quadraticCurveTo(R * 0.98, R * 0.06, R * 0.82, R * 0.32);
+        // Protruding lower jaw & chin
+        ctx.quadraticCurveTo(R * 0.76, jawDrop + R * 0.46, R * 0.34, jawDrop + R * 0.52);
+        ctx.quadraticCurveTo(-R * 0.12, jawDrop + R * 0.54, -R * 0.42, jawDrop + R * 0.24);
+        // Back of jaw & skull nape
+        ctx.quadraticCurveTo(-R * 0.86, R * 0.18, -R * 0.84, -R * 0.18);
+        ctx.quadraticCurveTo(-R * 0.84, -R * 0.42, -R * 0.68, -R * 0.58);
+        ctx.closePath();
+    };
+
+    traceHeadSilhouette();
+    const headGrad = ctx.createRadialGradient(R * 0.15, -R * 0.35, R * 0.1, 0, R * 0.05, R * 1.25);
+    headGrad.addColorStop(0, skinLit);
+    headGrad.addColorStop(0.58, skin);
+    headGrad.addColorStop(1, skinD);
+    ctx.fillStyle = headGrad;
+    ctx.fill();
+
+    // --- 2. Organic necrotic spots & 3D jaw/brow contour shading (clipped to skull)
+    ctx.save();
+    ctx.clip();
+
+    // Irregular organic decomposition blotches (Bezier kidney shapes, not geometric ovals)
+    ctx.fillStyle = blotch;
     ctx.beginPath();
-    ctx.arc(-R * 0.05, -R * 0.14, R * 0.94, Math.PI * 0.76, -Math.PI * 0.10, false);
-    ctx.quadraticCurveTo(R * 0.94, R * 0.10, R * 0.72, jawDrop + R * 0.34);
-    ctx.quadraticCurveTo(R * 0.20, jawDrop + R * 0.54, -R * 0.36, jawDrop + R * 0.22);
-    ctx.quadraticCurveTo(-R * 0.84, R * 0.20, -R * 0.80, -R * 0.18);
+    ctx.moveTo(-R * 0.48, -R * 0.54);
+    ctx.quadraticCurveTo(-R * 0.24, -R * 0.72, -R * 0.08, -R * 0.48);
+    ctx.quadraticCurveTo(-R * 0.28, -R * 0.34, -R * 0.48, -R * 0.54);
+    ctx.moveTo(R * 0.28, -R * 0.64);
+    ctx.quadraticCurveTo(R * 0.52, -R * 0.70, R * 0.58, -R * 0.48);
+    ctx.quadraticCurveTo(R * 0.38, -R * 0.42, R * 0.28, -R * 0.64);
+    ctx.fill();
+
+    // Deep shadow along underside of jaw and cheek hollow
+    ctx.fillStyle = 'rgba(28, 40, 26, 0.28)';
+    ctx.beginPath();
+    ctx.moveTo(-R * 0.85, R * 0.10);
+    ctx.quadraticCurveTo(-R * 0.20, jawDrop + R * 0.18, R * 0.85, jawDrop + R * 0.14);
+    ctx.lineTo(R * 0.85, jawDrop + R * 0.65);
+    ctx.lineTo(-R * 0.85, jawDrop + R * 0.65);
     ctx.closePath();
-    ctx.fillStyle = skin; ctx.fill();
+    ctx.fill();
+    ctx.restore();
+
+    // Crisp outer ink outline on the sculpted skull
+    traceHeadSilhouette();
     ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
 
-    // --- 2. Signature ZombieSmash! HD purple decomposition blotches on temple & forehead (ref_extra_0.jpg & ref_0.jpg)
-    ctx.save();
-    ctx.clip();
-    blob(-R * 0.30, -R * 0.50, R * 0.30, R * 0.18, -0.3, blotch, 0);
-    blob(R * 0.42, -R * 0.52, R * 0.20, R * 0.14, 0.2, blotch, 0);
-    if (!isGiant) {
-        blob(-R * 0.36, R * 0.18, R * 0.14, R * 0.10, 0.1, blotch, 0);
-    }
-    ctx.fillStyle = 'rgba(38, 52, 34, 0.24)';
-    ctx.fillRect(-R, jawDrop + R * 0.18, R * 2.2, R * 0.5);
-    ctx.restore();
-
-    // --- 3. Side ear with inner fold (ref_extra_0.jpg & ref_0.jpg) --------
-    blob(-R * 0.78, -R * 0.05, R * 0.20, R * 0.27, -0.12, skin, ink * 0.9);
-    ctx.strokeStyle = shade('#5a6b54', dim); ctx.lineWidth = 1.4 * s;
-    ctx.beginPath(); ctx.arc(-R * 0.78, -R * 0.05, R * 0.10, -1.2, 1.4); ctx.stroke();
-
-    // --- 4. Bruised Mauve Muzzle & Arched Groan Mouth with Crisp White Rectangular Teeth
-    const mouthX = R * 0.24;
-    const mouthY = jawDrop * 0.68 + R * 0.15;
-    const mouthW = panicked ? R * 0.44 : R * 0.45;
-    const mouthH = panicked ? R * 0.34 : R * 0.28;
-
-    // Soft reddish-mauve bruised mouth shadow (ref_0.jpg & ref_extra_1.jpg)
-    blob(mouthX, mouthY, mouthW * 1.22, mouthH * 1.25, 0.04, shade('#784552', dim), 0);
-
-    ctx.save();
+    // --- 3. Sculpted 3/4 Zombie Ear with tragus & inner helix (ref_extra_2.jpg!)
     ctx.beginPath();
-    ctx.moveTo(mouthX - mouthW, mouthY + mouthH * 0.55);
-    ctx.quadraticCurveTo(mouthX - mouthW, mouthY - mouthH * 0.98, mouthX, mouthY - mouthH * 0.98);
-    ctx.quadraticCurveTo(mouthX + mouthW, mouthY - mouthH * 0.98, mouthX + mouthW, mouthY + mouthH * 0.55);
-    ctx.quadraticCurveTo(mouthX, mouthY + mouthH * 0.80, mouthX - mouthW, mouthY + mouthH * 0.55);
+    ctx.moveTo(-R * 0.68, -R * 0.18);
+    ctx.bezierCurveTo(-R * 1.02, -R * 0.34, -R * 1.06, R * 0.24, -R * 0.70, R * 0.18);
     ctx.closePath();
-    ctx.fillStyle = '#381217'; ctx.fill();
-
-    ctx.clip();
-    // Bright white-cream rectangular upper & lower teeth (ref_0.jpg & ref_extra_0.jpg)
-    ctx.fillStyle = '#f2f4e1'; ctx.strokeStyle = INK; ctx.lineWidth = 1.25 * s;
-    const topY = mouthY - mouthH * 0.98, th = mouthH * 0.62;
-    ctx.fillRect(mouthX - mouthW * 0.88, topY, mouthW * 1.76, th);
-    ctx.strokeRect(mouthX - mouthW * 0.88, topY, mouthW * 1.76, th);
-    const botY = mouthY + mouthH * 0.24;
-    ctx.fillRect(mouthX - mouthW * 0.88, botY, mouthW * 1.76, th);
-    ctx.strokeRect(mouthX - mouthW * 0.88, botY, mouthW * 1.76, th);
-    for (let i = -2; i <= 2; i++) {
-        const tx = mouthX + i * (mouthW * 0.35);
-        ctx.beginPath();
-        ctx.moveTo(tx, topY); ctx.lineTo(tx, topY + th);
-        ctx.moveTo(tx, botY); ctx.lineTo(tx, botY + th);
-        ctx.stroke();
-    }
-    ctx.restore();
-
-    ctx.beginPath();
-    ctx.moveTo(mouthX - mouthW, mouthY + mouthH * 0.55);
-    ctx.quadraticCurveTo(mouthX - mouthW, mouthY - mouthH * 0.98, mouthX, mouthY - mouthH * 0.98);
-    ctx.quadraticCurveTo(mouthX + mouthW, mouthY - mouthH * 0.98, mouthX + mouthW, mouthY + mouthH * 0.55);
-    ctx.quadraticCurveTo(mouthX, mouthY + mouthH * 0.80, mouthX - mouthW, mouthY + mouthH * 0.55);
-    ctx.closePath();
+    ctx.fillStyle = skin; ctx.fill();
     ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.88; ctx.stroke();
+    ctx.strokeStyle = shade('#4f2e39', dim); ctx.lineWidth = 1.3 * s;
+    ctx.beginPath();
+    ctx.moveTo(-R * 0.84, -R * 0.12);
+    ctx.quadraticCurveTo(-R * 0.92, R * 0.02, -R * 0.76, R * 0.08);
+    ctx.stroke();
 
-    // --- 5. Bruised Reddish-Mauve Eye Sockets & Crazed ZombieSmash! HD Eyes (ref_0.jpg & ref_extra_0.jpg)
+    // --- 4. Lop-Sided ZombieSmash! HD Groan Mouth with Individual Rounded Teeth (ref_0.jpg & ref_extra_2.jpg!)
+    const mouthX = R * 0.22;
+    const mouthY = jawDrop * 0.66 + R * 0.16;
+    const mouthW = panicked ? R * 0.46 : R * 0.44;
+    const mouthH = panicked ? R * 0.34 : R * 0.27;
+
+    // Bruised mauve-purple lip contour around the mouth (exact ref_extra_2.jpg!)
+    const traceMouth = (scaleM) => {
+        const mw = mouthW * scaleM, mh = mouthH * scaleM;
+        ctx.beginPath();
+        // Lop-sided slack-jawed zombie groan shape
+        ctx.moveTo(mouthX - mw, mouthY + mh * 0.42);
+        ctx.bezierCurveTo(mouthX - mw * 0.95, mouthY - mh * 1.05, mouthX + mw * 0.15, mouthY - mh * 1.02, mouthX + mw * 0.85, mouthY - mh * 0.48);
+        ctx.quadraticCurveTo(mouthX + mw * 1.08, mouthY + mh * 0.18, mouthX + mw * 0.82, mouthY + mh * 0.62);
+        ctx.bezierCurveTo(mouthX + mw * 0.25, mouthY + mh * 0.88, mouthX - mw * 0.78, mouthY + mh * 0.82, mouthX - mw, mouthY + mh * 0.42);
+        ctx.closePath();
+    };
+
+    traceMouth(1.22);
+    ctx.fillStyle = shade('#733947', dim);
+    ctx.fill();
+
+    ctx.save();
+    traceMouth(1.0);
+    ctx.fillStyle = '#2b090e';
+    ctx.fill();
+    ctx.clip();
+
+    // Pinkish-red zombie tongue at back of throat
+    ctx.fillStyle = shade('#8f2d3b', dim);
+    ctx.beginPath();
+    ctx.ellipse(mouthX - mouthW * 0.1, mouthY + mouthH * 0.45, mouthW * 0.65, mouthH * 0.42, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Individual rounded-corner rectangular teeth (4 upper, 4 lower) — NO grid-line box!
+    const tw = (mouthW * 1.72) / 4;
+    const th = mouthH * 0.58;
+    const topY = mouthY - mouthH * 1.02;
+    const botY = mouthY + mouthH * 0.26;
+    ctx.fillStyle = '#f4f5dc';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 1.15 * s;
+    for (let i = 0; i < 4; i++) {
+        const tx = mouthX - mouthW * 0.86 + i * tw;
+        // Upper tooth
+        ctx.beginPath();
+        ctx.roundRect(tx + 0.3 * s, topY, tw - 0.6 * s, th, 1.6 * s);
+        ctx.fill(); ctx.stroke();
+        // Lower tooth (skip 1 tooth on shambler/brute for authentic snaggletooth zombie look!)
+        if (!(i === 2 && (z.kind === 'shambler' || z.kind === 'brute'))) {
+            ctx.beginPath();
+            ctx.roundRect(tx + 0.3 * s, botY, tw - 0.6 * s, th, 1.6 * s);
+            ctx.fill(); ctx.stroke();
+        }
+    }
+    ctx.restore();
+
+    traceMouth(1.0);
+    ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.86; ctx.stroke();
+
+    // --- 5. Sunken Mauve Eye Sockets, 3D Eyeballs, Glossy Irises & Curved Eyelids (ref_0.jpg & ref_extra_2.jpg!)
     const ex1 = -R * 0.12, ey1 = -R * 0.18;
-    const ex2 =  R * 0.44, ey2 = -R * 0.21;
+    const ex2 =  R * 0.45, ey2 = -R * 0.21;
 
-    // Dark mauve under-eye bruise rings
-    blob(ex1, ey1 + R * 0.04, R * 0.34, R * 0.35, -0.08, shade('#693542', dim), 0);
-    blob(ex2, ey2 + R * 0.04, R * 0.28, R * 0.29, 0.08, shade('#693542', dim), 0);
+    // Sculpted dark mauve-purple eye-bag shadows
+    ctx.fillStyle = shade('#63303e', dim);
+    ctx.beginPath();
+    ctx.ellipse(ex1, ey1 + R * 0.04, R * 0.33, R * 0.34, -0.10, 0, 7);
+    ctx.ellipse(ex2, ey2 + R * 0.04, R * 0.26, R * 0.28, 0.12, 0, 7);
+    ctx.fill();
 
     if (dead) {
-        ctx.strokeStyle = '#232620'; ctx.lineWidth = 2.4 * s;
+        ctx.strokeStyle = '#1c1f1a'; ctx.lineWidth = 2.2 * s;
         for (const [ex, ey, er] of [[ex1, ey1, R * 0.16], [ex2, ey2, R * 0.13]]) {
-            blob(ex, ey, er * 1.45, er * 1.45, 0, '#dcdab8', ink * 0.7);
+            ctx.fillStyle = '#d8d5b2';
+            ctx.beginPath(); ctx.ellipse(ex, ey, er * 1.4, er * 1.3, 0, 0, 7); ctx.fill();
+            ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.7; ctx.stroke();
+            ctx.strokeStyle = '#1c1f1a'; ctx.lineWidth = 2.1 * s;
             ctx.beginPath();
             ctx.moveTo(ex - er, ey - er); ctx.lineTo(ex + er, ey + er);
             ctx.moveTo(ex + er, ey - er); ctx.lineTo(ex - er, ey + er);
             ctx.stroke();
         }
     } else {
-        const eyeScale = panicked ? 1.18 : 1.0;
-        const r1 = R * 0.29 * eyeScale;
-        const r2 = R * 0.24 * eyeScale;
+        const eyeScale = panicked ? 1.15 : 1.0;
+        const r1 = R * 0.28 * eyeScale;
+        const r2 = R * 0.22 * eyeScale;
 
-        // Large bright creamy-yellow eyeballs (#f8f6c8) so eyes pop cleanly at all zoom levels!
-        blob(ex1, ey1, r1, r1 * 1.06, 0, '#f8f6c8', ink * 0.85);
-        blob(ex2, ey2, r2, r2 * 1.05, 0, '#f8f6c8', ink * 0.85);
+        // Draw each eye with 3D spherical sclera gradient, iris + catchlight, and clipped curved upper eyelid!
+        const drawOneEye = (ex, ey, er, isNear, lidTilt) => {
+            ctx.save();
+            ctx.beginPath();
+            ctx.ellipse(ex, ey, er, er * 1.05, isNear ? -0.06 : 0.08, 0, Math.PI * 2);
 
-        if (isGiant && !panicked) {
-            // Exact Giant Overalls Boss look from ref_extra_0.jpg:
-            // Large blank milky-yellow eyes (no pupils) with clipped angled sage-green upper eyelids (zero top gap!)
-            for (const [ex, ey, er, tilt] of [[ex1, ey1, r1, 0.24], [ex2, ey2, r2, -0.24]]) {
+            const eg = ctx.createRadialGradient(ex - er * 0.2, ey - er * 0.2, er * 0.1, ex, ey, er * 1.05);
+            eg.addColorStop(0, '#fffee6');
+            eg.addColorStop(0.72, '#f2ecb6');
+            eg.addColorStop(1, '#c9b882');
+            ctx.fillStyle = eg;
+            ctx.fill();
+            ctx.clip();
+
+            if (!isGiant || panicked) {
+                let px = ex + R * 0.04, py = ey;
+                if (panicked) {
+                    py = ey + R * 0.03;
+                } else if (dizzy) {
+                    const sp = perf * 0.015 + z.id;
+                    px = ex + Math.cos(sp) * R * 0.07 * (isNear ? 1 : -1);
+                    py = ey + Math.sin(sp) * R * 0.07;
+                }
+                const ir = er * (isNear ? 0.48 : 0.44);
+                // Glossy crimson-orange iris with dark rim
+                ctx.fillStyle = '#cf271d';
+                ctx.beginPath(); ctx.arc(px, py, ir, 0, 7); ctx.fill();
+                ctx.strokeStyle = '#6e100b'; ctx.lineWidth = 0.9 * s; ctx.stroke();
+                // Pinpoint pupil center
+                ctx.fillStyle = isNear ? '#fffee0' : '#1a0c0a';
+                ctx.beginPath(); ctx.arc(px, py, ir * 0.34, 0, 7); ctx.fill();
+                // Crisp white specular catchlight dot on upper-left of iris (makes eyes look like real game art!)
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath(); ctx.arc(px - ir * 0.38, py - ir * 0.38, ir * 0.26, 0, 7); ctx.fill();
+            }
+
+            // Curved upper eyelid fold inside the eye clip
+            if (!panicked) {
                 ctx.save();
-                ctx.beginPath();
-                ctx.ellipse(ex, ey, er, er * 1.06, 0, 0, Math.PI * 2);
-                ctx.clip();
                 ctx.translate(ex, ey);
-                ctx.rotate(tilt);
+                ctx.rotate(lidTilt);
                 ctx.fillStyle = skinD;
-                ctx.fillRect(-er * 1.4, -er * 1.4, er * 2.8, er * 1.08);
-                ctx.strokeStyle = INK;
-                ctx.lineWidth = ink * 0.85;
                 ctx.beginPath();
-                ctx.moveTo(-er * 1.3, -er * 0.32);
-                ctx.lineTo(er * 1.3, -er * 0.32);
+                ctx.moveTo(-er * 1.4, -er * 1.4);
+                ctx.lineTo(er * 1.4, -er * 1.4);
+                ctx.lineTo(er * 1.4, -er * (isGiant ? 0.28 : 0.52));
+                ctx.quadraticCurveTo(0, -er * (isGiant ? 0.18 : 0.38), -er * 1.4, -er * (isGiant ? 0.28 : 0.52));
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.82;
+                ctx.beginPath();
+                ctx.moveTo(-er * 1.3, -er * (isGiant ? 0.28 : 0.52));
+                ctx.quadraticCurveTo(0, -er * (isGiant ? 0.18 : 0.38), er * 1.3, -er * (isGiant ? 0.28 : 0.52));
                 ctx.stroke();
                 ctx.restore();
-
-                // Clean outer eye ring
-                ctx.strokeStyle = INK;
-                ctx.lineWidth = ink * 0.85;
-                ctx.beginPath();
-                ctx.ellipse(ex, ey, er, er * 1.06, 0, 0, Math.PI * 2);
-                ctx.stroke();
             }
-        } else {
-            // Standard ZombieSmash! HD crazed eyes (ref_0.jpg & ref_extra_2.jpg):
-            // Bold crimson-red iris circle (#c92a22) with tiny pale/dark pinpoint center!
-            let px1 = ex1 + R * 0.04, py1 = ey1, px2 = ex2 + R * 0.04, py2 = ey2;
-            if (panicked) {
-                py1 = ey1 + R * 0.04; py2 = ey2 + R * 0.04;
-            } else if (dizzy) {
-                const sp = perf * 0.015 + z.id;
-                px1 = ex1 + Math.cos(sp) * R * 0.08;
-                py1 = ey1 + Math.sin(sp) * R * 0.08;
-                px2 = ex2 - Math.cos(sp) * R * 0.07;
-                py2 = ey2 + Math.sin(sp) * R * 0.07;
-            }
-            // Near eye: bold crimson-red iris disc + pinpoint center
-            ctx.fillStyle = '#c92a22';
-            ctx.beginPath(); ctx.arc(px1, py1, r1 * 0.48, 0, 7); ctx.fill();
-            ctx.fillStyle = '#f8f6c8';
-            ctx.beginPath(); ctx.arc(px1, py1, r1 * 0.15, 0, 7); ctx.fill();
+            ctx.restore();
 
-            // Far eye: slightly smaller crimson-red iris disc + pinpoint center (exact ref_0.jpg!)
-            ctx.fillStyle = '#bd2820';
-            ctx.beginPath(); ctx.arc(px2, py2, r2 * 0.42, 0, 7); ctx.fill();
-            ctx.fillStyle = '#1e1412';
-            ctx.beginPath(); ctx.arc(px2, py2, r2 * 0.16, 0, 7); ctx.fill();
-
-            // Expressive angled zombie brow lines on standard zombies
-            ctx.strokeStyle = INK; ctx.lineWidth = 2.2 * s;
+            // Outer ink ring of eye socket
+            ctx.strokeStyle = INK;
+            ctx.lineWidth = ink * 0.86;
             ctx.beginPath();
-            if (panicked) {
-                ctx.moveTo(ex1 - r1, ey1 - r1 * 1.25);
-                ctx.quadraticCurveTo(ex1, ey1 - r1 * 1.6, ex1 + r1, ey1 - r1 * 1.2);
-                ctx.moveTo(ex2 - r2, ey2 - r2 * 1.2);
-                ctx.quadraticCurveTo(ex2, ey2 - r2 * 1.55, ex2 + r2, ey2 - r2 * 1.2);
-            } else {
-                ctx.moveTo(ex1 - r1 * 0.95, ey1 - r1 * 1.15);
-                ctx.lineTo(ex1 + r1 * 0.95, ey1 - r1 * 0.82);
-                ctx.moveTo(ex2 - r2 * 0.85, ey2 - r2 * 0.82);
-                ctx.moveTo(ex2 - r2 * 0.85, ey2 - r2 * 0.82);
-                ctx.lineTo(ex2 + r2 * 0.95, ey2 - r2 * 1.15);
-            }
+            ctx.ellipse(ex, ey, er, er * 1.05, isNear ? -0.06 : 0.08, 0, Math.PI * 2);
             ctx.stroke();
-        }
+        };
+
+        drawOneEye(ex1, ey1, r1, true,  isGiant ? 0.24 : 0.16);
+        drawOneEye(ex2, ey2, r2, false, isGiant ? -0.24 : -0.18);
     }
 
-    // Dark nostril slits between eyes and mouth (ref_extra_0.jpg)
-    ctx.fillStyle = '#3d1c24';
+    // Sculpted 3/4 nose bridge & dark nostril slits (ref_extra_2.jpg & ref_extra_0.jpg)
+    ctx.strokeStyle = skinD; ctx.lineWidth = 1.5 * s;
     ctx.beginPath();
-    ctx.ellipse(R * 0.22, -R * 0.01, R * 0.04, R * 0.07, -0.2, 0, 7);
-    ctx.ellipse(R * 0.31, -R * 0.02, R * 0.035, R * 0.06, 0.2, 0, 7);
+    ctx.moveTo(R * 0.20, -R * 0.14);
+    ctx.quadraticCurveTo(R * 0.36, -R * 0.04, R * 0.24, R * 0.03);
+    ctx.stroke();
+    ctx.fillStyle = '#33151c';
+    ctx.beginPath();
+    ctx.ellipse(R * 0.20, -R * 0.01, R * 0.038, R * 0.065, -0.2, 0, 7);
+    ctx.ellipse(R * 0.29, -R * 0.02, R * 0.032, R * 0.055, 0.2, 0, 7);
     ctx.fill();
 
-    // --- 6. HAIR & HEADGEAR (Exact ZombieSmash! HD styles) ----------------
+    // --- 6. HAND-ILLUSTRATED HAIR & HEADGEAR (Multi-toned shading & strands!)
     if (t.helmet && z.helmetHp > 0 && !t.boss) {
-        // Hardhat / Soldier: Dark Olive M1 Army Helmet with Playing Card in band (ref_extra_2.jpg!)
-        ctx.beginPath();
-        ctx.ellipse(-R * 0.04, -R * 0.48, R * 1.08, R * 0.68, -0.06, Math.PI * 0.98, 0.04);
-        ctx.closePath();
-        ctx.fillStyle = shade('#3a4a2b', dim); ctx.fill();
-        ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
-        ctx.strokeStyle = shade('#222b18', dim); ctx.lineWidth = 3.2 * s;
-        ctx.beginPath();
-        ctx.moveTo(-R * 1.06, -R * 0.44);
-        ctx.quadraticCurveTo(0, -R * 0.56, R * 1.02, -R * 0.50);
-        ctx.stroke();
+        // Hardhat / Soldier: 3D Shaded Olive M1 Combat Helmet with Camo Spots & Playing Card (ref_extra_2.jpg!)
         ctx.save();
-        ctx.translate(-R * 0.35, -R * 0.68);
+        ctx.beginPath();
+        ctx.moveTo(-R * 1.04, -R * 0.36);
+        ctx.bezierCurveTo(-R * 1.08, -R * 1.24, R * 0.92, -R * 1.26, R * 1.02, -R * 0.44);
+        ctx.quadraticCurveTo(R * 0.10, -R * 0.62, -R * 1.04, -R * 0.36);
+        ctx.closePath();
+        const hg = ctx.createRadialGradient(-R * 0.15, -R * 0.85, R * 0.1, 0, -R * 0.6, R * 1.1);
+        hg.addColorStop(0, shade('#566b42', dim));
+        hg.addColorStop(0.6, shade('#3a4a2b', dim));
+        hg.addColorStop(1, shade('#1f2916', dim));
+        ctx.fillStyle = hg; ctx.fill();
+
+        // Camo patches inside helmet clip
+        ctx.save();
+        ctx.clip();
+        ctx.fillStyle = shade('#25301a', dim);
+        ctx.beginPath();
+        ctx.arc(-R * 0.45, -R * 0.72, R * 0.24, 0, 7);
+        ctx.arc(R * 0.35, -R * 0.78, R * 0.22, 0, 7);
+        ctx.arc(R * 0.05, -R * 0.98, R * 0.20, 0, 7);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
+
+        // Helmet strap band & tucked Ace Playing Card
+        ctx.strokeStyle = shade('#232b19', dim); ctx.lineWidth = 3.0 * s;
+        ctx.beginPath();
+        ctx.moveTo(-R * 1.00, -R * 0.42);
+        ctx.quadraticCurveTo(0, -R * 0.62, R * 0.98, -R * 0.48);
+        ctx.stroke();
+
+        ctx.translate(-R * 0.32, -R * 0.68);
         ctx.rotate(-0.18);
         ctx.fillStyle = '#f2f0e6'; ctx.strokeStyle = INK; ctx.lineWidth = 1.2 * s;
-        ctx.fillRect(-R * 0.16, -R * 0.22, R * 0.32, R * 0.40);
-        ctx.strokeRect(-R * 0.16, -R * 0.22, R * 0.32, R * 0.40);
+        ctx.beginPath();
+        ctx.roundRect(-R * 0.15, -R * 0.21, R * 0.30, R * 0.38, 1.5 * s);
+        ctx.fill(); ctx.stroke();
         ctx.fillStyle = '#c92a2a';
-        ctx.beginPath(); ctx.arc(0, -R * 0.02, R * 0.06, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, -R * 0.02, R * 0.055, 0, 7); ctx.fill();
         ctx.restore();
     } else if (isFemale) {
-        // Long straight dark auburn (Runner) or black (Screamer) hair framing face (ref_0.jpg & ref_extra_2.jpg)
-        const hairCol = shade(z.kind === 'runner' ? '#6e241b' : '#1b1f24', dim);
-        ctx.fillStyle = hairCol; ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.85;
+        // Long flowing auburn (Runner) or black (Screamer) hair with highlight locks (ref_0.jpg & ref_extra_2.jpg)
+        const baseHair = shade(z.kind === 'runner' ? '#6e241b' : '#1b1f24', dim);
+        const litHair  = shade(z.kind === 'runner' ? '#943529' : '#323a45', dim);
+        ctx.fillStyle = baseHair; ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.85;
         ctx.beginPath();
-        ctx.arc(-R * 0.06, -R * 0.18, R * 0.96, Math.PI * 0.72, -Math.PI * 0.15, false);
-        ctx.quadraticCurveTo(R * 0.65, -R * 0.10, R * 0.48, R * 0.55);
-        ctx.lineTo(R * 0.32, R * 0.45);
-        ctx.quadraticCurveTo(R * 0.42, -R * 0.25, 0, -R * 0.62);
-        ctx.quadraticCurveTo(-R * 0.55, -R * 0.45, -R * 0.52, R * 0.85);
-        ctx.lineTo(-R * 0.95, R * 0.78);
-        ctx.quadraticCurveTo(-R * 1.04, 0, -R * 0.78, -R * 0.35);
+        ctx.moveTo(-R * 0.78, -R * 0.35);
+        ctx.bezierCurveTo(-R * 0.92, -R * 1.08, R * 0.58, -R * 1.12, R * 0.76, -R * 0.48);
+        ctx.quadraticCurveTo(R * 0.62, -R * 0.08, R * 0.46, R * 0.52);
+        ctx.lineTo(R * 0.30, R * 0.40);
+        ctx.quadraticCurveTo(R * 0.40, -R * 0.25, 0, -R * 0.62);
+        ctx.quadraticCurveTo(-R * 0.52, -R * 0.45, -R * 0.48, R * 0.82);
+        ctx.lineTo(-R * 0.72, R * 0.66);
+        ctx.lineTo(-R * 0.92, R * 0.78);
+        ctx.quadraticCurveTo(-R * 1.02, 0, -R * 0.78, -R * 0.35);
         ctx.closePath();
         ctx.fill(); ctx.stroke();
+
+        // Moonlit hair highlight ribbon
+        ctx.strokeStyle = litHair; ctx.lineWidth = 1.6 * s;
+        ctx.beginPath();
+        ctx.moveTo(-R * 0.56, -R * 0.62);
+        ctx.quadraticCurveTo(-R * 0.72, -R * 0.10, -R * 0.68, R * 0.48);
+        ctx.stroke();
     } else if (isGiant) {
-        // Sparse brown comb-over hair tufts on Giant Overalls Behemoth (ref_extra_0.jpg)
+        // Layered comb-over hair tufts on Giant Overalls Behemoth (ref_extra_0.jpg)
         ctx.fillStyle = shade('#4d3820', dim); ctx.strokeStyle = INK; ctx.lineWidth = 1.6 * s;
         ctx.beginPath();
         ctx.moveTo(-R * 0.72, -R * 0.48);
-        ctx.quadraticCurveTo(-R * 0.25, -R * 1.12, R * 0.28, -R * 0.96);
-        ctx.lineTo(R * 0.12, -R * 0.82);
-        ctx.quadraticCurveTo(-R * 0.25, -R * 0.92, -R * 0.58, -R * 0.38);
+        ctx.quadraticCurveTo(-R * 0.28, -R * 1.14, R * 0.32, -R * 0.94);
+        ctx.lineTo(R * 0.12, -R * 0.80);
+        ctx.lineTo(R * 0.26, -R * 0.72);
+        ctx.quadraticCurveTo(-R * 0.22, -R * 0.86, -R * 0.58, -R * 0.38);
         ctx.closePath();
         ctx.fill(); ctx.stroke();
     } else {
-        // Spiky messy brown hair (shambler), blonde hair (bloater), or black hair (butcher)
-        const hairCol = z.kind === 'bloater' ? shade('#dec659', dim)
-                      : z.kind === 'butcher' ? shade('#1f2226', dim)
-                      : shade('#543922', dim);
-        ctx.fillStyle = hairCol; ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.85;
+        // Multi-toned shaggy hair with layered forehead clumps & highlight locks (ref_0.jpg & ref_extra_2.jpg)
+        const baseH = z.kind === 'bloater' ? '#dec659' : z.kind === 'butcher' ? '#1e2229' : '#52361e';
+        const litH  = z.kind === 'bloater' ? '#f5e282' : z.kind === 'butcher' ? '#363e4a' : '#734d2c';
+        ctx.fillStyle = shade(baseH, dim); ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.85;
         ctx.beginPath();
-        ctx.moveTo(-R * 0.82, -R * 0.22);
-        ctx.quadraticCurveTo(-R * 0.88, -R * 0.88, -R * 0.15, -R * 1.02);
-        ctx.lineTo(-R * 0.05, -R * 1.14);
-        ctx.lineTo(R * 0.14, -R * 0.98);
-        ctx.lineTo(R * 0.32, -R * 1.08);
-        ctx.quadraticCurveTo(R * 0.68, -R * 0.85, R * 0.72, -R * 0.45);
-        ctx.lineTo(R * 0.42, -R * 0.58);
+        ctx.moveTo(-R * 0.82, -R * 0.20);
+        ctx.quadraticCurveTo(-R * 0.92, -R * 0.86, -R * 0.22, -R * 1.04);
+        ctx.lineTo(-R * 0.06, -R * 1.16);
+        ctx.lineTo(R * 0.14, -R * 1.00);
+        ctx.lineTo(R * 0.36, -R * 1.10);
+        ctx.quadraticCurveTo(R * 0.72, -R * 0.88, R * 0.76, -R * 0.44);
+        ctx.lineTo(R * 0.44, -R * 0.60);
         ctx.lineTo(R * 0.28, -R * 0.42);
-        ctx.lineTo(R * 0.05, -R * 0.60);
+        ctx.lineTo(R * 0.04, -R * 0.62);
         ctx.lineTo(-R * 0.18, -R * 0.44);
-        ctx.lineTo(-R * 0.42, -R * 0.62);
-        ctx.lineTo(-R * 0.62, -R * 0.35);
+        ctx.lineTo(-R * 0.44, -R * 0.62);
+        ctx.lineTo(-R * 0.64, -R * 0.32);
         ctx.closePath();
         ctx.fill(); ctx.stroke();
+
+        // Highlight hair strands on crown
+        ctx.fillStyle = shade(litH, dim);
+        ctx.beginPath();
+        ctx.moveTo(-R * 0.45, -R * 0.76);
+        ctx.quadraticCurveTo(-R * 0.10, -R * 0.96, R * 0.32, -R * 0.78);
+        ctx.quadraticCurveTo(0, -R * 0.72, -R * 0.45, -R * 0.76);
+        ctx.fill();
     }
 
     if (dizzy) {
@@ -2689,7 +3112,7 @@ function drawHead(z, skin, skinD, blotch, ink, dim) {
             const sx = Math.cos(a) * R * 0.92;
             const sy = -R * 1.25 + Math.sin(a) * R * 0.24;
             const fill = i % 2 === 0 ? '#e8eef5' : '#ffd84a';
-            drawStar5(sx, sy, 6.2 * s, 2.8 * s, fill, '#232620', 1.4 * s);
+            drawStar5(sx, sy, 6.0 * s, 2.6 * s, fill, '#232620', 1.3 * s);
         }
     }
 
@@ -2701,112 +3124,159 @@ const bg = document.createElement('canvas');
 bg.width = W; bg.height = H;
 const bctx = bg.getContext('2d');
 
-// Painted moonlit cloud with unified opaque layers (no internal Venn-diagram circle seams!)
+// Painted moonlit cumulus cloud using a continuous Bezier silhouette & vertical sky-lit gradient (zero ellipses!)
 function drawFluffyCloud(c, cx, cy, scale) {
     c.save();
     c.translate(cx, cy);
     c.scale(scale, scale);
 
-    const puffs = [
-        [-62, 10, 46, 20],
-        [-26, -6, 48, 25],
-        [18, -8, 52, 26],
-        [60, 8, 44, 19],
-        [0, 10, 68, 22]
-    ];
-    // 1. Deep slate-blue cloud base
-    c.fillStyle = '#2d4e68';
-    c.beginPath();
-    for (const [ox, oy, rx, ry] of puffs) {
-        c.moveTo(ox + rx, oy + 5);
-        c.ellipse(ox, oy + 5, rx, ry, 0, 0, Math.PI * 2);
-    }
+    const traceCloud = (yOff, sX, sY) => {
+        c.beginPath();
+        c.moveTo(-98 * sX, (18 + yOff) * sY);
+        c.bezierCurveTo(-112 * sX, (6 + yOff) * sY, -96 * sX, (-10 + yOff) * sY, -72 * sX, (-6 + yOff) * sY);
+        c.bezierCurveTo(-64 * sX, (-26 + yOff) * sY, -32 * sX, (-32 + yOff) * sY, -12 * sX, (-18 + yOff) * sY);
+        c.bezierCurveTo(6 * sX, (-38 + yOff) * sY, 46 * sX, (-36 + yOff) * sY, 58 * sX, (-12 + yOff) * sY);
+        c.bezierCurveTo(84 * sX, (-16 + yOff) * sY, 108 * sX, (2 + yOff) * sY, 94 * sX, (18 + yOff) * sY);
+        c.bezierCurveTo(42 * sX, (26 + yOff) * sY, -42 * sX, (26 + yOff) * sY, -98 * sX, (18 + yOff) * sY);
+        c.closePath();
+    };
+
+    // 1. Deep slate-blue cloud underside shadow
+    traceCloud(5, 1.02, 1.0);
+    c.fillStyle = 'rgba(28, 52, 72, 0.85)';
     c.fill();
 
-    // 2. Soft mid slate-blue cloud body
-    c.fillStyle = '#476e8a';
-    c.beginPath();
-    for (const [ox, oy, rx, ry] of puffs) {
-        c.moveTo(ox + rx * 0.95, oy);
-        c.ellipse(ox, oy, rx * 0.95, ry * 0.92, 0, 0, Math.PI * 2);
-    }
+    // 2. Main painted cloud body with moonlit silver-blue top gradient (ref_0.jpg!)
+    traceCloud(0, 1.0, 1.0);
+    const cg = c.createLinearGradient(0, -36, 0, 24);
+    cg.addColorStop(0, '#85adc7');
+    cg.addColorStop(0.38, '#58809c');
+    cg.addColorStop(0.82, '#385c78');
+    cg.addColorStop(1, '#294760');
+    c.fillStyle = cg;
     c.fill();
 
-    // 3. Moonlit silver-blue top puffs (ref_0.jpg & ref_2.jpg)
-    c.fillStyle = '#6c92ad';
+    // 3. Soft internal moonlit crest billow highlights
+    c.fillStyle = 'rgba(165, 204, 228, 0.35)';
     c.beginPath();
-    for (let i = 0; i < 4; i++) {
-        const [ox, oy, rx, ry] = puffs[i];
-        const rxi = rx * 0.78, ryi = ry * 0.68;
-        c.moveTo(ox - 3 + rxi, oy - 5);
-        c.ellipse(ox - 3, oy - 5, rxi, ryi, 0, 0, Math.PI * 2);
-    }
+    c.moveTo(-62, -6);
+    c.bezierCurveTo(-52, -24, -24, -26, -12, -12);
+    c.bezierCurveTo(6, -32, 40, -30, 50, -8);
+    c.bezierCurveTo(20, -16, -25, -14, -62, -6);
+    c.closePath();
     c.fill();
 
     c.restore();
 }
 
-// Richly detailed scalloped oak tree canopy matching ref_0.jpg & ref_extra_0.jpg
+// Authentic ZombieSmash! HD Oak Tree with pointed, serrated leafy boughs (exact ref_0.jpg right tree — ZERO circle bubbles!)
 function drawLeafyOak(c, tx, ty, scale, flip) {
     c.save();
     c.translate(tx, ty);
     c.scale(scale * (flip ? -1 : 1), scale);
 
-    // Gnarled bark trunk & spreading branches (ref_0.jpg right tree!)
-    c.fillStyle = '#121d28';
-    c.strokeStyle = '#091017';
-    c.lineWidth = 3;
+    // Gnarled bark trunk, flaring root buttresses & spreading limbs (ref_0.jpg)
+    const tg = c.createLinearGradient(-34, -80, 34, -20);
+    tg.addColorStop(0, '#1e3040');
+    tg.addColorStop(0.45, '#13202c');
+    tg.addColorStop(1, '#0a1219');
+    c.fillStyle = tg;
+    c.strokeStyle = '#070d12';
+    c.lineWidth = 2.8;
     c.beginPath();
-    c.moveTo(-32, 15);
-    c.quadraticCurveTo(-18, -42, -22, -102);
-    c.lineTo(-64, -148);
-    c.lineTo(-46, -156);
-    c.lineTo(-10, -116);
-    c.lineTo(-4, -162);
-    c.lineTo(14, -160);
-    c.lineTo(12, -114);
-    c.lineTo(54, -148);
-    c.lineTo(66, -138);
+    c.moveTo(-42, 18);
+    c.quadraticCurveTo(-24, 4, -20, -34);
+    c.quadraticCurveTo(-18, -72, -24, -104);
+    c.lineTo(-70, -146);
+    c.lineTo(-52, -156);
+    c.lineTo(-12, -118);
+    c.lineTo(-6, -166);
+    c.lineTo(14, -164);
+    c.lineTo(12, -116);
+    c.lineTo(58, -150);
+    c.lineTo(70, -138);
     c.lineTo(22, -96);
-    c.quadraticCurveTo(22, -42, 34, 15);
+    c.quadraticCurveTo(20, -44, 26, -12);
+    c.quadraticCurveTo(32, 6, 44, 18);
+    c.quadraticCurveTo(18, 12, 6, 16);
+    c.quadraticCurveTo(-8, 10, -22, 16);
     c.closePath();
     c.fill(); c.stroke();
 
-    // Bark ridges
-    c.strokeStyle = '#1f3142'; c.lineWidth = 2.2;
-    for (const ox of [-11, -2, 8]) {
-        c.beginPath(); c.moveTo(ox, 8); c.quadraticCurveTo(ox - 3, -48, ox - 1, -96); c.stroke();
+    // Organic bark grain grooves
+    c.strokeStyle = '#24384a'; c.lineWidth = 1.8;
+    for (const [x0, y0, x1, y1] of [[-14, 10, -12, -96], [-2, 12, -1, -108], [10, 8, 9, -92], [-18, -98, -48, -136], [14, -96, 46, -128]]) {
+        c.beginPath();
+        c.moveTo(x0, y0);
+        c.quadraticCurveTo(lerp(x0, x1, 0.5) - 3, lerp(y0, y1, 0.5), x1, y1);
+        c.stroke();
     }
 
-    // Scalloped multi-layered dark-blue leaf clusters (looks like real foliage, not smooth balloons!)
-    const drawLeafCluster = (cx, cy, r, col) => {
-        c.fillStyle = col;
+    // Pointed, serrated oak-leaf bough cluster (draws pointed overlapping leaf tips, NEVER circles!)
+    const drawSerratedBough = (cx, cy, rx, ry, darkCol, midCol, litCol) => {
+        const tips = 11;
+        const traceBough = (ox, oy, sx, sy) => {
+            c.beginPath();
+            for (let i = 0; i < tips; i++) {
+                const a0 = (i / tips) * Math.PI * 2;
+                const aMid = ((i + 0.5) / tips) * Math.PI * 2;
+                const a1 = ((i + 1) / tips) * Math.PI * 2;
+                const rIn = 0.72 + ((i * 7) % 3) * 0.05;
+                const rOut = 1.04 + ((i * 5) % 3) * 0.08;
+                const x0 = cx + ox + Math.cos(a0) * rx * sx * rIn;
+                const y0 = cy + oy + Math.sin(a0) * ry * sy * rIn;
+                // Pointed leaf tip drooping slightly outward
+                const tx2 = cx + ox + Math.cos(aMid) * rx * sx * rOut;
+                const ty2 = cy + oy + Math.sin(aMid) * ry * sy * rOut + 3;
+                const x1 = cx + ox + Math.cos(a1) * rx * sx * rIn;
+                const y1 = cy + oy + Math.sin(a1) * ry * sy * rIn;
+                if (i === 0) c.moveTo(x0, y0);
+                c.quadraticCurveTo(lerp(x0, tx2, 0.65), lerp(y0, ty2, 0.35), tx2, ty2);
+                c.quadraticCurveTo(lerp(tx2, x1, 0.35), lerp(ty2, y1, 0.65), x1, y1);
+            }
+            c.closePath();
+        };
+
+        // Deep underside bough shadow
+        traceBough(2, 7, 1.03, 1.02);
+        c.fillStyle = darkCol;
+        c.fill();
+
+        // Main serrated foliage mass with vertical gradient
+        traceBough(0, 0, 1.0, 1.0);
+        const bg = c.createLinearGradient(cx, cy - ry, cx, cy + ry);
+        bg.addColorStop(0, litCol);
+        bg.addColorStop(0.52, midCol);
+        bg.addColorStop(1, darkCol);
+        c.fillStyle = bg;
+        c.fill();
+
+        // Individual pointed moonlit leaf-cluster accents on upper rim
+        c.fillStyle = litCol;
         c.beginPath();
-        const lobes = 7;
-        for (let i = 0; i < lobes; i++) {
-            const a = (i / lobes) * Math.PI * 2;
-            const lx = cx + Math.cos(a) * r * 0.62;
-            const ly = cy + Math.sin(a) * r * 0.46;
-            const lr = r * (0.48 + (i % 2) * 0.08);
-            c.moveTo(lx + lr, ly);
-            c.arc(lx, ly, lr, 0, Math.PI * 2);
+        for (let i = -3; i <= 2; i++) {
+            const lx = cx + i * (rx * 0.24) - 4;
+            const ly = cy - ry * 0.55 + Math.abs(i) * 4;
+            c.moveTo(lx - 9, ly + 6);
+            c.quadraticCurveTo(lx - 2, ly - 9, lx + 2, ly - 11);
+            c.quadraticCurveTo(lx + 7, ly - 4, lx + 8, ly + 6);
+            c.closePath();
         }
         c.fill();
     };
 
-    const canopy = [
-        [-82, -142, 46], [80, -138, 44], [-52, -178, 50], [52, -175, 48],
-        [-18, -206, 52], [22, -204, 50], [-42, -138, 48], [40, -136, 48],
-        [0, -166, 58], [0, -222, 44]
+    // Multi-tiered oak boughs from bottom-back to top-front (exact silhouette of ref_0.jpg tree!)
+    const boughs = [
+        [-88, -134, 48, 30], [86, -130, 46, 28],
+        [-48, -132, 52, 32], [46, -130, 52, 32],
+        [-72, -168, 50, 32], [68, -165, 48, 30],
+        [-28, -172, 56, 35], [28, -170, 56, 35],
+        [-38, -206, 48, 30], [36, -204, 46, 30],
+        [0, -154, 62, 38],   [0, -218, 52, 32]
     ];
-    // Deep shadow leaf layer
-    for (const [cx, cy, r] of canopy) drawLeafCluster(cx, cy + 8, r * 1.04, '#0c1822');
-    // Mid dark-slate leaf layer
-    for (const [cx, cy, r] of canopy) drawLeafCluster(cx - 2, cy, r * 0.94, '#162b3d');
-    // Upper slate-blue leaf layer
-    for (const [cx, cy, r] of canopy) drawLeafCluster(cx - 6, cy - 6, r * 0.74, '#244259');
-    // Moonlit rim leaf highlights
-    for (const [cx, cy, r] of canopy) drawLeafCluster(cx - 10, cy - 12, r * 0.44, '#385f7a');
+    for (const [bx, by, rx, ry] of boughs) {
+        drawSerratedBough(bx, by, rx, ry, '#09141e', '#172e40', '#2d526e');
+    }
 
     c.restore();
 }
@@ -2829,18 +3299,33 @@ function paintBg() {
         c.fillRect(sx, sy, sz, sz);
     }
 
-    // Bright glowing full moon above the house & windmill (ref_0.jpg & ref_3.jpg)
+    // Smooth continuous radial-gradient full moon halo & painted moon surface (NO stepped concentric rings!)
     const mx = 745, my = 112;
-    for (const [r, a] of [[155, 0.06], [110, 0.11], [74, 0.18]]) {
-        c.fillStyle = `rgba(135,205,245,${a})`;
-        c.beginPath(); c.arc(mx, my, r, 0, 7); c.fill();
-    }
-    c.fillStyle = '#fdfce6';
+    const moonHalo = c.createRadialGradient(mx, my, 42, mx, my, 195);
+    moonHalo.addColorStop(0, 'rgba(190, 235, 255, 0.38)');
+    moonHalo.addColorStop(0.35, 'rgba(120, 195, 240, 0.16)');
+    moonHalo.addColorStop(0.70, 'rgba(70, 145, 200, 0.05)');
+    moonHalo.addColorStop(1, 'rgba(40, 100, 150, 0)');
+    c.fillStyle = moonHalo;
+    c.beginPath(); c.arc(mx, my, 195, 0, 7); c.fill();
+
+    const moonSurf = c.createRadialGradient(mx - 12, my - 12, 6, mx, my, 46);
+    moonSurf.addColorStop(0, '#fffff2');
+    moonSurf.addColorStop(0.75, '#f7f5d0');
+    moonSurf.addColorStop(1, '#d8d6aa');
+    c.fillStyle = moonSurf;
     c.beginPath(); c.arc(mx, my, 46, 0, 7); c.fill();
-    c.fillStyle = 'rgba(210,220,195,0.45)';
-    c.beginPath(); c.arc(mx - 14, my - 10, 9, 0, 7); c.fill();
-    c.beginPath(); c.arc(mx + 16, my + 12, 7, 0, 7); c.fill();
-    c.beginPath(); c.arc(mx - 4, my + 18, 5, 0, 7); c.fill();
+
+    // Subtle organic lunar mare / crater shading
+    c.fillStyle = 'rgba(195, 204, 172, 0.42)';
+    c.beginPath();
+    c.moveTo(mx - 24, my - 12);
+    c.quadraticCurveTo(mx - 12, my - 24, mx - 4, my - 10);
+    c.quadraticCurveTo(mx - 10, my + 2, mx - 24, my - 12);
+    c.moveTo(mx + 8, my + 6);
+    c.quadraticCurveTo(mx + 24, my + 2, mx + 22, my + 18);
+    c.quadraticCurveTo(mx + 10, my + 22, mx + 8, my + 6);
+    c.fill();
 
     // Seamless painted moonlit clouds (ref_0.jpg & ref_extra_0.jpg)
     drawFluffyCloud(c, 190, 145, 1.15);
@@ -2848,7 +3333,7 @@ function paintBg() {
     drawFluffyCloud(c, 920, 128, 1.25);
     drawFluffyCloud(c, 1180, 195, 0.90);
 
-    // Distant dark slate hills & rounded bush silhouettes (ref_0.jpg & ref_extra_0.jpg)
+    // Distant dark slate hills & ruffled treeline silhouettes (ref_0.jpg & ref_extra_0.jpg — NO circle bushes!)
     c.fillStyle = '#233b4d';
     c.beginPath(); c.moveTo(0, 435);
     for (let x = 0; x <= W; x += 32) {
@@ -2856,11 +3341,26 @@ function paintBg() {
     }
     c.lineTo(W, GROUND); c.lineTo(0, GROUND); c.fill();
 
-    // Dark bush clusters along hill ridge
-    c.fillStyle = '#152634';
-    for (const [bx, by, br] of [[180, 425, 22], [210, 422, 28], [245, 426, 20], [380, 402, 26], [415, 398, 32], [450, 404, 24], [840, 412, 28], [880, 408, 34], [920, 415, 24]]) {
-        c.beginPath(); c.arc(bx, by, br, 0, 7); c.fill();
-    }
+    // Organic ruffled distant treeline/hedgerow silhouettes along hill ridge
+    const drawHedgerow = (hx, hy, hw, hh) => {
+        c.fillStyle = '#142533';
+        c.beginPath();
+        c.moveTo(hx - hw, hy + 12);
+        const steps = 9;
+        for (let i = 0; i <= steps; i++) {
+            const u = i / steps;
+            const px = lerp(hx - hw, hx + hw, u);
+            const arch = Math.sin(u * Math.PI) * hh;
+            const ruffle = ((i * 5) % 3) * 5;
+            c.quadraticCurveTo(px - (hw / steps) * 0.5, hy - arch - ruffle - 7, px, hy - arch * 0.85);
+        }
+        c.lineTo(hx + hw, hy + 12);
+        c.closePath();
+        c.fill();
+    };
+    drawHedgerow(212, 432, 64, 24);
+    drawHedgerow(415, 408, 72, 28);
+    drawHedgerow(880, 418, 78, 28);
 
     // Sloping moonlit blue-grey tall grass / wheat field (ref_0.jpg & ref_3.jpg)
     const fieldGrad = c.createLinearGradient(0, 410, 0, GROUND - 35);
@@ -3216,102 +3716,151 @@ function drawHouse() {
     ctx.fillRect(gx - 5, gy + gh - 1, gw + 10, 5);
     ctx.strokeRect(gx - 5, gy + gh - 1, gw + 10, 5);
 
-    // JOEY inside the window (exact ref_2.jpg: spiky dark-brown hair, furrowed angry brows,
-    // intense eyes, wide clenched-teeth badass grin, brown vest over orange-tan shirt!)
+    // JOEY inside the window (exact ref_2.jpg & ref_extra_2.jpg comic-book illustration:
+    // chiseled 3/4 jawline, spiky dark-brown hair with chestnut highlights, furrowed brows,
+    // sculpted comic eyes, angled clenched-teeth grin, padded brown vest over tan shirt!)
     const jx = gx + gw * 0.5, jy = gy + 29;
     const jd = joey.dir || -1;
 
     ctx.save();
     ctx.beginPath(); ctx.rect(gx - 2, gy - 6, gw + 4, gh + 6); ctx.clip();
 
-    // Shoulders & torso: orange-tan undershirt + dark-brown survivor vest (ref_2.jpg)
-    blob(jx, gy + 36, 13.5, 11, 0, '#d96b27', 2.2);
-    ctx.fillStyle = '#4a3121'; ctx.strokeStyle = '#140e10'; ctx.lineWidth = 1.8;
+    // Sculpted shoulders & torso: tan undershirt + rust-brown padded survivor vest (ref_extra_2.jpg)
+    ctx.fillStyle = '#d4a67a'; ctx.strokeStyle = '#140e10'; ctx.lineWidth = 2.0;
     ctx.beginPath();
-    ctx.moveTo(jx - 12, gy + 26);
-    ctx.lineTo(jx - 4, gy + 26);
-    ctx.lineTo(jx - 2, gy + 43);
-    ctx.lineTo(jx - 13, gy + 43);
-    ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(jx + 12, gy + 26);
-    ctx.lineTo(jx + 4, gy + 26);
-    ctx.lineTo(jx + 2, gy + 43);
-    ctx.lineTo(jx + 13, gy + 43);
-    ctx.closePath(); ctx.fill(); ctx.stroke();
-
-    // Sculpted 3/4 cartoon head & jawline (ref_2.jpg)
-    const hx = jx - jd * 1.2, hy = gy + 16.5;
-    blob(hx, hy, 9.8, 10.6, 0, '#f0c4a0', 2.2);
-    // Warm lower-jaw shading / stubble tone
-    ctx.fillStyle = '#d4a17a';
-    ctx.beginPath();
-    ctx.arc(hx, hy + 1.5, 8.6, 0.15, Math.PI - 0.15);
-    ctx.fill();
-    // Side ear with inner contour
-    blob(hx - jd * 9.2, hy + 1.2, 2.8, 3.8, 0, '#e6b48e', 1.6);
-
-    // Iconic wide clenched-teeth grin (ref_2.jpg!)
-    const gxMouth = hx + jd * 1.8, gyMouth = hy + 4.8;
-    ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#140e10'; ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.roundRect(gxMouth - 6.2, gyMouth - 2.6, 12.4, 5.4, 2.2);
-    ctx.fill(); ctx.stroke();
-    ctx.strokeStyle = '#140e10'; ctx.lineWidth = 1.1;
-    ctx.beginPath();
-    ctx.moveTo(gxMouth - 5.5, gyMouth + 0.1); ctx.lineTo(gxMouth + 5.5, gyMouth + 0.1);
-    for (let ti = -1; ti <= 1; ti++) {
-        ctx.moveTo(gxMouth + ti * 3.0, gyMouth - 2.3);
-        ctx.lineTo(gxMouth + ti * 3.0, gyMouth + 2.5);
-    }
-    ctx.stroke();
-
-    // Sculpted cartoon nose
-    ctx.fillStyle = '#dfad86'; ctx.strokeStyle = '#140e10'; ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.arc(hx + jd * 2.6, hy + 0.4, 2.1, -Math.PI * 0.4, Math.PI * 0.7);
-    ctx.fill(); ctx.stroke();
-
-    // Intense eyes tracking target + heavy furrowed angry dark-brown eyebrows (ref_2.jpg!)
-    const ex1 = hx + jd * 0.2 - 3.2, ex2 = hx + jd * 2.2 + 2.6, ey = hy - 2.2;
-    blob(ex1, ey, 2.6, 2.3, 0, '#ffffff', 1.4);
-    blob(ex2, ey, 2.6, 2.3, 0, '#ffffff', 1.4);
-    ctx.fillStyle = '#140e10';
-    ctx.beginPath();
-    ctx.arc(ex1 + jd * 0.8, ey + 0.2, 1.25, 0, 7);
-    ctx.arc(ex2 + jd * 0.8, ey + 0.2, 1.25, 0, 7);
-    ctx.fill();
-
-    // Thick angry V-slanted eyebrows
-    ctx.strokeStyle = '#26150b'; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(ex1 - 2.8, ey - 3.0); ctx.lineTo(ex1 + 2.4, ey - 1.5);
-    ctx.moveTo(ex2 + 2.8, ey - 3.0); ctx.lineTo(ex2 - 2.4, ey - 1.5);
-    ctx.stroke();
-
-    // Iconic spiky dark-brown hair with widow's peak & thick sideburns (exact ref_2.jpg!)
-    ctx.fillStyle = '#382010'; ctx.strokeStyle = '#120a05'; ctx.lineWidth = 1.8;
-    ctx.beginPath();
-    ctx.moveTo(hx - 9.8, hy + 1.5);
-    ctx.lineTo(hx - 11.2, hy - 4.5);
-    ctx.lineTo(hx - 8.2, hy - 5.2);
-    ctx.lineTo(hx - 9.5, hy - 10.5);
-    ctx.lineTo(hx - 4.2, hy - 8.8);
-    ctx.lineTo(hx - 2.0, hy - 13.5);
-    ctx.lineTo(hx + 1.5, hy - 9.5);
-    ctx.lineTo(hx + 6.2, hy - 12.8);
-    ctx.lineTo(hx + 6.8, hy - 8.2);
-    ctx.lineTo(hx + 11.2, hy - 8.8);
-    ctx.lineTo(hx + 9.5, hy - 2.5);
-    ctx.lineTo(hx + 7.2, hy - 5.0);
-    ctx.lineTo(hx + jd * 1.2, hy - 4.2); // Widow's peak dip
-    ctx.lineTo(hx - 5.5, hy - 5.2);
-    ctx.lineTo(hx - jd * 7.2, hy + 2.2); // Sideburn
+    ctx.moveTo(jx - 14, gy + 44);
+    ctx.quadraticCurveTo(jx - 14, gy + 25, jx, gy + 25);
+    ctx.quadraticCurveTo(jx + 14, gy + 25, jx + 14, gy + 44);
     ctx.closePath();
     ctx.fill(); ctx.stroke();
+
+    const vg = ctx.createLinearGradient(jx - 13, gy + 25, jx + 13, gy + 44);
+    vg.addColorStop(0, '#9e4720');
+    vg.addColorStop(1, '#59250e');
+    ctx.fillStyle = vg;
+    ctx.beginPath();
+    ctx.moveTo(jx - 13, gy + 26); ctx.lineTo(jx - 4, gy + 25);
+    ctx.lineTo(jx - 2, gy + 44); ctx.lineTo(jx - 14, gy + 44);
+    ctx.closePath();
+    ctx.moveTo(jx + 13, gy + 26); ctx.lineTo(jx + 4, gy + 25);
+    ctx.lineTo(jx + 2, gy + 44); ctx.lineTo(jx + 14, gy + 44);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Chiseled 3/4 comic-book head & square jawline (NO oval blob — exact ref_extra_2.jpg contour!)
+    const hx = jx - jd * 1.0, hy = gy + 16.5;
+    ctx.save();
+    ctx.translate(hx, hy);
+    ctx.scale(jd, 1);
+
+    // Side ear with inner helix
+    ctx.fillStyle = '#e0ac86'; ctx.strokeStyle = '#140e10'; ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-7.8, -1.5);
+    ctx.bezierCurveTo(-11.4, -2.8, -11.4, 3.8, -7.8, 3.2);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Unified 3/4 comic head contour (temple -> cheekbone -> chiseled jaw -> square chin -> jawline)
+    ctx.beginPath();
+    ctx.moveTo(-8.2, -5.5);
+    ctx.bezierCurveTo(-6.5, -11.2, 5.5, -11.2, 8.2, -5.2);
+    ctx.lineTo(8.8, -0.5);
+    ctx.quadraticCurveTo(9.4, 3.5, 7.2, 7.6);
+    ctx.quadraticCurveTo(3.8, 9.8, -1.8, 9.4);
+    ctx.quadraticCurveTo(-7.2, 8.2, -8.4, 2.8);
+    ctx.closePath();
+
+    // Two-tone comic-book skin lighting (exact ref_extra_2.jpg left shadow / right highlight!)
+    const fg = ctx.createLinearGradient(-8, -4, 8, 4);
+    fg.addColorStop(0, '#d49b72');
+    fg.addColorStop(0.45, '#f5c8a6');
+    fg.addColorStop(1, '#ffe2c9');
+    ctx.fillStyle = fg;
+    ctx.fill();
+    ctx.strokeStyle = '#140e10'; ctx.lineWidth = 2.0;
+    ctx.stroke();
+
+    // Iconic angled clenched-teeth grimace (ref_2.jpg & ref_extra_2.jpg!)
+    ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#140e10'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-4.2, 3.2);
+    ctx.lineTo(5.6, 2.5);
+    ctx.quadraticCurveTo(6.8, 4.8, 5.4, 6.8);
+    ctx.lineTo(-4.4, 6.5);
+    ctx.quadraticCurveTo(-5.4, 4.8, -4.2, 3.2);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    ctx.moveTo(-4.4, 4.9); ctx.lineTo(5.6, 4.7);
+    ctx.moveTo(-1.2, 3.0); ctx.lineTo(-1.2, 6.6);
+    ctx.moveTo(2.2, 2.8);  ctx.lineTo(2.2, 6.6);
+    ctx.stroke();
+
+    // Chiseled comic nose ridge
+    ctx.strokeStyle = '#b87d56'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(1.8, -3.2); ctx.lineTo(3.6, 0.4); ctx.lineTo(1.4, 1.0);
+    ctx.stroke();
+
+    // Sculpted comic-book D-shaped eyes with olive-green irises & catchlights (ref_extra_2.jpg!)
+    for (const [ex, ey, ew, eh] of [[-2.8, -2.2, 2.7, 2.2], [3.6, -2.2, 2.5, 2.2]]) {
+        ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#140e10'; ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(ex - ew, ey - eh * 0.6);
+        ctx.lineTo(ex + ew, ey - eh * 0.3);
+        ctx.quadraticCurveTo(ex + ew, ey + eh, ex, ey + eh);
+        ctx.quadraticCurveTo(ex - ew, ey + eh, ex - ew, ey - eh * 0.6);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        ctx.fillStyle = '#4d5722';
+        ctx.beginPath(); ctx.arc(ex + 0.6, ey + 0.2, 1.35, 0, 7); ctx.fill();
+        ctx.fillStyle = '#120e0a';
+        ctx.beginPath(); ctx.arc(ex + 0.7, ey + 0.2, 0.75, 0, 7); ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(ex + 0.2, ey - 0.3, 0.45, 0, 7); ctx.fill();
+    }
+
+    // Thick furrowed dark-brown eyebrows
+    ctx.fillStyle = '#29160a';
+    ctx.beginPath();
+    ctx.moveTo(-6.2, -5.2); ctx.lineTo(-0.2, -3.5); ctx.lineTo(-0.5, -2.2); ctx.lineTo(-6.0, -3.8);
+    ctx.closePath();
+    ctx.moveTo(6.6, -5.4); ctx.lineTo(1.2, -3.5); ctx.lineTo(1.5, -2.2); ctx.lineTo(6.5, -4.0);
+    ctx.closePath();
+    ctx.fill();
+
+    // Spiky dark-brown hair with chestnut highlight spikes & sideburn (exact ref_extra_2.jpg!)
+    const hg = ctx.createLinearGradient(0, -14, 0, -2);
+    hg.addColorStop(0, '#5e391b');
+    hg.addColorStop(0.55, '#382010');
+    hg.addColorStop(1, '#211208');
+    ctx.fillStyle = hg; ctx.strokeStyle = '#120a05'; ctx.lineWidth = 1.7;
+    ctx.beginPath();
+    ctx.moveTo(-8.6, 1.8);
+    ctx.lineTo(-10.4, -4.5);
+    ctx.lineTo(-7.8, -5.4);
+    ctx.lineTo(-9.2, -10.5);
+    ctx.lineTo(-4.2, -8.8);
+    ctx.lineTo(-2.2, -13.6);
+    ctx.lineTo(1.4, -9.6);
+    ctx.lineTo(5.8, -13.0);
+    ctx.lineTo(6.4, -8.4);
+    ctx.lineTo(10.4, -9.0);
+    ctx.lineTo(8.8, -3.2);
+    ctx.lineTo(6.5, -5.4);
+    ctx.lineTo(1.2, -4.2); // Widow's peak
+    ctx.lineTo(-5.2, -5.4);
+    ctx.lineTo(-6.8, 2.0); // Sideburn
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    ctx.restore();
     ctx.restore();
 
-    // Joey's Muscular Arms, Hands & Pump-Action Shotgun (drawn UNCLIPPED so barrel & muzzle flash project out!)
+    // Joey's Muscular Arms, Sculpted Hands & Pump-Action Shotgun (drawn UNCLIPPED so barrel & muzzle flash project out!)
     ctx.save();
     const rx = -Math.cos(joey.aim) * joey.recoil;
     const ry = -Math.sin(joey.aim) * joey.recoil;
@@ -3326,32 +3875,41 @@ function drawHouse() {
     ctx.closePath(); ctx.fill(); ctx.stroke();
 
     // Steel shotgun receiver & dark ejection port
-    ctx.fillStyle = '#6e7b87';
+    const rg = ctx.createLinearGradient(0, -4, 0, 3);
+    rg.addColorStop(0, '#96a6b5'); rg.addColorStop(0.5, '#5e6b78'); rg.addColorStop(1, '#333b42');
+    ctx.fillStyle = rg;
     ctx.fillRect(-2, -3.5, 10, 5.8);
     ctx.strokeRect(-2, -3.5, 10, 5.8);
-    ctx.fillStyle = '#1f252b';
+    ctx.fillStyle = '#1a2026';
     ctx.fillRect(0.5, -2.2, 4.5, 2.0);
 
     // Extended gunmetal barrel + under-barrel magazine tube + front sight bead
-    ctx.fillStyle = '#333b42';
+    ctx.fillStyle = '#2d353d';
     ctx.fillRect(8, -3.6, 21, 3.4);
     ctx.strokeRect(8, -3.6, 21, 3.4);
-    ctx.fillStyle = '#566470';
-    ctx.fillRect(8.5, -3.1, 19.5, 1.2);
-    ctx.fillStyle = '#1d2226';
+    ctx.fillStyle = '#687887';
+    ctx.fillRect(8.5, -3.1, 19.5, 1.1);
+    ctx.fillStyle = '#1b2024';
     ctx.fillRect(8, -0.2, 16, 2.4);
     ctx.strokeRect(8, -0.2, 16, 2.4);
     ctx.fillStyle = '#dce6f0';
     ctx.fillRect(26.5, -5.2, 2.0, 1.8);
 
-    // Ribbed wooden pump forend
+    // Ribbed wooden pump forend with vertical grip grooves
     ctx.fillStyle = '#915027';
     ctx.fillRect(10.5, -0.8, 9.5, 4.2);
     ctx.strokeRect(10.5, -0.8, 9.5, 4.2);
+    ctx.strokeStyle = '#4a2510'; ctx.lineWidth = 1.0;
+    for (let gx2 = 12.5; gx2 <= 18.5; gx2 += 2.0) {
+        ctx.beginPath(); ctx.moveTo(gx2, -0.5); ctx.lineTo(gx2, 3.1); ctx.stroke();
+    }
 
-    // Joey's rear trigger hand & front pump hand gripping the shotgun
-    blob(-1.5, 1.8, 3.6, 3.2, 0, '#f0c4a0', 1.8);
-    blob(14.8, 2.2, 3.8, 3.2, 0, '#eab893', 1.8);
+    // Sculpted comic hands with articulated knuckles gripping the shotgun (no round blobs!)
+    ctx.fillStyle = '#f0c4a0'; ctx.strokeStyle = '#140e10'; ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.roundRect(-4.2, -0.4, 5.4, 4.4, 1.8);
+    ctx.roundRect(12.2, 0.2, 6.0, 4.2, 1.8);
+    ctx.fill(); ctx.stroke();
 
     // Blazing multi-layered 12-gauge Muzzle Flash Cone when firing!
     if (joey.flash > 0) {
@@ -3547,32 +4105,183 @@ function drawBeltIcon(tool, cx, cy) {
     ctx.save();
     ctx.translate(cx, cy);
     if (tool === 'hand') {
-        blob(0, 4, 11, 10, 0, '#f5d2b8', 2.2);
-        for (const [fx, fy, rot] of [[-9, -6, -0.25], [-3, -10, -0.05], [4, -10, 0.1], [10, -5, 0.3]]) {
-            blob(fx, fy, 3.5, 8, rot, '#f5d2b8', 2);
-        }
-    } else if (tool === 'grenade') {
-        blob(0, 3, 14, 14, 0, '#262b30', 2.5);
-        ctx.fillStyle = '#5a6570'; ctx.fillRect(-4, -14, 8, 5);
-        ctx.strokeStyle = '#ffd83d'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(0, -14); ctx.quadraticCurveTo(8, -20, 12, -14); ctx.stroke();
-        drawStar5(12, -14, 5, 2, '#ff9d2e', '#fff', 0.8);
-    } else if (tool === 'spike') {
-        ctx.rotate(-0.22);
-        blob(0, 3, 19, 10, 0, '#5a6570', 2.5);
-        blob(0, 0, 16, 8, 0, '#9aa8b5', 2);
-        blob(0, -3, 7, 3.5, 0, '#7fe3a0', 1.8);
-    } else if (tool === 'saw') {
-        ctx.fillStyle = '#d0dae3'; ctx.strokeStyle = '#1e242b'; ctx.lineWidth = 2;
+        // Authentic Hand-Illustrated 3D Cartoon Grabbing Hand (ONE unified continuous Bezier silhouette — ZERO overlapping ovals!)
+        ctx.rotate(-0.10);
+        const traceHand = () => {
+            ctx.beginPath();
+            // Wrist base left
+            ctx.moveTo(-8.5, 19);
+            // Left thumb base & angled thumb
+            ctx.quadraticCurveTo(-11.5, 13, -15.5, 8.5);
+            ctx.bezierCurveTo(-21.5, 4.5, -22.5, -2.5, -17.5, -4.5);
+            ctx.bezierCurveTo(-13.5, -5.5, -10.5, -0.5, -9.5, 3.0);
+            // Index finger
+            ctx.lineTo(-10.8, -12.5);
+            ctx.bezierCurveTo(-11.0, -18.2, -4.2, -18.5, -3.8, -12.5);
+            ctx.lineTo(-3.2, -2.0);
+            // Middle finger (tallest)
+            ctx.lineTo(-2.6, -15.5);
+            ctx.bezierCurveTo(-2.4, -21.5, 4.4, -21.5, 4.6, -15.2);
+            ctx.lineTo(4.4, -1.8);
+            // Ring finger
+            ctx.lineTo(5.6, -13.2);
+            ctx.bezierCurveTo(6.2, -18.8, 12.6, -18.0, 12.0, -12.2);
+            ctx.lineTo(10.6, 0.2);
+            // Pinky finger
+            ctx.lineTo(12.8, -7.8);
+            ctx.bezierCurveTo(14.0, -12.5, 19.8, -10.8, 18.2, -5.5);
+            // Outer right palm edge curving to wrist
+            ctx.bezierCurveTo(17.2, 4.5, 14.5, 12.5, 9.5, 19);
+            ctx.closePath();
+        };
+
+        // Drop shadow behind hand
+        ctx.save();
+        ctx.translate(1.5, 2.5);
+        traceHand();
+        ctx.fillStyle = 'rgba(15, 8, 4, 0.42)';
+        ctx.fill();
+        ctx.restore();
+
+        // 3D painted skin gradient fill
+        traceHand();
+        const hg = ctx.createRadialGradient(-2, -2, 3, 0, 4, 24);
+        hg.addColorStop(0, '#fff0e0');
+        hg.addColorStop(0.55, '#f2ba94');
+        hg.addColorStop(1, '#ba764e');
+        ctx.fillStyle = hg;
+        ctx.fill();
+
+        // Inner palm shading & life-line crease (clipped to hand)
+        ctx.save();
+        ctx.clip();
+        ctx.strokeStyle = 'rgba(150, 82, 45, 0.55)';
+        ctx.lineWidth = 1.8;
+        ctx.lineCap = 'round';
         ctx.beginPath();
-        for (let i = 0; i < 12; i++) {
-            const a = (i / 12) * 6.283;
-            const rr = i % 2 ? 17 : 12;
-            ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * rr, Math.sin(a) * rr);
+        ctx.moveTo(-6, 7);
+        ctx.quadraticCurveTo(1, 4, 7, 9);
+        ctx.moveTo(-4, 12);
+        ctx.quadraticCurveTo(2, 9, 5, 15);
+        ctx.stroke();
+
+        // Soft fingernail specular highlights at fingertips
+        ctx.fillStyle = 'rgba(255, 248, 240, 0.65)';
+        for (const [nx, ny] of [[-17.2, -2.2], [-7.4, -14.2], [0.9, -17.2], [8.6, -14.2], [15.4, -7.8]]) {
+            ctx.beginPath(); ctx.arc(nx, ny, 1.8, 0, 7); ctx.fill();
         }
-        ctx.closePath(); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = '#4a5560';
-        ctx.beginPath(); ctx.arc(0, 0, 5, 0, 7); ctx.fill();
+        ctx.restore();
+
+        // Crisp continuous outer cartoon outline (no internal circle seams!)
+        traceHand();
+        ctx.strokeStyle = '#1a100a';
+        ctx.lineWidth = 2.4;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+    } else if (tool === 'grenade') {
+        // 3D Cast-Iron Bomb / Fragmentation Grenade with Specular Sheen, Spoon Lever & Sparking Fuse
+        ctx.rotate(-0.12);
+        const bg = ctx.createRadialGradient(-5, -2, 2, 0, 4, 18);
+        bg.addColorStop(0, '#788896');
+        bg.addColorStop(0.35, '#343e47');
+        bg.addColorStop(0.82, '#181e24');
+        bg.addColorStop(1, '#0b0e12');
+        ctx.fillStyle = bg; ctx.strokeStyle = '#0e1317'; ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.arc(0, 5, 14.5, 0, 7); ctx.fill(); ctx.stroke();
+
+        // Cast-iron seam lines & specular highlight
+        ctx.strokeStyle = 'rgba(160, 185, 205, 0.35)'; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.arc(-4.5, 0.5, 6.5, Math.PI * 0.9, Math.PI * 1.65); ctx.stroke();
+        ctx.strokeStyle = 'rgba(12, 16, 20, 0.65)'; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.ellipse(0, 5, 14.2, 5.2, 0, 0, Math.PI); ctx.stroke();
+
+        // Steel fuse nozzle collar
+        const ng = ctx.createLinearGradient(-5, -13, 5, -13);
+        ng.addColorStop(0, '#9aaab8'); ng.addColorStop(1, '#434e59');
+        ctx.fillStyle = ng; ctx.strokeStyle = '#0e1317'; ctx.lineWidth = 2.0;
+        ctx.beginPath(); ctx.roundRect(-4.5, -13.5, 9, 5.5, 1.5); ctx.fill(); ctx.stroke();
+
+        // Braided fuse cord & multi-layered star spark
+        ctx.strokeStyle = '#d9b872'; ctx.lineWidth = 2.4; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(0, -13.5); ctx.quadraticCurveTo(7, -21, 13, -15); ctx.stroke();
+        drawStar5(13, -15, 6.5, 2.6, '#ff7b1a', '#fff6b0', 1.0);
+        drawStar5(13, -15, 3.8, 1.5, '#ffffff', '#ffea4a', 0.5);
+    } else if (tool === 'spike') {
+        // Exact 1-to-1 ZombieSmash! HD Tilted 3D Saucer Landmine from ref_0.jpg Top-Left!
+        ctx.rotate(-0.38);
+        // Dark steel bottom rim shadow
+        ctx.fillStyle = '#182028'; ctx.strokeStyle = '#0b1014'; ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.ellipse(0, 4.5, 21.5, 8.5, 0, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+
+        // Brushed-steel sloped saucer body (single unified 3D frustum path with metallic sheen gradient!)
+        const mg = ctx.createLinearGradient(-20, 0, 20, 0);
+        mg.addColorStop(0, '#414f5c');
+        mg.addColorStop(0.28, '#9eb0bf');
+        mg.addColorStop(0.48, '#eef6fc');
+        mg.addColorStop(0.72, '#647687');
+        mg.addColorStop(1, '#2b3540');
+        ctx.fillStyle = mg;
+        ctx.beginPath();
+        ctx.ellipse(0, 2.5, 21.0, 8.0, 0, 0, Math.PI);
+        ctx.lineTo(13.5, -3.5);
+        ctx.ellipse(0, -3.5, 13.5, 4.8, 0, 0, Math.PI, true);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        // Top dark recessed bezel ring
+        ctx.fillStyle = '#263038';
+        ctx.beginPath();
+        ctx.ellipse(0, -3.5, 13.2, 4.6, 0, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+
+        // Raised glowing sage-green cylindrical pressure plate button (exact ref_0.jpg!)
+        const pg = ctx.createLinearGradient(-8, -6, 8, -3);
+        pg.addColorStop(0, '#b8f5d4');
+        pg.addColorStop(0.55, '#6ec49a');
+        pg.addColorStop(1, '#39785a');
+        ctx.fillStyle = pg;
+        ctx.beginPath();
+        ctx.ellipse(0, -5.6, 8.2, 3.0, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#14261e'; ctx.lineWidth = 1.6; ctx.stroke();
+    } else if (tool === 'saw') {
+        // 3D Brushed-Steel Circular Rip-Saw Blade with Hooked Gullet Teeth & Blood Spatter
+        const teeth = 14, rOut = 19.5, rIn = 14.2;
+        ctx.beginPath();
+        for (let i = 0; i < teeth; i++) {
+            const a0 = (i / teeth) * Math.PI * 2;
+            const aTip = ((i + 0.22) / teeth) * Math.PI * 2;
+            const aGul = ((i + 0.65) / teeth) * Math.PI * 2;
+            const x0 = Math.cos(a0) * rIn, y0 = Math.sin(a0) * rIn;
+            const xt = Math.cos(aTip) * rOut, yt = Math.sin(aTip) * rOut;
+            const xg = Math.cos(aGul) * (rIn - 1.2), yg = Math.sin(aGul) * (rIn - 1.2);
+            if (i === 0) ctx.moveTo(x0, y0);
+            ctx.lineTo(xt, yt);
+            ctx.quadraticCurveTo(Math.cos(aGul) * (rOut * 0.86), Math.sin(aGul) * (rOut * 0.86), xg, yg);
+        }
+        ctx.closePath();
+        const sg = ctx.createLinearGradient(-16, -16, 16, 16);
+        sg.addColorStop(0, '#eef5fc');
+        sg.addColorStop(0.45, '#9aaab8');
+        sg.addColorStop(0.55, '#dce6f0');
+        sg.addColorStop(1, '#4a5663');
+        ctx.fillStyle = sg; ctx.fill();
+        ctx.strokeStyle = '#141a20'; ctx.lineWidth = 2.0; ctx.stroke();
+
+        // Crimson blood accent on top-right teeth
+        ctx.save();
+        ctx.clip();
+        ctx.fillStyle = '#a81414';
+        ctx.beginPath(); ctx.arc(12, -10, 8, 0, 7); ctx.fill();
+        ctx.restore();
+
+        // Center bronze/steel arbor flange & hole
+        ctx.fillStyle = '#5c6873'; ctx.strokeStyle = '#141a20'; ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.arc(0, 0, 6.5, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#18222c';
+        ctx.beginPath(); ctx.arc(0, 0, 2.6, 0, 7); ctx.fill();
     }
     ctx.restore();
 }
@@ -3586,36 +4295,68 @@ function drawBelt() {
         const usable = n !== 0;
 
         ctx.save();
-        ctx.globalAlpha = usable ? 1 : 0.48;
+        ctx.globalAlpha = usable ? 1 : 0.55;
 
-        const grad = ctx.createRadialGradient(r.x + r.w / 2, r.y + r.h / 2, 4, r.x + r.w / 2, r.y + r.h / 2, r.w * 0.7);
+        const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+        roundRect(r.x, r.y, r.w, r.h, 9);
+
+        // Authentic ZombieSmash! HD Radiant Sunburst Slot Background (exact ref_0.jpg & ref_extra_0.jpg!)
+        ctx.save();
+        ctx.clip();
+        const grad = ctx.createRadialGradient(cx, cy, 3, cx, cy, r.w * 0.76);
         if (on) {
-            grad.addColorStop(0, '#fff6b0');
-            grad.addColorStop(0.55, '#d4882a');
-            grad.addColorStop(1, '#5e2c14');
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.28, '#fff099');
+            grad.addColorStop(0.68, '#d97b1c');
+            grad.addColorStop(1, '#522008');
         } else if (usable) {
-            grad.addColorStop(0, '#42b8e8');
-            grad.addColorStop(0.65, '#1b648a');
-            grad.addColorStop(1, '#0e334a');
+            grad.addColorStop(0, '#b8f0ff');
+            grad.addColorStop(0.45, '#2b9cd4');
+            grad.addColorStop(1, '#0d3550');
         } else {
-            grad.addColorStop(0, '#3a5266');
-            grad.addColorStop(1, '#1c2c38');
+            grad.addColorStop(0, 'rgba(32, 56, 74, 0.72)');
+            grad.addColorStop(1, 'rgba(14, 28, 40, 0.85)');
+        }
+        ctx.fillStyle = grad;
+        ctx.fillRect(r.x, r.y, r.w, r.h);
+
+        // Radiant sunburst light rays inside usable/active weapon slots (ref_0.jpg top-left!)
+        if (usable) {
+            ctx.fillStyle = on ? 'rgba(255, 252, 200, 0.28)' : 'rgba(180, 238, 255, 0.16)';
+            const rays = 12;
+            for (let k = 0; k < rays; k++) {
+                const a0 = (k / rays) * Math.PI * 2 + 0.15;
+                const a1 = ((k + 0.42) / rays) * Math.PI * 2 + 0.15;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(a0) * r.w, cy + Math.sin(a0) * r.w);
+                ctx.lineTo(cx + Math.cos(a1) * r.w, cy + Math.sin(a1) * r.w);
+                ctx.closePath();
+                ctx.fill();
+            }
         }
 
+        drawBeltIcon(b.tool, cx, cy);
+        ctx.restore();
+
+        // Outer beveled ZombieSmash! HD slot border (gold when active, frosted silver-blue when idle)
         roundRect(r.x, r.y, r.w, r.h, 9);
-        ctx.fillStyle = grad; ctx.fill();
-        ctx.lineWidth = on ? 4 : 3.2;
-        ctx.strokeStyle = on ? '#ffea4a' : (usable ? '#78d4ff' : '#6c8599');
+        ctx.lineWidth = on ? 4.2 : 3.2;
+        ctx.strokeStyle = on ? '#ffea3d' : (usable ? '#78d4ff' : 'rgba(125, 160, 185, 0.65)');
         ctx.stroke();
 
-        drawBeltIcon(b.tool, r.x + r.w / 2, r.y + r.h / 2 - 4);
-
-        ctx.font = 'bold 11px Trebuchet MS';
-        ctx.lineWidth = 3; ctx.strokeStyle = '#0e171f';
-        const txt = b.label + (n >= 0 ? ' x' + n : '');
-        ctx.strokeText(txt, r.x + r.w / 2, r.y + r.h - 7);
-        ctx.fillStyle = on ? '#fff9c4' : '#e4f2fc';
-        ctx.fillText(txt, r.x + r.w / 2, r.y + r.h - 7);
+        // Corner Star Badge (exact ref_extra_0.jpg bottom-left star!) + clean ammo counter badge
+        if (usable) {
+            drawStar5(r.x + 12, r.y + r.h - 12, 7.2, 3.2, '#ffea4a', '#3b1e06', 1.5);
+        }
+        if (n >= 0) {
+            ctx.textAlign = 'right';
+            ctx.font = 'bold 13px Trebuchet MS';
+            ctx.lineWidth = 3.5; ctx.strokeStyle = '#0d151c';
+            ctx.strokeText('x' + n, r.x + r.w - 7, r.y + r.h - 7);
+            ctx.fillStyle = n > 0 ? '#fff9c4' : '#9ab0c2';
+            ctx.fillText('x' + n, r.x + r.w - 7, r.y + r.h - 7);
+        }
 
         ctx.restore();
     }
@@ -3739,16 +4480,28 @@ function draw() {
     ctx.drawImage(decal, 0, 0);
 
     for (const sp of spikes) {
-        ctx.fillStyle = '#6c7a86'; ctx.strokeStyle = INK; ctx.lineWidth = 2.5;
+        // 3D Brushed-Steel Saucer Landmine with Spike Array on Ground
+        ctx.save();
+        ctx.translate(sp.x, GROUND - 2);
+        ctx.fillStyle = '#5c6b78'; ctx.strokeStyle = INK; ctx.lineWidth = 2.2;
         for (let i = -3; i <= 3; i++) {
             ctx.beginPath();
-            ctx.moveTo(sp.x + i * 11 - 6, GROUND);
-            ctx.lineTo(sp.x + i * 11, GROUND - 24);
-            ctx.lineTo(sp.x + i * 11 + 6, GROUND);
+            ctx.moveTo(i * 11 - 5.5, 0);
+            ctx.lineTo(i * 11, -21);
+            ctx.lineTo(i * 11 + 5.5, 0);
             ctx.closePath(); ctx.fill(); ctx.stroke();
         }
-        blob(sp.x, GROUND - 2, sp.w * 0.5, 6, 0, '#495661', 2.5);
-        blob(sp.x, GROUND - 5, 10, 3.5, 0, '#7fe3a0', 1.5);
+        const mg = ctx.createLinearGradient(-sp.w * 0.5, 0, sp.w * 0.5, 0);
+        mg.addColorStop(0, '#36424d'); mg.addColorStop(0.45, '#b8cad8'); mg.addColorStop(1, '#263038');
+        ctx.fillStyle = mg;
+        ctx.beginPath();
+        ctx.ellipse(0, 1, sp.w * 0.5, 5.5, 0, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#7fe3a0';
+        ctx.beginPath();
+        ctx.ellipse(0, -2.5, 11, 3.2, 0, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+        ctx.restore();
     }
 
     drawHouse();
@@ -3777,19 +4530,54 @@ function draw() {
     }
 
     for (const b of boulders) {
+        // 3D Faceted Granite Boulder with Fracture Cracks & Chiseled Rock Planes (NO circle inside!)
         ctx.save();
         ctx.translate(b.x, b.y);
         ctx.rotate(b.rot);
-        ctx.fillStyle = '#53626e'; ctx.strokeStyle = INK; ctx.lineWidth = 3;
+        const pts = [
+            [1.02, 0.0], [0.76, 0.64], [0.12, 0.96], [-0.62, 0.78],
+            [-0.98, 0.22], [-0.84, -0.54], [-0.24, -0.96], [0.58, -0.82]
+        ];
         ctx.beginPath();
-        for (let i = 0; i < 8; i++) {
-            const a = (i / 8) * 6.283;
-            const rr = b.r * (i % 2 ? 1.04 : 0.86);
-            ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * rr, Math.sin(a) * rr);
+        for (let i = 0; i < pts.length; i++) {
+            const px = pts[i][0] * b.r, py = pts[i][1] * b.r;
+            ctx[i ? 'lineTo' : 'moveTo'](px, py);
         }
-        ctx.closePath(); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = '#758896';
-        ctx.beginPath(); ctx.arc(-b.r * 0.25, -b.r * 0.25, b.r * 0.38, 0, 7); ctx.fill();
+        ctx.closePath();
+        const rg = ctx.createLinearGradient(-b.r, -b.r, b.r, b.r);
+        rg.addColorStop(0, '#8498a8');
+        rg.addColorStop(0.52, '#51616e');
+        rg.addColorStop(1, '#29333b');
+        ctx.fillStyle = rg;
+        ctx.fill();
+
+        // Chiseled upper-left granite facet plane + fracture crack lines
+        ctx.fillStyle = 'rgba(165, 192, 212, 0.28)';
+        ctx.beginPath();
+        ctx.moveTo(pts[4][0] * b.r * 0.85, pts[4][1] * b.r * 0.85);
+        ctx.lineTo(pts[5][0] * b.r * 0.85, pts[5][1] * b.r * 0.85);
+        ctx.lineTo(pts[6][0] * b.r * 0.85, pts[6][1] * b.r * 0.85);
+        ctx.lineTo(pts[7][0] * b.r * 0.65, pts[7][1] * b.r * 0.65);
+        ctx.lineTo(-b.r * 0.10, -b.r * 0.05);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#1b2329'; ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(pts[5][0] * b.r * 0.8, pts[5][1] * b.r * 0.8);
+        ctx.lineTo(-b.r * 0.08, -b.r * 0.04);
+        ctx.lineTo(pts[1][0] * b.r * 0.75, pts[1][1] * b.r * 0.75);
+        ctx.moveTo(-b.r * 0.08, -b.r * 0.04);
+        ctx.lineTo(pts[7][0] * b.r * 0.7, pts[7][1] * b.r * 0.7);
+        ctx.stroke();
+
+        ctx.strokeStyle = INK; ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let i = 0; i < pts.length; i++) {
+            ctx[i ? 'lineTo' : 'moveTo'](pts[i][0] * b.r, pts[i][1] * b.r);
+        }
+        ctx.closePath();
+        ctx.stroke();
         ctx.restore();
 
         if (b.hostile) {
@@ -3805,25 +4593,32 @@ function draw() {
         ctx.save();
         ctx.translate(g.x, g.y); ctx.rotate(g.rot);
         ctx.globalAlpha = clamp(g.life, 0, 1);
-        blob(0, 0, g.r * 2.1, g.r * 0.95, 0, g.color, 2.2);
+        drawTaperedLimb({ x: -g.r * 1.6, y: 0 }, { x: 0, y: -g.r * 0.2 }, { x: g.r * 1.6, y: 0 }, g.r * 0.85, g.r * 0.75, g.r * 0.65, g.color, shade('#1a2218', 0), 2.0);
         ctx.fillStyle = '#8a1111';
-        ctx.beginPath(); ctx.arc(g.r * 1.6, 0, g.r * 0.7, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(g.r * 1.5, 0, g.r * 0.58, 0, 7); ctx.fill();
         ctx.restore();
     }
     ctx.globalAlpha = 1;
 
     for (const s of saws) {
         ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot);
-        ctx.fillStyle = '#c9d2da'; ctx.strokeStyle = INK; ctx.lineWidth = 2.5;
+        const teeth = 14, rOut = s.r, rIn = s.r * 0.74;
         ctx.beginPath();
-        for (let i = 0; i < 12; i++) {
-            const a = (i / 12) * 6.283;
-            const rr = i % 2 ? s.r : s.r * 0.78;
-            ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * rr, Math.sin(a) * rr);
+        for (let i = 0; i < teeth; i++) {
+            const a0 = (i / teeth) * Math.PI * 2;
+            const aTip = ((i + 0.22) / teeth) * Math.PI * 2;
+            const aGul = ((i + 0.65) / teeth) * Math.PI * 2;
+            ctx[i === 0 ? 'moveTo' : 'lineTo'](Math.cos(a0) * rIn, Math.sin(a0) * rIn);
+            ctx.lineTo(Math.cos(aTip) * rOut, Math.sin(aTip) * rOut);
+            ctx.quadraticCurveTo(Math.cos(aGul) * (rOut * 0.86), Math.sin(aGul) * (rOut * 0.86), Math.cos(aGul) * rIn, Math.sin(aGul) * rIn);
         }
-        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.closePath();
+        const sg = ctx.createLinearGradient(-rOut, -rOut, rOut, rOut);
+        sg.addColorStop(0, '#eef5fc'); sg.addColorStop(0.5, '#9aaab8'); sg.addColorStop(1, '#4a5663');
+        ctx.fillStyle = sg; ctx.strokeStyle = INK; ctx.lineWidth = 2.4;
+        ctx.fill(); ctx.stroke();
         ctx.fillStyle = '#5a636b';
-        ctx.beginPath(); ctx.arc(0, 0, s.r * 0.3, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, s.r * 0.28, 0, 7); ctx.fill(); ctx.stroke();
         ctx.restore();
     }
 
