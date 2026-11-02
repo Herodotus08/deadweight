@@ -132,9 +132,12 @@ nothing to buy. A scaling Repair Shack gives that late-game gold somewhere to go
 | **1 / 2 / 3** | Grenade · Spike trap · Saw blade |
 | **ESC** | Pause / menu |
 
-Heavies and bosses need a minimum grip level before you can even attempt a
-lift, and each attempt can slip. Failed attempts build `strain`, which makes
-the next attempt likelier — so wrestling is a strategy, not a coin flip.
+Super-heavies and bosses (Titans, Butchers, Wardens) are grounded behemoths —
+no matter how high your Grip level is, you can never sky-toss them like normal
+zombies, and you never get soft-locked for lacking Grip levels. Instead, beat
+them *ZombieSmash! HD* style: **bowl** lighter zombies into them, **catch and
+return** the boulders they hurl at Joey's shack, or yank their legs near the
+ground to **trip** them face-first into the dirt.
 
 ## Running it
 

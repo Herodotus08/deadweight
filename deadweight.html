@@ -279,16 +279,13 @@
 
             <div class="pane" id="paneHow">
                 <div class="how">
-                    🖐 <b>Grab and fling them.</b> Damage comes from the <i>impact</i> —
-                    slam them into the dirt, spike them, or bowl them into each other.<br>
-                    🩹 A zombie that survives a throw will <b>get back up</b>. Finish it.<br>
-                    💪 <b>Big ones fight your grip.</b> Heavies and bosses need a grip
-                    level just to try, and even then you may slip — keep wrestling,
-                    every failed attempt makes the next one likelier.<br>
-                    🛡 <b>Armour only stops gadgets</b>, never your hands. The answer to
-                    an armoured zombie is always a throw.<br>
-                    💣 Pick a gadget off the belt, then tap the field to use it.<br>
-                    🏚 Keep them off the shack. Kills buy upgrades between waves.
+                    🖐 <b>Flick, lift, and slam!</b> Damage comes from <i>impact</i> —
+                    launch zombies sky-high, slam them into the dirt, or <b>bowl them into each other</b>.<br>
+                    🩹 A zombie that survives a throw will <b>scramble back up fast</b>. Finish it!<br>
+                    💪 <b>Giant Bosses &amp; Heavies can't be tossed into the sky!</b> Just like <i>ZombieSmash! HD</i>, massive bosses are too heavy to fling around like ragdolls — <b>sweep their legs</b> to trip them, <b>bowl smaller zombies into them</b>, or <b>catch the boulders they throw</b> and smash them right back!<br>
+                    🛡 <b>Armour blunts gadgets</b>, never physical impacts or bowling strikes.<br>
+                    💣 Pick a gadget off the belt (or press <b>1–4</b>), then tap the field.<br>
+                    🏚 Protect Joey's shack! Bosses arrive every 4th wave.
                 </div>
                 <button class="menu-btn back-btn">← BACK</button>
             </div>
@@ -709,7 +706,7 @@ const game = {
 // ceilings, gold stops being a win condition and the late waves have to be
 // answered with positioning and target priority instead.
 const upgrades = {
-    grip:    { lvl: 0, max: 10, cost: 70,  step: 1.58, name: '💪 Grip Strength',  desc: '+28% smash dmg, lift heavier' },
+    grip:    { lvl: 0, max: 10, cost: 75,  step: 1.58, name: '💪 Flick & Bowl Power', desc: '+28% smash/bowl dmg, harder trips' },
     brittle: { lvl: 0, max: 5,  cost: 90,  step: 1.60, name: '☠ Bone Breaker',    desc: 'They break easier' },
     shack:   { lvl: 0, max: 10, cost: 80,  step: 1.50, name: '🏚 Reinforce Shack', desc: '+50 max HP, repair' },
     // The gadget ceilings are stated as COUNTS (6 grenades, 4 spikes, 4 saws), so
@@ -724,10 +721,6 @@ const upgrades = {
 const maxed = key => upgrades[key].lvl >= upgrades[key].max;
 
 // Per-wave ammo. Hard ceilings: 6 grenades, 4 spikes, 4 saws at full investment.
-// Gadgets are a budget you spend per wave, not a faucet — running dry mid-wave and
-// having to fall back on your hands is the intended experience, not a failure state.
-// Saws start at zero on purpose: they're the one tool you must choose to bring, and
-// the belt already greys out an empty slot so it reads as locked rather than broken.
 const ammo = { grenade: 0, spike: 0, saw: 0 };
 const capOf = {
     grenade: () => Math.min(6, 1 + upgrades.nade.lvl),
@@ -735,38 +728,33 @@ const capOf = {
     saw:     () => Math.min(4, upgrades.saw.lvl)
 };
 
-// Grip is capped at 10, so this tops out at 3.52x rather than running away.
+// Grip is capped at 10, so this tops out at 3.80x rather than running away.
 const gripMul = () => 1 + upgrades.grip.lvl * 0.28;
-// Grip doubles as lift capacity. One stat, so every point spent here visibly
-// unlocks a body you could not pick up before.
 const liftLvl = () => upgrades.grip.lvl;
 
-// ---- LIFT ODDS -------------------------------------------------------------
-// Meeting grabLvl buys you an ATTEMPT, not a lift. The big bodies fight back:
-// you wrestle at them and occasionally get purchase. Trash is unaffected — a
-// shambler is always picked up on the first try, because the core verb of the
-// game has to stay instant for the bodies you spend all game handling.
+// ---- ZOMBIESMASH! HD HEAVY & BOSS WRESTLING --------------------------------
+// In ZombieSmash! HD, no zombie is ever locked behind a hard "NEEDS GRIP Lv4"
+// stat wall that soft-locks the run if you didn't buy Grip, AND conversely,
+// even at max Grip you can NEVER pick up a giant Boss or Super-Heavy and toss
+// it into the sky like a featherweight ragdoll!
 //
-// base   — chance at exactly the required grip level, on the FIRST wave you can
-//          meet this class at all
-// perLvl — what each grip level ABOVE the requirement adds
-// waveDk — decay per wave, because a wave-20 warden is a bigger animal than a
-//          wave-5 one; the same grip should not manhandle both
-// since  — the wave decay is measured FROM. Without this the boss is already
-//          floored the first time you ever see one: wardens don't appear until
-//          wave 5, so charging five waves of decay against your debut warden
-//          made the whole base value dead weight and every boss read as the
-//          same flat 5% no matter what you'd spent.
-// floor  — never fully impossible, or a bad RNG streak reads as a broken game
-// cap    — never guaranteed either; a boss you can always pick up is a trash mob
+// Instead:
+// - Normal zombies (shambler, runner, hardhat, screamer) are flicked sky-high.
+// - Medium heavies (brute, bloater) can be wrestled/tripped at Lv 0 and heaved
+//   to waist/head height as Grip increases, but gravity pulls them back down.
+// - Super-heavies & Bosses (titan, butcher, warden) are grounded behemoths:
+//   grabbing them lets you yank/sweep their legs to trip them face-first into
+//   the dirt (with an unstoppable poise cooldown afterward so they can't be
+//   chain-floored), while your main damage comes from BOWLING other zombies
+//   into them and CATCHING & RETURNING the boulders they hurl!
 const LIFT_ODDS = {
-    boss:  { base: 0.20, perLvl: 0.070, waveDk: 0.008, since: 5, floor: 0.08, cap: 0.55 },
-    heavy: { base: 0.40, perLvl: 0.130, waveDk: 0.005, since: 4, floor: 0.18, cap: 0.92 }
+    boss:  { base: 0.68, perLvl: 0.040, waveDk: 0.004, since: 4, floor: 0.45, cap: 0.88 },
+    heavy: { base: 0.78, perLvl: 0.050, waveDk: 0.003, since: 4, floor: 0.55, cap: 0.96 }
 };
 
 function liftChance(z) {
     const cls = z.t.boss ? 'boss' : (z.t.heavy ? 'heavy' : null);
-    if (!cls) return 1;                       // normal zombies: unchanged
+    if (!cls) return 1;
     const o = LIFT_ODDS[cls];
     const over = liftLvl() - (z.t.grabLvl || 0);
     const late = Math.max(0, (z.spawnWave || 1) - o.since);
@@ -774,59 +762,33 @@ function liftChance(z) {
     return clamp(raw, o.floor, o.cap);
 }
 
-// Failed attempts are not wasted. Each one banks strain on that specific body,
-// which is added to the next roll and cleared on a success. Pure independent
-// rolls at 10% mean a player can genuinely whiff eight times in a row and
-// conclude the boss is unliftable; this guarantees progress while keeping the
-// moment of getting a grip on a warden feel earned.
 function rollLift(z) {
     const p = liftChance(z);
     if (p >= 1) return true;
     z.strain = z.strain || 0;
-    if (Math.random() < clamp(p + z.strain, 0, 0.95)) { z.strain = 0; return true; }
-    z.strain += p * 0.55;
+    if (Math.random() < clamp(p + z.strain, 0, 0.96)) { z.strain = 0; return true; }
+    z.strain += 0.38;
     return false;
 }
 
-// Gadgets scale with their OWN upgrade, not with grip, and they are deliberately
-// flat-ish: they exist to soften and to crowd-control, not to out-damage your
-// hands. Every one of these used to be unbounded DPS.
-//
-// Deliberately weaker than they were. With a hard ammo cap a gadget is a tool
-// you aim at a problem — a grenade under a titan, a spike where the runners
-// funnel — and if it also killed things outright there'd be no decision to make.
-// Against a late-wave heavy these numbers are chip damage, on purpose.
-const nadeDmg  = () => 34 + upgrades.nade.lvl * 4;
-const spikeDmg = () => 8  + upgrades.spike.lvl * 2;
-const sawDmg   = () => 5  + upgrades.saw.lvl * 1.4;
+const nadeDmg  = () => 38 + upgrades.nade.lvl * 5;
+const spikeDmg = () => 9  + upgrades.spike.lvl * 2.2;
+const sawDmg   = () => 5.5 + upgrades.saw.lvl * 1.5;
 
-// Impact speed a body must exceed before it starts taking damage at all.
-const breakPt = () => Math.max(3.4, 8.2 - upgrades.brittle.lvl * 0.6);
-// Impact that knocks a walking zombie off its feet.
+// Harder impact threshold: weak little drops won't kill full-HP walkers —
+// players must genuinely flick them high or bowl them hard into each other.
+const breakPt = () => Math.max(3.8, 9.0 - upgrades.brittle.lvl * 0.55);
 const KNOCK = 6.5;
-
-// How long one throw's landing counts as a single slam. A body touches down over
-// several frames (feet, hips, head), and every one of those frames reports an
-// impact. 0.42s is long enough to swallow a full landing plus its first bounce,
-// short enough that a genuine second throw always reads as a new slam.
 const SLAM_WINDOW = 0.42;
 
-// Ragdoll odds by damage source. Being on the floor is the strongest crowd
-// control in the game — a body down is a body not clawing the shack — so traps
-// only ever get a ROLL at it. Unconditional knockdown is what made a single
-// spike strip lock the whole field down permanently.
-// 'slam' is your own hands: trash always goes down, but a braced heavy or boss
-// can eat a hit and stay standing, so you can't chain-floor them forever.
 const KNOCK_ODDS = {
     light: { spike: 0.45, saw: 0.30, blast: 1.00, slam: 1.00 },
-    heavy: { spike: 0.12, saw: 0.07, blast: 0.55, slam: 0.55 },
-    boss:  { spike: 0.02, saw: 0.01, blast: 0.38, slam: 0.28 }
+    heavy: { spike: 0.14, saw: 0.08, blast: 0.60, slam: 0.62 },
+    boss:  { spike: 0.04, saw: 0.02, blast: 0.42, slam: 0.38 }
 };
 const weightClass = z => z.t.boss ? 'boss' : ((z.t.mass || 1) >= 1.5 ? 'heavy' : 'light');
 
 function tryKnock(z, source, recover) {
-    // Just-got-up grace. Without it, a zombie standing in a spike strip is
-    // re-floored on the first tick after rising and never walks again.
     if (z.poiseT > 0 && source !== 'blast') return false;
     if (Math.random() >= KNOCK_ODDS[weightClass(z)][source]) return false;
     z.knockDown(recover);
@@ -834,6 +796,7 @@ function tryKnock(z, source, recover) {
 }
 
 const zombies = [];
+const boulders = [];
 const gibs = [];
 const parts = [];
 const nades = [];
@@ -842,7 +805,7 @@ const saws = [];
 const popups = [];
 let spawnTimers = [];
 
-const SPLATS = ['SPLAT!', 'CRUNCH!', 'OOF!', 'SQUISH!', 'YEET!', 'KAPOW!', 'THUD!', 'POP!', 'BONK!'];
+const SPLATS = ['SPLAT!', 'CRUNCH!', 'SMASH!', 'SQUISH!', 'YEET!', 'KAPOW!', 'THUD!', 'WHAM!', 'BONK!'];
 
 // ============================================================== FX
 let bannerT = 0, bannerText = '', bannerColor = '#b6ff4a';
@@ -869,18 +832,16 @@ function puff(x, y, color, n, spread) {
 }
 
 function bloodDecal(x, y, r, color) {
-    dctx.globalAlpha = 0.5;
+    dctx.globalAlpha = 0.55;
     dctx.fillStyle = color;
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
         dctx.beginPath();
-        dctx.arc(x + rand(-r, r), y + rand(-r * 0.35, r * 0.35), rand(r * 0.28, r * 0.75), 0, 7);
+        dctx.arc(x + rand(-r, r), y + rand(-r * 0.35, r * 0.35), rand(r * 0.25, r * 0.8), 0, 7);
         dctx.fill();
     }
     dctx.globalAlpha = 1;
 }
 
-// Two-bone IK. Only used for drawing elbows/knees, so it never touches physics.
-// sign picks which way the joint bends.
 function ik(ax, ay, bx, by, l1, l2, sign) {
     let dx = bx - ax, dy = by - ay;
     let d = Math.hypot(dx, dy) || 0.001;
@@ -893,90 +854,74 @@ function ik(ax, ay, bx, by, l1, l2, sign) {
 }
 
 // ============================================================== ZOMBIE TYPES
-// Palette in the spirit of the 2012 originals: sickly greens and greys, grubby
-// mismatched clothes, heavy ink outlines. Every colour below is hand-picked —
-// nothing here is sampled from another game.
-const INK = '#20250f';
+// ZombieSmash! HD style: expressive oversized heads, vivid cartoon contrast,
+// punchier speeds, and grounded heavy/boss physics (maxLift caps how high above
+// the dirt a body can ever be hoisted by hand, even at Lv10 Grip).
+const INK = '#1a1f0c';
 
-// grabLvl   — grip level needed to even ATTEMPT a lift. Below it your hand
-//             slides off. This is what makes the shop gate content.
-// mass      — how sluggishly the held point chases the cursor. 1 = weightless.
-// armor     — multiplier on GADGET and BLAST damage only. Impact damage ignores
-//             it entirely, so the answer to an armored zombie is always your
-//             hands, never a saw. That's the whole thesis of the game.
-// capImpact — ceiling on ONE slam's damage, as a fraction of max HP. This is the
-//             only thing standing between a levelled grip and two-shotting a
-//             boss: impact damage scales with your throw speed and with grip,
-//             both unbounded, so without a cap the big bodies evaporate. 0.15
-//             means "at least seven good slams, no matter how hard you throw."
-//             Absent on the trash, which SHOULD burst.
-// bounty    — gold multiplier, so the scary ones are worth the risk.
 const TYPES = {
     shambler: {
-        hp: 28, hpw: 7, scale: 1.00, speed: 26, gold: 8,  dmg: 9,
-        skin: '#93b35a', skinDark: '#71904a', shirt: '#5c6a8a', pants: '#3f4a5e',
-        headR: 15, torsoW: 20, limb: 7.5, gut: 0,
+        hp: 32, hpw: 7.5, scale: 1.00, speed: 31, gold: 8,  dmg: 10,
+        skin: '#95b858', skinDark: '#6c8d3f', shirt: '#5e7094', pants: '#3b4659',
+        headR: 21.5, torsoW: 20, limb: 7.5, gut: 0,
         grabLvl: 0, mass: 1.0, armor: 1
     },
     runner: {
-        hp: 18, hpw: 4.5, scale: 0.88, speed: 56, gold: 12, dmg: 7,
-        skin: '#a8c464', skinDark: '#85a04c', shirt: '#8f5252', pants: '#4a3b34',
-        headR: 13.5, torsoW: 16, limb: 6, gut: 0,
+        hp: 21, hpw: 5.0, scale: 0.92, speed: 64, gold: 12, dmg: 8,
+        skin: '#acd062', skinDark: '#82a344', shirt: '#a44a4a', pants: '#4a3830',
+        headR: 20.5, torsoW: 16, limb: 6.2, gut: 0,
         grabLvl: 0, mass: 0.85, armor: 1, fast: true
     },
     hardhat: {
-        hp: 38, hpw: 8, scale: 1.02, speed: 23, gold: 16, dmg: 11,
-        skin: '#8fae57', skinDark: '#6d8a45', shirt: '#b8862f', pants: '#4a4438',
-        headR: 15, torsoW: 21, limb: 8, gut: 2, helmet: true,
-        grabLvl: 0, mass: 1.1, armor: 0.9
+        hp: 44, hpw: 9.0, scale: 1.04, speed: 28, gold: 16, dmg: 12,
+        skin: '#8fb253', skinDark: '#69873d', shirt: '#cf8e28', pants: '#464136',
+        headR: 21.5, torsoW: 21, limb: 8, gut: 2, helmet: true,
+        grabLvl: 0, mass: 1.15, armor: 0.9
     },
     brute: {
-        hp: 86, hpw: 15, scale: 1.34, speed: 16, gold: 28, dmg: 22,
-        skin: '#7f9d4c', skinDark: '#61793a', shirt: '#4d4436', pants: '#3a3226',
-        headR: 14, torsoW: 27, limb: 9.5, gut: 12,
-        grabLvl: 1, mass: 1.7, armor: 0.85, heavy: true, capImpact: 0.34
+        hp: 96, hpw: 16, scale: 1.36, speed: 19, gold: 28, dmg: 24,
+        skin: '#7fa148', skinDark: '#5d7834', shirt: '#4f4434', pants: '#383024',
+        headR: 21.0, torsoW: 28, limb: 10, gut: 14,
+        grabLvl: 0, mass: 2.1, armor: 0.85, heavy: true, capImpact: 0.34, maxLift: 115
     },
-
-    // ---- wave 5+ : the ones that change how you play -----------------------
-    // Pops on death. Grab it, walk it into a crowd, let go. Chain reactions
-    // are intentional and are the cheapest crowd clear in the game.
     bloater: {
-        hp: 46, hpw: 9, scale: 1.16, speed: 18, gold: 24, dmg: 14,
-        skin: '#a3b862', skinDark: '#7d9247', shirt: '#6b7a4a', pants: '#454f36',
-        headR: 15.5, torsoW: 26, limb: 8.5, gut: 22,
-        grabLvl: 1, mass: 1.5, armor: 0.8, bloat: true, heavy: true, capImpact: 0.38
+        hp: 54, hpw: 10, scale: 1.18, speed: 21, gold: 24, dmg: 16,
+        skin: '#a6c05c', skinDark: '#7b9142', shirt: '#687a46', pants: '#434d34',
+        headR: 22.0, torsoW: 27, limb: 8.5, gut: 24,
+        grabLvl: 0, mass: 1.75, armor: 0.8, bloat: true, heavy: true, capImpact: 0.38, maxLift: 135
     },
-    // Speeds up everything near it. Kill it first or the wave outruns you.
     screamer: {
-        hp: 32, hpw: 6.5, scale: 0.94, speed: 42, gold: 30, dmg: 8,
-        skin: '#b9c46e', skinDark: '#8f9a52', shirt: '#6d4a7a', pants: '#40354a',
-        headR: 16, torsoW: 16, limb: 6.2, gut: 0,
-        grabLvl: 1, mass: 0.95, armor: 1, howl: true, fast: true
+        hp: 36, hpw: 7.0, scale: 0.96, speed: 48, gold: 30, dmg: 9,
+        skin: '#bfd06a', skinDark: '#8e9c4b', shirt: '#7a468a', pants: '#3f324a',
+        headR: 22.5, torsoW: 16, limb: 6.4, gut: 0,
+        grabLvl: 0, mass: 0.95, armor: 1, howl: true, fast: true
     },
-    // ---- wave 8+ : needs a real grip --------------------------------------
     titan: {
-        hp: 215, hpw: 32, scale: 1.62, speed: 13, gold: 72, dmg: 34,
-        skin: '#6f8c42', skinDark: '#546b31', shirt: '#4a3f30', pants: '#332c22',
-        headR: 14.5, torsoW: 34, limb: 12, gut: 18,
-        grabLvl: 2, mass: 3.2, armor: 0.55, heavy: true, capImpact: 0.27
+        hp: 230, hpw: 34, scale: 1.64, speed: 16, gold: 74, dmg: 36,
+        skin: '#6e8f3e', skinDark: '#50692c', shirt: '#4c3f2f', pants: '#322b20',
+        headR: 20.5, torsoW: 35, limb: 12.5, gut: 18,
+        grabLvl: 0, mass: 3.8, armor: 0.55, heavy: true, grounded: true, hurler: true,
+        capImpact: 0.26, maxLift: 64
     },
     butcher: {
-        hp: 155, hpw: 24, scale: 1.30, speed: 31, gold: 64, dmg: 26,
-        skin: '#8a9e52', skinDark: '#68793c', shirt: '#7d2f2f', pants: '#3b3128',
-        headR: 14, torsoW: 26, limb: 9, gut: 4, plate: true,
-        grabLvl: 3, mass: 2.4, armor: 0.45, heavy: true, capImpact: 0.25
+        hp: 170, hpw: 26, scale: 1.32, speed: 35, gold: 66, dmg: 28,
+        skin: '#89a34e', skinDark: '#647838', shirt: '#8c2b2b', pants: '#3a3026',
+        headR: 20.5, torsoW: 27, limb: 9.5, gut: 5, plate: true,
+        grabLvl: 0, mass: 2.9, armor: 0.45, heavy: true, grounded: true,
+        capImpact: 0.24, maxLift: 74
     },
-    // ---- every 5th wave ----------------------------------------------------
+    // ---- Every 4th wave: The Warden Boss -----------------------------------
     warden: {
-        hp: 640, hpw: 98, scale: 2.05, speed: 11, gold: 280, dmg: 46,
-        skin: '#5f7d3a', skinDark: '#455c28', shirt: '#3d3a30', pants: '#2b271f',
-        headR: 15, torsoW: 40, limb: 14, gut: 22, plate: true, helmet: true,
-        grabLvl: 4, mass: 5.0, armor: 0.3, boss: true, capImpact: 0.15
+        hp: 580, hpw: 88, scale: 2.05, speed: 13.5, gold: 280, dmg: 46,
+        skin: '#5d7e36', skinDark: '#415924', shirt: '#3b382e', pants: '#29251d',
+        headR: 21.0, torsoW: 41, limb: 14.5, gut: 22, plate: true, helmet: true,
+        grabLvl: 0, mass: 6.0, armor: 0.35, boss: true, grounded: true, hurler: true,
+        capImpact: 0.16, maxLift: 46
     }
 };
 
 // Skeleton heights above the lane's ground line, at scale 1.
-const SK = { foot: 11, hips: 34, chest: 58, head: 80, hand: 54 };
+const SK = { foot: 11, hips: 34, chest: 58, head: 84, hand: 54 };
 
 let zid = 0;
 
@@ -1037,6 +982,8 @@ class Zombie {
         // slamBudget is what's left of that slam's damage allowance.
         this.slamT = 0;
         this.slamBudget = 0;
+        this.bowlHit = false;
+        this.hurlCd = t.hurler ? rand(3.2, 5.2) : 0;
         this.hasteT = 0;          // screamer buff timer
         this.haste = 1;
 
@@ -1281,7 +1228,7 @@ function think(z, dt) {
             return;
         }
 
-        if (z.settle > 0.85) {
+        if (z.settle > 0.62) {
             z.state = 'rise';
             z.riseT = 0;
             // Physics owned the body while it tumbled, so hand the walk anchor
@@ -1295,12 +1242,11 @@ function think(z, dt) {
 
     if (z.state === 'rise') {
         z.riseT += dt;
-        const k = clamp(z.riseT / 0.65, 0, 1);
-        z.applyPose(z.wx, 0.06 + k * 0.26);
+        const k = clamp(z.riseT / 0.50, 0, 1);
+        z.applyPose(z.wx, 0.08 + k * 0.28);
         // Poise window: for a beat after standing up they shrug off trap
-        // knockdowns. Without it a body lying in a spike strip is re-floored on
-        // the frame it finishes rising and never walks again.
-        if (k >= 1) { z.state = 'walk'; z.swing = 0; z.poiseT = 1.2; }
+        // knockdowns and cannot be chain-tripped while scrambling up.
+        if (k >= 1) { z.state = 'walk'; z.swing = 0; z.poiseT = z.t.grounded ? 1.8 : 1.1; }
         return;
     }
 
@@ -1321,7 +1267,7 @@ function think(z, dt) {
         z.applyPose(z.wx, 0.35);
 
         if (z.attackCd <= 0 && game.hp > 0) {
-            z.attackCd = 1.05;
+            z.attackCd = 1.00;
             game.hp -= z.t.dmg;
             game.shake = Math.max(game.shake, 7);
             puff(edge + z.dir * -6, z.chest.y, '#c8a76a', 12, 4);
@@ -1330,6 +1276,31 @@ function think(z, dt) {
             if (game.hp <= 0) { game.hp = 0; endGame(); }
         }
         return;
+    }
+
+    // ZombieSmash! HD Boss/Titan Boulder Hurl: when at medium range, Wardens
+    // and Titans rip a chunk of rubble from the dirt and lob it at the shack!
+    // Players can grab the boulder mid-air and fling it right back at them.
+    if (z.t.hurler && z.wx > 70 && z.wx < W - 70 && gap > 125 && gap < 470 && boulders.length < 3) {
+        z.hurlCd -= dt;
+        if (z.hurlCd <= 0) {
+            z.hurlCd = z.t.boss ? rand(4.2, 6.2) : rand(5.5, 8.0);
+            z.swing = 1;
+            const bx = z.lhand.x, by = z.lhand.y - 14 * z.s;
+            const tx = z.dir > 0 ? HOUSE.x + 20 : HOUSE.r - 20;
+            const flightT = 58;
+            boulders.push({
+                x: bx, y: by,
+                vx: (tx - bx) / flightT,
+                vy: (HOUSE.y + 40 - by) / flightT - 0.5 * (GRAV * 0.52) * flightT,
+                r: z.t.boss ? 22 : 18,
+                rot: 0, vr: z.dir * 0.14,
+                hostile: true, grabbed: false, hits: 2, life: 7.5
+            });
+            puff(bx, z.gy, '#6b5a38', 14, 4.5);
+            popup(z.head.x, z.head.y - 36, '⚠️ ROCK HURL!', '#ffd83d', 18);
+            sfx('grabBoss');
+        }
     }
 
     z.swing = lerp(z.swing, 0, 0.1);
@@ -1341,18 +1312,12 @@ function think(z, dt) {
         if (o === z || o.lane !== z.lane || o.state === 'dead') continue;
         const ahead = (o.hips.x - z.wx) * z.dir;
         if (ahead > 0 && ahead < minGap && Math.abs(o.hips.y - z.hips.y) < 50 * z.s) {
-            // Only yield to someone facing the same way, so head-on pairs
-            // push past each other rather than deadlocking.
             if (o.dir === z.dir || o.state !== 'walk') { z.blocked = true; break; }
         }
     }
 
-    // Wave speed ramp, capped. 1.5%/wave compounded meant wave 25 was a jog and
-    // wave 40 was unplayable; 2.6% with a +85% ceiling makes the horde visibly
-    // meaner every wave and then holds at "you cannot walk this off" instead of
-    // running away into farce. Late waves get their difficulty from composition
-    // and volume, not from speed alone.
-    const ramp = Math.min(1.85, 1 + game.wave * 0.026);
+    // Stronger wave speed ramp for tighter ZombieSmash! HD pressure.
+    const ramp = Math.min(2.0, 1 + game.wave * 0.032);
     const speed = z.t.speed * ramp * z.haste * dt;
     const move = z.blocked ? 0 : speed;
     z.wx += z.dir * move;
@@ -1466,7 +1431,9 @@ function separate() {
 }
 
 // Bowling one body into another. Runs once per frame on integrated velocities,
-// before the constraint iterations muddy them.
+// before the constraint iterations muddy them. In ZombieSmash! HD, bowling
+// normal zombies into heavy/boss zombies is a primary way to damage and stagger
+// them without needing high Grip Strength!
 function collisionDamage() {
     const list = [];
     for (const z of zombies) {
@@ -1477,22 +1444,36 @@ function collisionDamage() {
         const [za, a] = list[i];
         for (let j = i + 1; j < list.length; j++) {
             const [zb, b] = list[j];
-            if (za === zb || za.lane !== zb.lane) continue;
-            // At least one of them has to actually be flying.
+            if (za === zb) continue;
+            // Allow bowling into bosses/heavies across adjacent lanes so aiming
+            // a flung body at a towering boss always connects cleanly.
+            const bossPair = za.t.boss || zb.t.boss || za.t.grounded || zb.t.grounded;
+            if (za.lane !== zb.lane && (!bossPair || Math.abs(za.lane - zb.lane) > 1)) continue;
             if (!isSim(za) && !isSim(zb)) continue;
 
             const dx = b.x - a.x, dy = b.y - a.y;
-            const reach = a.r + b.r + 6;
+            const reach = a.r + b.r + (bossPair ? 12 : 6);
             if (dx * dx + dy * dy >= reach * reach) continue;
 
             const rvx = (b.x - b.px) - (a.x - a.px);
             const rvy = (b.y - b.py) - (a.y - a.py);
             const rel = Math.hypot(rvx, rvy);
-            if (rel < breakPt() + 2) continue;
+            if (rel < breakPt() + 1.5) continue;
 
-            za.impact = Math.max(za.impact, rel * 0.9);
-            zb.impact = Math.max(zb.impact, rel * 0.9);
-            popup((a.x + b.x) / 2, (a.y + b.y) / 2 - 30, 'STRIKE!', '#9de0ff', 17);
+            const mul = bossPair ? 1.38 : 0.95;
+            za.impact = Math.max(za.impact, rel * mul);
+            zb.impact = Math.max(zb.impact, rel * mul);
+            if (bossPair) {
+                za.bowlHit = true; zb.bowlHit = true;
+                for (const hz of [za, zb]) {
+                    if ((hz.t.boss || hz.t.heavy) && !isSim(hz)) {
+                        hz.wx -= hz.dir * (26 / (hz.t.mass * 0.45));
+                    }
+                }
+                popup((a.x + b.x) / 2, (a.y + b.y) / 2 - 34, 'BOWLED!', '#ffd83d', 20);
+            } else {
+                popup((a.x + b.x) / 2, (a.y + b.y) / 2 - 30, 'STRIKE!', '#9de0ff', 17);
+            }
         }
     }
 }
@@ -1500,23 +1481,29 @@ function collisionDamage() {
 const ITER = 6;
 const isSim = z => z.grabbed || z.state === 'ragdoll' || z.state === 'dead';
 
+// Helper for the maximum height above ground a held zombie can be lifted.
+// Grounded bosses and super-heavies can NEVER be lifted into the sky, even at
+// Grip Lv 10 — you can only yank them near the dirt to trip/wrench them!
+function clampGrabY(z, targetY) {
+    if (!z.t.maxLift) return targetY;
+    const bonus = z.t.grounded ? liftLvl() * 3.5 : liftLvl() * 11;
+    const ceiling = z.gy - (z.t.maxLift + bonus) * z.s;
+    return Math.max(targetY, ceiling);
+}
+
 function physics() {
     for (const z of zombies) {
         if (z.fade <= 0 || !isSim(z)) continue;
         for (const p of z.pts) integrate(p);
     }
 
-    // Impacts are read from post-integration velocity, before the solver has a
-    // chance to alter it.
     collisionDamage();
 
     for (let it = 0; it < ITER; it++) {
-        // The held point chases the cursor every iteration so the rest of the
-        // body hangs off it. grab.drag is how much of that chase actually lands:
-        // a shambler snaps to the pointer, a warden lumbers after it.
         if (grab.z) {
+            const ty = clampGrabY(grab.z, grab.y);
             grab.p.x = lerp(grab.p.x, grab.x, grab.drag);
-            grab.p.y = lerp(grab.p.y, grab.y, grab.drag);
+            grab.p.y = lerp(grab.p.y, ty, grab.drag);
         }
 
         for (const z of zombies) {
@@ -1524,8 +1511,6 @@ function physics() {
             for (const l of z.links) solve(l);
             for (const p of z.pts) {
                 const hit = collide(p, z.gy);
-                // Only the first pass sees the true landing speed; later passes
-                // are looking at the bounce this function already applied.
                 if (it === 0 && hit > z.impact) z.impact = hit;
             }
         }
@@ -1533,11 +1518,13 @@ function physics() {
     }
 
     if (grab.z) {
+        const ty = clampGrabY(grab.z, grab.y);
         grab.p.x = lerp(grab.p.x, grab.x, grab.drag);
-        grab.p.y = lerp(grab.p.y, grab.y, grab.drag);
-        // Throw speed is limited by how well you can actually swing the body.
+        grab.p.y = lerp(grab.p.y, ty, grab.drag);
+        // Grounded bosses/heavies cannot be launched upward into orbit on release.
+        const sy = (grab.z.t.grounded && grab.sy < -3) ? -3 : grab.sy;
         grab.p.px = grab.p.x - grab.sx * grab.drag;
-        grab.p.py = grab.p.y - grab.sy * grab.drag;
+        grab.p.py = grab.p.y - sy * grab.drag;
     }
 }
 
@@ -1547,28 +1534,19 @@ function resolveImpacts() {
     const bp = breakPt();
     for (const z of zombies) {
         const imp = z.impact;
+        const wasBowl = z.bowlHit;
         z.impact = 0;
+        z.bowlHit = false;
         if (z.state === 'dead' || z.fade <= 0 || imp <= 0) continue;
 
-        // Heavy bodies plant their feet. Rolled, not automatic: an unconditional
-        // knockdown here handed every big body a free floor every time it was
-        // bumped, which is what made slam-locking a warden possible.
-        if (imp > KNOCK * Math.sqrt(z.t.mass || 1)) tryKnock(z, 'slam', 0.25);
+        if (imp > KNOCK * Math.sqrt(z.t.mass || 1) || (wasBowl && imp > bp + 2)) {
+            tryKnock(z, 'slam', 0.25);
+        }
         if (imp <= bp) continue;
 
-        let dmg = (imp - bp) * 2.4 * gripMul();
+        let dmg = (imp - bp) * (wasBowl ? 3.1 : 2.4) * gripMul();
 
-        // Big bodies cap what a SINGLE slam can take off. Throw speed and grip
-        // both scale without bound, so uncapped a levelled player deleted a
-        // warden in two throws.
-        //
-        // The subtlety: one throw is not one frame. A body lands over ~4-8
-        // frames as feet, hips and head hit in sequence, and capping each of
-        // those frames on its own let a "15% max" warden lose most of its bar
-        // to a single fling. So the cap is a BUDGET spent over a time window —
-        // the whole landing sequence resolves as one slam, and you have to
-        // pick the body back up to earn another.
-        const cap = z.t.capImpact;
+        const cap = z.t.capImpact ? (wasBowl ? z.t.capImpact * 1.35 : z.t.capImpact) : 0;
         if (cap) {
             if (z.slamT <= 0) {
                 z.slamT = SLAM_WINDOW;
@@ -1576,9 +1554,6 @@ function resolveImpacts() {
             }
             if (dmg > z.slamBudget) {
                 dmg = z.slamBudget;
-                // Tell the player the hit was throttled, otherwise a capped slam
-                // just looks like the throw didn't land. Only on the frame the
-                // budget actually runs dry, or it spams for the whole window.
                 if (dmg > 0 && z.state !== 'dead')
                     popup(z.chest.x, z.chest.y - 56, 'TOUGH HIDE', '#9de0ff', 15);
             }
@@ -1723,6 +1698,75 @@ function stepGadgets(dt) {
         }
         if (s.life <= 0) { puff(s.x, s.y, '#9aa3ad', 12, 4); saws.splice(i, 1); }
     }
+
+    // Boulders hurled by Bosses/Titans (or caught & flung back by the player!)
+    for (let i = boulders.length - 1; i >= 0; i--) {
+        const b = boulders[i];
+        b.life -= dt;
+        if (b.grabbed) {
+            b.x = lerp(b.x, grab.x, 0.72);
+            b.y = lerp(b.y, grab.y, 0.72);
+            b.vx = grab.sx * 0.92;
+            b.vy = grab.sy * 0.92;
+            b.hostile = false;
+            continue;
+        }
+        b.vy += GRAV * 0.52;
+        b.x += b.vx; b.y += b.vy;
+        b.rot += b.vr;
+
+        if (b.y > GROUND - b.r) {
+            b.y = GROUND - b.r;
+            if (Math.abs(b.vy) > 3.5) {
+                sfx('impact', 1.4);
+                puff(b.x, GROUND, '#6b5a38', 8, 3.5);
+                game.shake = Math.max(game.shake, 6);
+            }
+            b.vy *= -0.42;
+            b.vx *= 0.80;
+            b.vr = b.vx * 0.04;
+            b.hostile = false; // once on the dirt, it's a free rock to pick up & smash!
+        }
+
+        // Hostile boulder hitting the shack
+        if (b.hostile && b.x + b.r > HOUSE.x && b.x - b.r < HOUSE.r && b.y + b.r > HOUSE.y + 12) {
+            if (game.hp > 0) {
+                game.hp = Math.max(0, game.hp - 22);
+                game.shake = Math.max(game.shake, 11);
+                puff(b.x, b.y, '#c8a76a', 18, 5);
+                popup(b.x, b.y - 24, '-22 ROCK!', '#ff6b5e', 20);
+                sfx('house');
+                if (game.hp <= 0) endGame();
+            }
+            boulders.splice(i, 1);
+            continue;
+        }
+
+        // Player-thrown / rolling boulder smashing into zombies
+        const spd = Math.hypot(b.vx, b.vy);
+        if (!b.hostile && spd > 3.2) {
+            for (const z of zombies) {
+                if (z.state === 'dead' || z.fade <= 0) continue;
+                const d = Math.hypot(z.chest.x - b.x, z.chest.y - b.y);
+                if (d > b.r + z.chest.r + 12) continue;
+                const dmg = (68 + spd * 3.4) * gripMul();
+                z.hurt(dmg, 'impact');
+                z.knockDown(0.35);
+                z.wx -= z.dir * 32;
+                sfx('crunch', 1.5);
+                game.shake = Math.max(game.shake, 12);
+                puff(b.x, b.y, '#8a795d', 16, 5.5);
+                popup(z.chest.x, z.chest.y - 44, z.t.boss ? 'RETURN TO SENDER!' : 'BOULDER SMASH!', '#ffd83d', 20);
+                b.vx *= -0.45; b.vy = -4.5;
+                b.hits--;
+                break;
+            }
+        }
+        if (b.life <= 0 || b.hits <= 0 || b.x < -200 || b.x > W + 200) {
+            puff(b.x, b.y, '#7a6c52', 12, 4);
+            boulders.splice(i, 1);
+        }
+    }
 }
 
 // ============================================================== FX STEP
@@ -1761,28 +1805,22 @@ function clearTimers() {
     spawnTimers = [];
 }
 
-// Weighted roll over a cumulative table. Later waves unlock heavier stock and
-// the cheap trash quietly thins out.
-//
-// The bands widen with the wave on top of the unlock gates, so a wave-20 field
-// is mostly things that need a grip level, while a wave-6 field is still mostly
-// trash with a brute in it. Without the widening, every wave past ~12 had the
-// same 26% heavy share and the run flattened out into busywork.
 function rollKind(w) {
     const r = Math.random();
-    const t = Math.min(1, Math.max(0, (w - 6) / 16));   // 0 at wave 6, 1 at wave 22
+    const t = Math.min(1, Math.max(0, (w - 5) / 15));
     const lerpB = (a, b) => a + (b - a) * t;
-    if (w >= 12 && r < lerpB(0.07, 0.20)) return 'butcher';
-    if (w >= 8  && r < lerpB(0.16, 0.36)) return 'titan';
-    if (w >= 6  && r < lerpB(0.26, 0.50)) return 'brute';
-    if (w >= 7  && r < lerpB(0.34, 0.60)) return 'screamer';
-    if (w >= 5  && r < lerpB(0.44, 0.70)) return 'bloater';
-    if (w >= 4  && r < lerpB(0.58, 0.80)) return 'hardhat';
-    if (w >= 2  && r < lerpB(0.76, 0.92)) return 'runner';
+    if (w >= 10 && r < lerpB(0.08, 0.22)) return 'butcher';
+    if (w >= 7  && r < lerpB(0.17, 0.38)) return 'titan';
+    if (w >= 5  && r < lerpB(0.28, 0.52)) return 'brute';
+    if (w >= 6  && r < lerpB(0.36, 0.62)) return 'screamer';
+    if (w >= 4  && r < lerpB(0.46, 0.72)) return 'bloater';
+    if (w >= 3  && r < lerpB(0.60, 0.82)) return 'hardhat';
+    if (w >= 2  && r < lerpB(0.78, 0.93)) return 'runner';
     return 'shambler';
 }
 
-const isBossWave = w => w % 5 === 0;
+// Boss arrives every 4th wave (Wave 4, 8, 12, 16, 20...)
+const isBossWave = w => w % 4 === 0;
 
 function startWave() {
     game.wave++;
@@ -1790,38 +1828,30 @@ function startWave() {
     game.combo = 0;
     game.clearT = 0;
     game.tool = 'hand';
+    game.fodderCd = 3.0;
 
     ammo.grenade = capOf.grenade();
     ammo.spike = capOf.spike();
     ammo.saw = capOf.saw();
-    nades.length = 0; spikes.length = 0; saws.length = 0;
+    nades.length = 0; spikes.length = 0; saws.length = 0; boulders.length = 0;
 
     const boss = isBossWave(game.wave);
-    // Boss waves trade crowd size for one enormous problem. Standard waves ramp
-    // up hard: 1.85x per wave is sustainable early, brutal late. By wave 15
-    // you're facing 30+ bodies with a meaningful share being heavies that need
-    // grip investment to even try lifting, and the ammo cap means you can't lean
-    // on gadgets to clear them all. The game stays a game because your upgrades
-    // are capped — you won't outscale the threat, you have to position and
-    // prioritise instead.
-    const n = boss ? 4 + Math.round(game.wave * 1.1)
-                   : 5 + Math.round(game.wave * 1.85);
-    const eliteChance = Math.min(0.34, Math.max(0, (game.wave - 3) * 0.035));
+    const n = boss ? 5 + Math.round(game.wave * 1.25)
+                   : 6 + Math.round(game.wave * 2.0);
+    const eliteChance = Math.min(0.38, Math.max(0, (game.wave - 2) * 0.04));
 
     game.pending = n + (boss ? 1 : 0);
     game.alive = 0;
 
-    banner(boss ? 'WAVE ' + game.wave + ' — WARDEN' : 'WAVE ' + game.wave,
+    banner(boss ? 'WAVE ' + game.wave + ' — THE WARDEN' : 'WAVE ' + game.wave,
            boss ? '#ff6b5e' : '#b6ff4a');
 
-    // Retune the loop for the new wave: tempo and layer density climb with the
-    // wave number, and boss waves drop a held drone under everything.
     musicSet(game.wave, boss);
     sfx(boss ? 'bossHorn' : 'wave');
 
-    let t = 300;
+    let t = 260;
     for (let i = 0; i < n; i++) {
-        t += rand(360, 700) / (1 + game.wave * 0.05);
+        t += rand(310, 610) / (1 + game.wave * 0.055);
         spawnTimers.push(setTimeout(() => {
             if (game.mode !== 'playing') return;
             zombies.push(new Zombie(rollKind(game.wave), game.wave,
@@ -1840,7 +1870,7 @@ function startWave() {
             game.pending--;
             game.alive++;
             game.shake = Math.max(game.shake, 18);
-        }, 900));
+        }, 850));
     }
 }
 
@@ -1901,31 +1931,31 @@ function blob(x, y, rx, ry, rot, fill, ink) {
     if (ink > 0) { ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke(); }
 }
 
-// ============================================================== ZOMBIE ART
+// ============================================================== ZOMBIE ART (ZOMBIESMASH! HD STYLE)
 function drawZombie(z) {
     const t = z.t, s = z.s, d = z.dir;
-    const dim = z.lane * 0.11;
+    const dim = z.lane * 0.10;
     const skin = shade(t.skin, dim), skinD = shade(t.skinDark, dim);
+    const skinHi = shade('#d8f294', dim + 0.08);
     const shirt = shade(t.shirt, dim), pants = shade(t.pants, dim);
     const bSkin = shade(t.skin, dim + 0.22), bShirt = shade(t.shirt, dim + 0.22);
     const bPants = shade(t.pants, dim + 0.22);
 
     const hd = z.head, ch = z.chest, hp = z.hips;
-    const ink = 3.2 * s;
+    const ink = 3.3 * s;
     ctx.globalAlpha = clamp(z.fade, 0, 1);
 
-    // contact shadow
-    ctx.globalAlpha *= 0.34;
-    blob(hp.x, z.gy + 2, 26 * s, 6.5 * s, 0, '#000', 0);
+    // Contact shadow
+    ctx.globalAlpha *= 0.38;
+    blob(hp.x, z.gy + 2, 28 * s, 7 * s, 0, '#000', 0);
     ctx.globalAlpha = clamp(z.fade, 0, 1);
 
-    // Screamer rally ring, drawn on the floor so it reads as an area of effect
-    // rather than as part of the body.
+    // Screamer rally ring
     if (t.howl && z.state !== 'dead') {
         const pulse = (z.howlT || 0) % 1.1 / 1.1;
         ctx.save();
-        ctx.globalAlpha = clamp(z.fade, 0, 1) * (1 - pulse) * 0.5;
-        ctx.strokeStyle = '#e07be0'; ctx.lineWidth = 3 * s;
+        ctx.globalAlpha = clamp(z.fade, 0, 1) * (1 - pulse) * 0.55;
+        ctx.strokeStyle = '#f07bff'; ctx.lineWidth = 3.2 * s;
         ctx.beginPath();
         ctx.ellipse(hp.x, z.gy + 2, 250 * s * pulse, 62 * s * pulse, 0, 0, 7);
         ctx.stroke();
@@ -1933,65 +1963,117 @@ function drawZombie(z) {
         ctx.globalAlpha = clamp(z.fade, 0, 1);
     }
 
-    // torso frame
+    // Torso coordinate frame
     let ax = ch.x - hp.x, ay = ch.y - hp.y;
     const al = Math.hypot(ax, ay) || 1;
-    const nx = -ay / al, ny = ax / al;                 // sideways unit vector
-    const hw = t.torsoW * 0.5 * s, hipW = t.torsoW * 0.42 * s;
+    const nx = -ay / al, ny = ax / al;
+    const hw = t.torsoW * 0.52 * s, hipW = t.torsoW * 0.44 * s;
 
-    const shL = { x: ch.x - nx * hw * 0.86, y: ch.y - ny * hw * 0.86 };
-    const shR = { x: ch.x + nx * hw * 0.86, y: ch.y + ny * hw * 0.86 };
+    const shL = { x: ch.x - nx * hw * 0.88, y: ch.y - ny * hw * 0.88 };
+    const shR = { x: ch.x + nx * hw * 0.88, y: ch.y + ny * hw * 0.88 };
     const hipL = { x: hp.x - nx * hipW, y: hp.y - ny * hipW };
     const hipR = { x: hp.x + nx * hipW, y: hp.y + ny * hipW };
 
     const legB = (SK.hips - SK.foot) * 0.62 * s;
-    const armB = 12.5 * s;
+    const armB = 12.8 * s;
     const near = d > 0 ? 1 : -1;
 
-    // --- far arm + far leg ------------------------------------------------
+    // --- Far arm + far leg ------------------------------------------------
     if (z.limbOn(z.rhand)) {
         const el = ik(shR.x, shR.y, z.rhand.x, z.rhand.y, armB, armB, -near);
-        limb(shR, el, z.rhand, t.limb * 0.85 * s, bSkin, ink);
-        limb(shR, el, { x: lerp(shR.x, el.x, 0.9), y: lerp(shR.y, el.y, 0.9) },
-             t.limb * 1.05 * s, bShirt, ink * 0.7);
-        blob(z.rhand.x, z.rhand.y, 5.6 * s, 5.6 * s, 0, bSkin, ink * 0.8);
+        limb(shR, el, z.rhand, t.limb * 0.86 * s, bSkin, ink);
+        limb(shR, el, { x: lerp(shR.x, el.x, 0.88), y: lerp(shR.y, el.y, 0.88) },
+             t.limb * 1.08 * s, bShirt, ink * 0.75);
+        blob(z.rhand.x, z.rhand.y, 5.8 * s, 5.4 * s, 0, bSkin, ink * 0.85);
     }
     if (z.limbOn(z.rfoot)) {
         const kn = ik(hipR.x, hipR.y, z.rfoot.x, z.rfoot.y, legB, legB, near);
-        limb(hipR, kn, z.rfoot, t.limb * 1.05 * s, bPants, ink);
-        blob(z.rfoot.x + d * 3 * s, z.rfoot.y + 2 * s, 8 * s, 4.6 * s, 0, shade('#2b2620', dim), ink * 0.8);
+        limb(hipR, kn, z.rfoot, t.limb * 1.06 * s, bPants, ink);
+        blob(z.rfoot.x + d * 3.4 * s, z.rfoot.y + 2 * s, 8.6 * s, 5 * s, 0, shade('#241f1a', dim), ink * 0.85);
     }
 
-    // --- torso ------------------------------------------------------------
+    // --- Torso with ZombieSmash! HD cel-shading & archetype gear ----------
     ctx.beginPath();
     ctx.moveTo(shL.x, shL.y);
     ctx.lineTo(shR.x, shR.y);
-    ctx.quadraticCurveTo(hipR.x + nx * t.gut * s * 0.4, hipR.y, hipR.x, hipR.y);
+    ctx.quadraticCurveTo(hipR.x + nx * t.gut * s * 0.45, hipR.y, hipR.x, hipR.y);
     ctx.lineTo(hipL.x, hipL.y);
-    ctx.quadraticCurveTo(hipL.x - nx * t.gut * s * 0.4, lerp(hipL.y, shL.y, 0.5), shL.x, shL.y);
+    ctx.quadraticCurveTo(hipL.x - nx * t.gut * s * 0.45, lerp(hipL.y, shL.y, 0.5), shL.x, shL.y);
     ctx.closePath();
     ctx.fillStyle = shirt; ctx.fill();
     ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
 
-    // torn hem + belly
+    // Inner torso clip: cel-highlight, belt, tattered pants, archetype details
     ctx.save();
     ctx.clip();
+
+    // Cel highlight along the chest leading edge
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath();
+    ctx.arc(ch.x + d * hw * 0.35, ch.y - 4 * s, hw * 0.75, 0, 7);
+    ctx.fill();
+
+    // Brute bulging belly cutout
+    if (z.kind === 'brute') {
+        blob(lerp(ch.x, hp.x, 0.62) + d * 4 * s, lerp(ch.y, hp.y, 0.62), hw * 0.75, hw * 0.55, 0, skin, ink * 0.6);
+        blob(lerp(ch.x, hp.x, 0.68) + d * 7 * s, lerp(ch.y, hp.y, 0.68), 2.2 * s, 2.2 * s, 0, skinD, 0);
+    }
+
+    // Hardhat reflective safety vest stripes
+    if (z.kind === 'hardhat') {
+        ctx.strokeStyle = shade('#e8ff4a', dim);
+        ctx.lineWidth = 3.6 * s;
+        ctx.beginPath();
+        ctx.moveTo(shL.x + nx * 4 * s, shL.y); ctx.lineTo(hipL.x + nx * 4 * s, hipL.y);
+        ctx.moveTo(shR.x - nx * 4 * s, shR.y); ctx.lineTo(hipR.x - nx * 4 * s, hipR.y);
+        ctx.stroke();
+    }
+
+    // Runner straightjacket / asylum straps
+    if (z.kind === 'runner') {
+        ctx.strokeStyle = shade('#d8d2c0', dim);
+        ctx.lineWidth = 3.2 * s;
+        ctx.beginPath();
+        ctx.moveTo(shL.x, shL.y); ctx.lineTo(hipR.x, hipR.y);
+        ctx.moveTo(shR.x, shR.y); ctx.lineTo(hipL.x, hipL.y);
+        ctx.stroke();
+    }
+
+    // Torn hem + pants + belt
     ctx.fillStyle = pants;
     ctx.beginPath();
     ctx.moveTo(hipL.x - nx * 10 * s, lerp(hipL.y, shL.y, 0.24));
     for (let i = 0; i <= 6; i++) {
         const u = i / 6;
         const bx = lerp(hipL.x, hipR.x, u), by = lerp(hipL.y, hipR.y, u);
-        ctx.lineTo(bx + nx * 0, by - (i % 2 ? 5 : 0) * s - 4 * s);
+        ctx.lineTo(bx, by - (i % 2 ? 5 : 0) * s - 4 * s);
     }
     ctx.lineTo(hipR.x + nx * 10 * s, hipR.y + 20 * s);
     ctx.lineTo(hipL.x - nx * 10 * s, hipL.y + 20 * s);
     ctx.closePath(); ctx.fill();
 
-    // exposed ribs on the scruffier variants
+    // Belt + brass buckle
+    ctx.strokeStyle = '#1e1912'; ctx.lineWidth = 3.8 * s;
+    ctx.beginPath(); ctx.moveTo(hipL.x - nx * 4 * s, hipL.y - 2 * s); ctx.lineTo(hipR.x + nx * 4 * s, hipR.y - 2 * s); ctx.stroke();
+    ctx.fillStyle = '#d4a838';
+    ctx.fillRect(hp.x + d * 2 * s - 3.5 * s, hp.y - 5 * s, 7 * s, 5.5 * s);
+
+    // Shambler tattered red office tie
+    if (z.kind === 'shambler') {
+        ctx.fillStyle = shade('#c82828', dim);
+        ctx.strokeStyle = INK; ctx.lineWidth = 1.6 * s;
+        ctx.beginPath();
+        ctx.moveTo(ch.x + d * 2 * s, ch.y - 6 * s);
+        ctx.lineTo(ch.x + d * 7 * s, lerp(ch.y, hp.y, 0.55));
+        ctx.lineTo(ch.x + d * 2 * s, lerp(ch.y, hp.y, 0.68));
+        ctx.lineTo(ch.x - d * 2 * s, lerp(ch.y, hp.y, 0.55));
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+
+    // Exposed ribs on scruffy variant
     if (z.look === 2) {
-        ctx.strokeStyle = 'rgba(232,240,205,0.85)';
-        ctx.lineWidth = 2.1 * s;
+        ctx.strokeStyle = 'rgba(236,244,210,0.88)';
+        ctx.lineWidth = 2.2 * s;
         for (let i = 0; i < 3; i++) {
             const u = 0.24 + i * 0.15;
             const cx2 = lerp(shL.x, hipL.x, u) + nx * 3 * s;
@@ -2002,23 +2084,22 @@ function drawZombie(z) {
             ctx.stroke();
         }
     }
-    // grime
-    ctx.fillStyle = 'rgba(40,30,16,0.3)';
+
+    // Grime & blood splatters
+    ctx.fillStyle = 'rgba(40,30,16,0.32)';
     ctx.beginPath();
     ctx.arc(ch.x + z.stainA.x * hw * 1.6, lerp(ch.y, hp.y, 0.5 + z.stainA.y * 0.4), 6 * s, 0, 7);
     ctx.fill();
-    ctx.fillStyle = 'rgba(96,20,20,0.42)';
+    ctx.fillStyle = 'rgba(115,20,20,0.48)';
     ctx.beginPath();
-    ctx.arc(ch.x + z.stainB.x * hw * 1.5, lerp(ch.y, hp.y, 0.3 + z.stainB.y * 0.5), 5 * s, 0, 7);
+    ctx.arc(ch.x + z.stainB.x * hw * 1.5, lerp(ch.y, hp.y, 0.3 + z.stainB.y * 0.5), 5.5 * s, 0, 7);
     ctx.fill();
     ctx.restore();
 
-    // Steel plate over the chest (butcher, warden). Its own HP is on the boss
-    // meter; here it just goes dull and cracked once spent, so you can read
-    // "hit it with your hands now" off the silhouette alone.
+    // Steel plate over chest (butcher, warden) + Warden spiked pauldrons
     if (t.plate) {
         const cracked = z.plateHp <= 0;
-        const pw = hw * 1.5, ph = Math.hypot(ch.x - hp.x, ch.y - hp.y) * 0.72;
+        const pw = hw * 1.52, ph = Math.hypot(ch.x - hp.x, ch.y - hp.y) * 0.74;
         ctx.save();
         ctx.translate(lerp(ch.x, hp.x, 0.3), lerp(ch.y, hp.y, 0.3));
         ctx.rotate(Math.atan2(hp.y - ch.y, hp.x - ch.x) - Math.PI / 2);
@@ -2028,73 +2109,111 @@ function drawZombie(z) {
         ctx.lineTo(pw * 0.42, ph * 0.5);
         ctx.lineTo(-pw * 0.42, ph * 0.5);
         ctx.closePath();
-        ctx.fillStyle = shade(cracked ? '#4a4f55' : '#8d95a0', dim); ctx.fill();
+        ctx.fillStyle = shade(cracked ? '#4a4f55' : '#8d96a2', dim); ctx.fill();
         ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
+        // Corner rivets
+        ctx.fillStyle = '#dce6f0';
+        for (const [rx, ry] of [[-0.36, -0.36], [0.36, -0.36], [-0.30, 0.34], [0.30, 0.34]]) {
+            ctx.beginPath(); ctx.arc(pw * rx, ph * ry, 2.2 * s, 0, 7); ctx.fill();
+        }
         if (!cracked) {
-            ctx.strokeStyle = 'rgba(240,250,255,0.5)'; ctx.lineWidth = 2 * s;
+            ctx.strokeStyle = 'rgba(240,250,255,0.55)'; ctx.lineWidth = 2.2 * s;
             ctx.beginPath();
             ctx.moveTo(-pw * 0.24, -ph * 0.34); ctx.lineTo(-pw * 0.24, ph * 0.3);
             ctx.stroke();
         } else {
-            ctx.strokeStyle = INK; ctx.lineWidth = 2.2 * s;
+            ctx.strokeStyle = INK; ctx.lineWidth = 2.4 * s;
             ctx.beginPath();
             ctx.moveTo(-pw * 0.4, -ph * 0.3); ctx.lineTo(0, 0);
             ctx.lineTo(pw * 0.3, -ph * 0.1); ctx.lineTo(pw * 0.1, ph * 0.42);
             ctx.stroke();
         }
         ctx.restore();
+
+        if (t.boss) {
+            // Spiked shoulder pauldrons for the Warden
+            for (const sh of [shL, shR]) {
+                blob(sh.x, sh.y - 2 * s, 11 * s, 8 * s, 0, shade('#5a626c', dim), ink * 0.85);
+                ctx.fillStyle = shade('#c8d2dc', dim);
+                ctx.beginPath();
+                ctx.moveTo(sh.x - 4 * s, sh.y - 8 * s);
+                ctx.lineTo(sh.x, sh.y - 18 * s);
+                ctx.lineTo(sh.x + 4 * s, sh.y - 8 * s);
+                ctx.closePath(); ctx.fill(); ctx.stroke();
+            }
+        }
     }
 
-    // Bloater sacs — the visual promise that this one is a bomb.
+    // Bloater glowing toxic pustules
     if (t.bloat && z.state !== 'dead') {
-        const throb = 1 + Math.sin(perf * 0.006 + z.phase) * 0.09;
+        const throb = 1 + Math.sin(perf * 0.007 + z.phase) * 0.10;
         for (let i = -1; i <= 1; i++) {
             const u = 0.42 + i * 0.2;
-            const bx2 = lerp(ch.x, hp.x, u) + nx * (i * 5) * s;
+            const bx2 = lerp(ch.x, hp.x, u) + nx * (i * 5.5) * s;
             const by2 = lerp(ch.y, hp.y, u);
-            blob(bx2, by2, 8.5 * s * throb, 7.5 * s * throb, 0,
-                 shade('#c6ff6a', dim + 0.05), ink * 0.7);
-            ctx.globalAlpha = clamp(z.fade, 0, 1) * 0.45;
-            blob(bx2 - 2 * s, by2 - 2 * s, 3.4 * s, 3 * s, 0, '#f2ffc9', 0);
+            blob(bx2, by2, 9 * s * throb, 8 * s * throb, 0,
+                 shade('#c6ff5e', dim + 0.04), ink * 0.72);
+            ctx.globalAlpha = clamp(z.fade, 0, 1) * 0.55;
+            blob(bx2 - 2.2 * s, by2 - 2.2 * s, 3.6 * s, 3.2 * s, 0, '#f4ffd4', 0);
             ctx.globalAlpha = clamp(z.fade, 0, 1);
         }
     }
 
-    // --- near leg + near arm ---------------------------------------------
+    // --- Near leg + cartoon boot + near arm + fingers/props ---------------
     if (z.limbOn(z.lfoot)) {
         const kn = ik(hipL.x, hipL.y, z.lfoot.x, z.lfoot.y, legB, legB, near);
-        limb(hipL, kn, z.lfoot, t.limb * 1.1 * s, pants, ink);
-        // torn trouser cuff shows bare shin
+        limb(hipL, kn, z.lfoot, t.limb * 1.12 * s, pants, ink);
         ctx.beginPath();
         ctx.moveTo(kn.x, kn.y); ctx.lineTo(z.lfoot.x, z.lfoot.y);
-        ctx.strokeStyle = INK; ctx.lineWidth = t.limb * 0.85 * s + ink; ctx.stroke();
-        ctx.strokeStyle = skin; ctx.lineWidth = t.limb * 0.85 * s; ctx.stroke();
-        blob(z.lfoot.x + d * 3.4 * s, z.lfoot.y + 2 * s, 8.6 * s, 5 * s, 0, '#332c24', ink * 0.85);
+        ctx.strokeStyle = INK; ctx.lineWidth = t.limb * 0.86 * s + ink; ctx.stroke();
+        ctx.strokeStyle = skin; ctx.lineWidth = t.limb * 0.86 * s; ctx.stroke();
+        // Cartoon boot with sole
+        blob(z.lfoot.x + d * 3.8 * s, z.lfoot.y + 2 * s, 9.2 * s, 5.2 * s, 0, '#362e26', ink * 0.9);
+        ctx.fillStyle = '#cfc6b8';
+        ctx.fillRect(z.lfoot.x - 5 * s, z.lfoot.y + 4.5 * s, 13 * s, 2.2 * s);
     }
     if (z.limbOn(z.lhand)) {
         const el = ik(shL.x, shL.y, z.lhand.x, z.lhand.y, armB, armB, -near);
-        limb(shL, el, z.lhand, t.limb * 0.9 * s, skin, ink);
+        limb(shL, el, z.lhand, t.limb * 0.92 * s, skin, ink);
         limb(shL, el, { x: lerp(shL.x, el.x, 0.85), y: lerp(shL.y, el.y, 0.85) },
-             t.limb * 1.15 * s, shirt, ink * 0.8);
-        // clawed hand
-        blob(z.lhand.x, z.lhand.y, 6 * s, 5.6 * s, 0, skin, ink * 0.9);
-        ctx.strokeStyle = INK; ctx.lineWidth = 1.6 * s;
+             t.limb * 1.16 * s, shirt, ink * 0.82);
+
+        // Titan iron wrist shackle
+        if (z.kind === 'titan') {
+            blob(z.lhand.x - d * 3 * s, z.lhand.y - 1 * s, 5 * s, 6.5 * s, 0, '#5a636b', ink * 0.7);
+        }
+        // Butcher meat cleaver in hand
+        if (z.kind === 'butcher' && z.state !== 'dead') {
+            ctx.save();
+            ctx.translate(z.lhand.x + d * 4 * s, z.lhand.y);
+            ctx.rotate(d * (0.3 - z.swing * 0.8));
+            ctx.fillStyle = '#c8d2dc'; ctx.strokeStyle = INK; ctx.lineWidth = 2.4 * s;
+            ctx.fillRect(0, -14 * s, d * 18 * s, 11 * s);
+            ctx.strokeRect(0, -14 * s, d * 18 * s, 11 * s);
+            ctx.fillStyle = '#8e1b1b';
+            ctx.fillRect(d * 8 * s, -14 * s, d * 9 * s, 4 * s);
+            ctx.restore();
+        }
+
+        // Cartoon hand with fingers
+        blob(z.lhand.x, z.lhand.y, 6.2 * s, 5.8 * s, 0, skin, ink * 0.9);
+        blob(z.lhand.x - d * 1.5 * s, z.lhand.y - 1.5 * s, 2.5 * s, 2 * s, 0, skinHi, 0);
+        ctx.strokeStyle = INK; ctx.lineWidth = 1.8 * s;
         for (let i = -1; i <= 1; i++) {
             ctx.beginPath();
-            ctx.moveTo(z.lhand.x, z.lhand.y);
-            ctx.lineTo(z.lhand.x + d * 8 * s, z.lhand.y + i * 4 * s);
+            ctx.moveTo(z.lhand.x + d * 2 * s, z.lhand.y + i * 2.2 * s);
+            ctx.lineTo(z.lhand.x + d * 8.5 * s, z.lhand.y + i * 4.2 * s);
             ctx.stroke();
         }
     }
 
-    drawHead(z, skin, skinD, ink, dim);
+    drawHead(z, skin, skinD, skinHi, ink, dim);
 
-    // Elites: a hot rim over the head. Same silhouette as their base type, so
-    // the marker is the only warning you get that this one has 70% more meat.
+    // Elites: fiery orange crown aura
     if (z.elite && z.state !== 'dead') {
         ctx.save();
-        ctx.globalAlpha = clamp(z.fade, 0, 1) * (0.6 + Math.sin(perf * 0.007 + z.phase) * 0.25);
-        ctx.strokeStyle = '#ff8a2f'; ctx.lineWidth = 2.6 * s;
+        ctx.globalAlpha = clamp(z.fade, 0, 1) * (0.65 + Math.sin(perf * 0.008 + z.phase) * 0.25);
+        ctx.strokeStyle = '#ff8a2f'; ctx.lineWidth = 2.8 * s;
         ctx.beginPath();
         ctx.arc(hd.x, hd.y, t.headR * s + 5 * s, 0, 7);
         ctx.stroke();
@@ -2102,109 +2221,307 @@ function drawZombie(z) {
         ctx.globalAlpha = clamp(z.fade, 0, 1);
     }
 
-    // --- health pip -------------------------------------------------------
+    // Health bar above damaged non-boss zombies
     if (z.hp < z.maxHp && z.state !== 'dead' && !t.boss) {
-        const bw = 40 * s, bx = hd.x - bw / 2, by = hd.y - t.headR * s - 15 * s;
-        ctx.fillStyle = 'rgba(0,0,0,0.62)'; ctx.fillRect(bx - 1, by - 1, bw + 2, 6 * s + 2);
+        const bw = 42 * s, bx = hd.x - bw / 2, by = hd.y - t.headR * s - 16 * s;
+        ctx.fillStyle = 'rgba(0,0,0,0.68)'; ctx.fillRect(bx - 1, by - 1, bw + 2, 6 * s + 2);
         const f = clamp(z.hp / z.maxHp, 0, 1);
         ctx.fillStyle = f > 0.5 ? '#8fd63f' : f > 0.22 ? '#ffd83d' : '#ff5b47';
         ctx.fillRect(bx, by, bw * f, 6 * s);
     }
 
     if (z.grabbed) {
-        ctx.strokeStyle = 'rgba(182,255,74,0.85)';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.arc(grab.x, grab.y, 20 + Math.sin(perf * 0.012) * 3, 0, 7); ctx.stroke();
+        ctx.strokeStyle = 'rgba(182,255,74,0.9)';
+        ctx.lineWidth = 2.8;
+        ctx.beginPath(); ctx.arc(grab.x, grab.y, 20 + Math.sin(perf * 0.014) * 3, 0, 7); ctx.stroke();
     }
     ctx.globalAlpha = 1;
 }
 
-function drawHead(z, skin, skinD, ink, dim) {
+function drawHead(z, skin, skinD, skinHi, ink, dim) {
     const t = z.t, s = z.s, d = z.dir;
     const hd = z.head, ch = z.chest;
     const R = t.headR * s;
 
-    // neck
+    // Expressive state flags for ZombieSmash! HD facial reactions
+    const dead = z.state === 'dead';
+    const airborne = isSim(z) && !dead && z.hips.y < z.gy - 52 * s;
+    const panicked = !dead && (z.grabbed || airborne);
+    const dizzy = !dead && !panicked && (z.state === 'ragdoll' || z.state === 'rise');
+
+    // Neck
     ctx.beginPath();
     ctx.moveTo(ch.x, ch.y); ctx.lineTo(hd.x, hd.y);
-    ctx.strokeStyle = INK; ctx.lineWidth = 9 * s + ink; ctx.lineCap = 'round'; ctx.stroke();
-    ctx.strokeStyle = skinD; ctx.lineWidth = 9 * s; ctx.stroke();
+    ctx.strokeStyle = INK; ctx.lineWidth = 9.5 * s + ink; ctx.lineCap = 'round'; ctx.stroke();
+    ctx.strokeStyle = skinD; ctx.lineWidth = 9.5 * s; ctx.stroke();
 
     ctx.save();
     ctx.translate(hd.x, hd.y);
-    ctx.rotate(Math.atan2(hd.x - ch.x, ch.y - hd.y));
+    ctx.rotate(clamp(Math.atan2(hd.x - ch.x, ch.y - hd.y), -1.1, 1.1));
     ctx.scale(d, 1);
 
-    // skull + heavy brow
-    blob(0, -R * 0.14, R * 0.96, R * 1.0, 0, skin, ink);
-    // jaw, hanging slightly open
-    const jaw = z.state === 'dead' ? R * 0.28 : R * (0.5 + z.swing * 0.16);
-    blob(R * 0.12, jaw, R * 0.66, R * 0.44, 0, skin, ink);
-    // ear
-    blob(-R * 0.82, -R * 0.06, R * 0.2, R * 0.26, 0, skinD, ink * 0.8);
+    // Back ear
+    blob(-R * 0.84, -R * 0.04, R * 0.22, R * 0.29, -0.15, skinD, ink * 0.85);
+    blob(-R * 0.84, -R * 0.04, R * 0.10, R * 0.14, -0.15, shade('#4a5828', dim), 0);
 
-    // sunken sockets
-    ctx.fillStyle = shade('#20280f', dim);
-    ctx.beginPath(); ctx.ellipse(R * 0.34, -R * 0.28, R * 0.31, R * 0.36, 0.2, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(-R * 0.24, -R * 0.3, R * 0.27, R * 0.33, -0.2, 0, 7); ctx.fill();
+    // Cranium + cheek structure
+    blob(0, -R * 0.14, R * 0.98, R * 0.98, 0, skin, ink);
+    // Forehead cel-highlight
+    ctx.globalAlpha = clamp(z.fade, 0, 1) * 0.38;
+    blob(-R * 0.14, -R * 0.56, R * 0.54, R * 0.30, -0.2, skinHi, 0);
+    ctx.globalAlpha = clamp(z.fade, 0, 1);
 
-    if (z.state === 'dead') {
-        // X eyes
-        ctx.strokeStyle = '#f4ffd0'; ctx.lineWidth = 2.4 * s;
-        for (const ex of [R * 0.34, -R * 0.24]) {
+    // Prominent cartoon cheekbone
+    blob(R * 0.22, R * 0.08, R * 0.42, R * 0.26, 0.1, skin, 0);
+
+    // Articulated lower jaw (drops wide open when panicked, screaming, or biting!)
+    const jawDrop = dead ? R * 0.34
+                  : panicked ? R * 0.72
+                  : (t.howl ? R * (0.64 + Math.sin(perf * 0.02) * 0.12)
+                            : R * (0.48 + z.swing * 0.22 + Math.sin(z.phase * 2) * 0.05));
+    const jawW = (z.kind === 'brute' || t.boss) ? R * 0.78 : R * 0.68;
+    blob(R * 0.14, jawDrop, jawW, R * 0.46, 0.05, skin, ink);
+    // Chin stubble / shadow
+    ctx.globalAlpha = clamp(z.fade, 0, 1) * 0.28;
+    blob(R * 0.18, jawDrop + R * 0.14, jawW * 0.72, R * 0.22, 0, '#1e260e', 0);
+    ctx.globalAlpha = clamp(z.fade, 0, 1);
+
+    // Shambler exposed brain dome on top of head
+    if (z.kind === 'shambler' && z.look <= 1) {
+        blob(-R * 0.10, -R * 0.88, R * 0.52, R * 0.28, -0.1, shade('#e07a96', dim), ink * 0.75);
+        ctx.strokeStyle = shade('#9e3b56', dim); ctx.lineWidth = 1.6 * s;
+        ctx.beginPath();
+        ctx.arc(-R * 0.22, -R * 0.88, R * 0.16, 0, 4.5);
+        ctx.arc(R * 0.06, -R * 0.88, R * 0.16, 0, 4.5);
+        ctx.stroke();
+    }
+
+    // Deep bruised eye sockets (ZombieSmash! signature purple/olive bags)
+    ctx.fillStyle = shade('#261e2e', dim);
+    ctx.beginPath(); ctx.ellipse(R * 0.36, -R * 0.24, R * 0.34, R * 0.38, 0.15, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-R * 0.22, -R * 0.26, R * 0.30, R * 0.34, -0.15, 0, 7); ctx.fill();
+
+    // --- EYES (Dynamic by state!) -----------------------------------------
+    if (dead) {
+        ctx.strokeStyle = '#f4ffd0'; ctx.lineWidth = 2.6 * s;
+        for (const ex of [R * 0.36, -R * 0.22]) {
             ctx.beginPath();
-            ctx.moveTo(ex - R * .16, -R * .44); ctx.lineTo(ex + R * .16, -R * .14);
-            ctx.moveTo(ex + R * .16, -R * .44); ctx.lineTo(ex - R * .16, -R * .14);
+            ctx.moveTo(ex - R * 0.17, -R * 0.40); ctx.lineTo(ex + R * 0.17, -R * 0.10);
+            ctx.moveTo(ex + R * 0.17, -R * 0.40); ctx.lineTo(ex - R * 0.17, -R * 0.10);
+            ctx.stroke();
+        }
+    } else if (t.boss) {
+        // Warden glowing red visor eyes
+        ctx.fillStyle = '#ff2a1f';
+        ctx.beginPath(); ctx.ellipse(R * 0.38, -R * 0.24, R * 0.22, R * 0.13, -0.12, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(-R * 0.18, -R * 0.26, R * 0.19, R * 0.12, 0.12, 0, 7); ctx.fill();
+        ctx.fillStyle = '#fff5a8';
+        ctx.beginPath(); ctx.arc(R * 0.40, -R * 0.24, R * 0.06, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(-R * 0.16, -R * 0.26, R * 0.05, 0, 7); ctx.fill();
+    } else {
+        // Big bulging mismatched cartoon eyeballs!
+        const eyeScale = panicked ? 1.32 : 1.0;
+        const rBig = R * 0.29 * eyeScale;
+        const rSml = R * 0.23 * eyeScale;
+        const eyeTint = z.kind === 'screamer' ? '#ffd6ff' : '#fff8c4';
+
+        blob(R * 0.38, -R * 0.24, rBig, rBig * 1.08, 0, eyeTint, ink * 0.82);
+        blob(-R * 0.20, -R * 0.26, rSml, rSml * 1.06, 0, '#fffde0', ink * 0.82);
+
+        // Bloodshot capillaries on big eye
+        ctx.strokeStyle = 'rgba(210,45,45,0.55)'; ctx.lineWidth = 1.1 * s;
+        ctx.beginPath();
+        ctx.moveTo(R * 0.38 - rBig * 0.8, -R * 0.24); ctx.lineTo(R * 0.38 - rBig * 0.3, -R * 0.24 - rBig * 0.2);
+        ctx.stroke();
+
+        // Pupils: tiny pinpoint looking down when panicked, spinning when dizzy, tracking shack when walking
+        let px1 = R * 0.44, py1 = -R * 0.23, px2 = -R * 0.15, py2 = -R * 0.25;
+        if (panicked) {
+            py1 = -R * 0.14; py2 = -R * 0.16;
+        } else if (dizzy) {
+            const sp = perf * 0.015 + z.id;
+            px1 = R * 0.38 + Math.cos(sp) * R * 0.10;
+            py1 = -R * 0.24 + Math.sin(sp) * R * 0.10;
+            px2 = -R * 0.20 - Math.cos(sp) * R * 0.08;
+            py2 = -R * 0.26 + Math.sin(sp) * R * 0.08;
+        }
+        const pr = panicked ? R * 0.055 : R * 0.085;
+        ctx.fillStyle = z.kind === 'screamer' ? '#b81fd6' : '#c8281e';
+        ctx.beginPath(); ctx.arc(px1, py1, pr * 1.35, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(px2, py2, pr * 1.15, 0, 7); ctx.fill();
+        ctx.fillStyle = '#111508';
+        ctx.beginPath(); ctx.arc(px1, py1, pr * 0.75, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(px2, py2, pr * 0.65, 0, 7); ctx.fill();
+        // Glossy eye catchlight
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(px1 - R * 0.04, py1 - R * 0.04, R * 0.035, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(px2 - R * 0.03, py2 - R * 0.03, R * 0.03, 0, 7); ctx.fill();
+
+        // Popped-out dangling eyeball on look===1
+        if (z.look === 1 && !panicked) {
+            ctx.strokeStyle = '#a83232'; ctx.lineWidth = 2.0 * s;
+            ctx.beginPath(); ctx.moveTo(-R * 0.20, -R * 0.18); ctx.lineTo(-R * 0.34, R * 0.26); ctx.stroke();
+            blob(-R * 0.36, R * 0.32, R * 0.17, R * 0.17, 0, '#fff8c4', ink * 0.65);
+            ctx.fillStyle = '#111508';
+            ctx.beginPath(); ctx.arc(-R * 0.34, R * 0.34, R * 0.06, 0, 7); ctx.fill();
+        }
+
+        // Expressive cartoon eyebrows (raised high in panic, furrowed in anger otherwise)
+        ctx.strokeStyle = INK; ctx.lineWidth = 3.2 * s;
+        ctx.beginPath();
+        if (panicked) {
+            ctx.moveTo(R * 0.12, -R * 0.62); ctx.quadraticCurveTo(R * 0.38, -R * 0.78, R * 0.62, -R * 0.58);
+            ctx.moveTo(-R * 0.44, -R * 0.56); ctx.quadraticCurveTo(-R * 0.20, -R * 0.74, 0, -R * 0.60);
+        } else {
+            ctx.moveTo(R * 0.64, -R * 0.50); ctx.lineTo(R * 0.12, -R * 0.36);
+            ctx.moveTo(-R * 0.02, -R * 0.36); ctx.lineTo(-R * 0.46, -R * 0.48);
+        }
+        ctx.stroke();
+    }
+
+    // Cartoon upturned snout / nostrils
+    ctx.fillStyle = shade('#3a481e', dim);
+    ctx.beginPath(); ctx.ellipse(R * 0.52, -R * 0.02, R * 0.06, R * 0.09, -0.2, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(R * 0.38, 0, R * 0.05, R * 0.08, -0.2, 0, 7); ctx.fill();
+
+    // Brute brass bull nose-ring
+    if (z.kind === 'brute') {
+        ctx.strokeStyle = '#ffd83d'; ctx.lineWidth = 2.2 * s;
+        ctx.beginPath(); ctx.arc(R * 0.46, R * 0.10, R * 0.12, -0.4, 3.8); ctx.stroke();
+    }
+
+    // --- MOUTH, TEETH & TONGUE --------------------------------------------
+    const mouthY = jawDrop * 0.76 + R * 0.08;
+    const mouthRx = panicked ? R * 0.36 : R * 0.48;
+    const mouthRy = panicked ? R * 0.34 : R * 0.26;
+    ctx.fillStyle = '#381216';
+    ctx.beginPath();
+    ctx.ellipse(R * 0.22, mouthY, mouthRx, mouthRy, 0, 0, 7);
+    ctx.fill();
+    ctx.strokeStyle = INK; ctx.lineWidth = 2.0 * s; ctx.stroke();
+
+    // Pink cartoon tongue / uvula
+    ctx.fillStyle = z.t.bloat ? '#9eff4a' : '#d95b72';
+    ctx.beginPath();
+    if (panicked) {
+        ctx.arc(R * 0.16, mouthY + mouthRy * 0.35, R * 0.18, 0, Math.PI, true);
+    } else {
+        const flop = Math.sin(z.phase * 2) * R * 0.08;
+        ctx.ellipse(R * 0.32, mouthY + mouthRy * 0.55 + flop, R * 0.16, R * 0.24, 0.3, 0, 7);
+    }
+    ctx.fill();
+
+    // Crooked cartoon teeth (upper + lower underbite fangs)
+    for (let i = -1; i <= 1; i++) {
+        if (i === 0 && z.look === 2) continue;
+        const tx = R * 0.22 + i * R * 0.22;
+        ctx.fillStyle = (z.kind === 'brute' && i === 1) ? '#ffd83d' : '#f7fadc';
+        ctx.strokeStyle = INK; ctx.lineWidth = 1.4 * s;
+        ctx.beginPath();
+        ctx.rect(tx - R * 0.08, mouthY - mouthRy * 0.92, R * 0.15, R * 0.24);
+        ctx.fill(); ctx.stroke();
+    }
+    if (z.kind === 'brute' || z.kind === 'titan' || t.boss) {
+        // Underbite tusks jutting up
+        ctx.fillStyle = '#f7fadc'; ctx.strokeStyle = INK; ctx.lineWidth = 1.5 * s;
+        for (const side of [-1, 1]) {
+            const tx = R * 0.24 + side * R * 0.28;
+            ctx.beginPath();
+            ctx.moveTo(tx - R * 0.08, mouthY + mouthRy * 0.78);
+            ctx.lineTo(tx + R * 0.08, mouthY + mouthRy * 0.78);
+            ctx.lineTo(tx, mouthY + mouthRy * 0.10);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+        }
+    }
+
+    // Hardhat bushy construction mustache
+    if (z.kind === 'hardhat') {
+        blob(R * 0.32, R * 0.15, R * 0.42, R * 0.15, 0.08, shade('#4a3219', dim), ink * 0.7);
+    }
+
+    // Bloater toxic respirator nozzle on chin
+    if (z.kind === 'bloater') {
+        blob(R * 0.42, jawDrop, R * 0.24, R * 0.22, 0.2, shade('#3a4532', dim), ink * 0.8);
+        ctx.fillStyle = '#b6ff4a';
+        ctx.fillRect(R * 0.34, jawDrop + R * 0.14, 3.2 * s, R * 0.52);
+    } else if (!panicked) {
+        // Drool strand
+        ctx.fillStyle = 'rgba(150,210,60,0.75)';
+        ctx.fillRect(R * 0.34, mouthY + mouthRy * 0.6, 2.5 * s, R * 0.42);
+    }
+
+    // Butcher riveted iron face-guard mask
+    if (z.kind === 'butcher') {
+        ctx.fillStyle = shade('#7c8590', dim);
+        ctx.strokeStyle = INK; ctx.lineWidth = ink * 0.85;
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(-R * 0.45, -R * 0.08, R * 1.12, R * 0.88, 4 * s)
+                      : ctx.rect(-R * 0.45, -R * 0.08, R * 1.12, R * 0.88);
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#1b2024';
+        for (let i = 0; i < 3; i++) {
+            ctx.fillRect(R * (0.0 + i * 0.20), R * 0.12, 3 * s, R * 0.48);
+        }
+    }
+
+    // --- HELMETS, HAIR & HEADGEAR -----------------------------------------
+    if (t.helmet && z.helmetHp > 0) {
+        if (t.boss) {
+            // Warden Dark Riot Juggernaut Helmet + central spike
+            ctx.beginPath();
+            ctx.ellipse(0, -R * 0.56, R * 1.12, R * 0.72, 0, Math.PI, 0);
+            ctx.fillStyle = shade('#353c44', dim); ctx.fill();
+            ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
+            // Center spike
+            ctx.fillStyle = shade('#cfd8e2', dim);
+            ctx.beginPath();
+            ctx.moveTo(-R * 0.18, -R * 1.22);
+            ctx.lineTo(0, -R * 1.72);
+            ctx.lineTo(R * 0.18, -R * 1.22);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+            // Steel helmet brim + crimson visor strip
+            ctx.strokeStyle = INK; ctx.lineWidth = 5.4 * s;
+            ctx.beginPath(); ctx.moveTo(-R * 1.14, -R * 0.52); ctx.lineTo(R * 1.18, -R * 0.52); ctx.stroke();
+            ctx.strokeStyle = '#ff382b'; ctx.lineWidth = 2.6 * s;
+            ctx.beginPath(); ctx.moveTo(-R * 0.55, -R * 0.52); ctx.lineTo(R * 0.78, -R * 0.52); ctx.stroke();
+        } else {
+            // Hardhat ribbed yellow safety helmet + headlamp
+            ctx.beginPath();
+            ctx.ellipse(0, -R * 0.58, R * 1.14, R * 0.68, 0, Math.PI, 0);
+            ctx.fillStyle = shade('#f5b01b', dim); ctx.fill();
+            ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(-R * 1.24, -R * 0.56); ctx.lineTo(R * 1.34, -R * 0.56);
+            ctx.strokeStyle = INK; ctx.lineWidth = 5.2 * s; ctx.stroke();
+            ctx.strokeStyle = shade('#d99216', dim); ctx.lineWidth = 3.2 * s; ctx.stroke();
+            // Headlamp on front of helmet
+            blob(R * 0.88, -R * 0.82, R * 0.20, R * 0.22, 0, '#fff6a8', ink * 0.7);
+        }
+    } else if (z.kind === 'screamer') {
+        // Screamer neon magenta punk mohawk
+        ctx.fillStyle = shade('#e639d8', dim);
+        ctx.strokeStyle = INK; ctx.lineWidth = 2.2 * s;
+        for (let i = 0; i < 4; i++) {
+            const a = -2.3 + i * 0.38;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(a - 0.16) * R * 0.85, -R * 0.18 + Math.sin(a - 0.16) * R * 0.85);
+            ctx.lineTo(Math.cos(a) * R * 1.62, -R * 0.18 + Math.sin(a) * R * 1.62);
+            ctx.lineTo(Math.cos(a + 0.16) * R * 0.85, -R * 0.18 + Math.sin(a + 0.16) * R * 0.85);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+        }
+    } else if (z.kind === 'runner') {
+        // Runner wild electrocuted lunatic hair tufts
+        ctx.strokeStyle = shade('#d8e2c4', dim); ctx.lineWidth = 2.6 * s;
+        for (let i = 0; i < 6; i++) {
+            const a = -2.7 + i * 0.36;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(a) * R * 0.85, -R * 0.16 + Math.sin(a) * R * 0.9);
+            ctx.lineTo(Math.cos(a) * R * 1.55, -R * 0.16 + Math.sin(a) * R * 1.55);
             ctx.stroke();
         }
     } else {
-        ctx.fillStyle = '#fbffdc';
-        ctx.beginPath(); ctx.arc(R * 0.42, -R * 0.26, R * 0.15, 0, 7); ctx.fill();
-        ctx.beginPath(); ctx.arc(-R * 0.18, -R * 0.28, R * 0.12, 0, 7); ctx.fill();
-        ctx.fillStyle = '#1b1f0c';
-        ctx.beginPath(); ctx.arc(R * 0.46, -R * 0.25, R * 0.07, 0, 7); ctx.fill();
-        ctx.beginPath(); ctx.arc(-R * 0.14, -R * 0.27, R * 0.06, 0, 7); ctx.fill();
-        // one eye dangling on the ugliest variant
-        if (z.look === 1) {
-            ctx.strokeStyle = '#9c3b3b'; ctx.lineWidth = 1.8 * s;
-            ctx.beginPath(); ctx.moveTo(-R * 0.18, -R * 0.2); ctx.lineTo(-R * 0.3, R * 0.24); ctx.stroke();
-            ctx.fillStyle = '#fbffdc';
-            ctx.beginPath(); ctx.arc(-R * 0.32, R * 0.3, R * 0.14, 0, 7); ctx.fill();
-            ctx.fillStyle = '#1b1f0c';
-            ctx.beginPath(); ctx.arc(-R * 0.3, R * 0.32, R * 0.06, 0, 7); ctx.fill();
-        }
-    }
-
-    // gaping grin with a couple of surviving teeth
-    ctx.fillStyle = '#2a1a12';
-    ctx.beginPath();
-    ctx.ellipse(R * 0.2, jaw - R * 0.06, R * 0.42, R * 0.24, 0, 0, 7);
-    ctx.fill();
-    ctx.fillStyle = '#f2f6d4';
-    for (let i = -1; i <= 1; i++) {
-        if (i === 0 && z.look !== 3) continue;
-        ctx.beginPath();
-        ctx.moveTo(R * 0.2 + i * R * 0.24 - R * 0.07, jaw - R * 0.28);
-        ctx.lineTo(R * 0.2 + i * R * 0.24 + R * 0.07, jaw - R * 0.28);
-        ctx.lineTo(R * 0.2 + i * R * 0.24, jaw - R * 0.02);
-        ctx.closePath(); ctx.fill();
-    }
-    // dribble
-    ctx.fillStyle = 'rgba(122,26,26,0.75)';
-    ctx.fillRect(R * 0.3, jaw + R * 0.1, 2.4 * s, R * 0.5);
-
-    // stitched scalp wound / hair tufts
-    if (t.helmet && z.helmetHp > 0) {
-        ctx.beginPath();
-        ctx.ellipse(0, -R * 0.62, R * 1.12, R * 0.66, 0, Math.PI, 0);
-        ctx.fillStyle = shade('#f0a81f', dim); ctx.fill();
-        ctx.strokeStyle = INK; ctx.lineWidth = ink; ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(-R * 1.24, -R * 0.6); ctx.lineTo(R * 1.3, -R * 0.6);
-        ctx.strokeStyle = INK; ctx.lineWidth = 5 * s; ctx.stroke();
-        ctx.strokeStyle = shade('#d8901a', dim); ctx.lineWidth = 3.2 * s; ctx.stroke();
-    } else {
-        ctx.strokeStyle = shade('#4b5a26', dim); ctx.lineWidth = 2.4 * s;
+        // Scruffy hair tufts + Frankenstein forehead stitches
+        ctx.strokeStyle = shade('#3f4d20', dim); ctx.lineWidth = 2.4 * s;
         for (let i = 0; i < 4; i++) {
             const a = -2.5 + i * 0.42 + (z.look * 0.15);
             ctx.beginPath();
@@ -2212,8 +2529,8 @@ function drawHead(z, skin, skinD, ink, dim) {
             ctx.lineTo(Math.cos(a) * R * 1.3, -R * 0.16 + Math.sin(a) * R * 1.4);
             ctx.stroke();
         }
-        if (z.look === 0) {
-            ctx.strokeStyle = '#2f2016'; ctx.lineWidth = 1.7 * s;
+        if (z.look === 0 || z.kind === 'titan') {
+            ctx.strokeStyle = '#2f2016'; ctx.lineWidth = 1.8 * s;
             ctx.beginPath(); ctx.moveTo(-R * 0.5, -R * 0.72); ctx.lineTo(R * 0.35, -R * 0.86); ctx.stroke();
             for (let i = 0; i < 4; i++) {
                 const u = i / 3;
@@ -2224,10 +2541,22 @@ function drawHead(z, skin, skinD, ink, dim) {
             }
         }
     }
+
+    // Dizzy stars orbiting head when knocked down!
+    if (dizzy) {
+        ctx.fillStyle = '#ffd83d';
+        for (let i = 0; i < 3; i++) {
+            const a = perf * 0.008 + i * 2.09;
+            const sx = Math.cos(a) * R * 0.85;
+            const sy = -R * 1.25 + Math.sin(a) * R * 0.22;
+            ctx.beginPath(); ctx.arc(sx, sy, 3.2 * s, 0, 7); ctx.fill();
+        }
+    }
+
     ctx.restore();
 }
 
-// ============================================================== SCENERY
+// ============================================================== SCENERY (ZOMBIESMASH! HD)
 const bg = document.createElement('canvas');
 bg.width = W; bg.height = H;
 const bctx = bg.getContext('2d');
@@ -2235,126 +2564,214 @@ const bctx = bg.getContext('2d');
 function paintBg() {
     const c = bctx;
     const sky = c.createLinearGradient(0, 0, 0, GROUND);
-    sky.addColorStop(0, '#0a1220');
-    sky.addColorStop(0.55, '#1d3040');
-    sky.addColorStop(1, '#4a5a35');
+    sky.addColorStop(0, '#070d19');
+    sky.addColorStop(0.48, '#162838');
+    sky.addColorStop(0.82, '#2d4436');
+    sky.addColorStop(1, '#4c6134');
     c.fillStyle = sky; c.fillRect(0, 0, W, GROUND);
 
-    // moon + haze
-    c.fillStyle = 'rgba(226,242,190,0.09)';
-    c.beginPath(); c.arc(1080, 118, 96, 0, 7); c.fill();
-    c.fillStyle = '#e8f4c6';
-    c.beginPath(); c.arc(1080, 118, 48, 0, 7); c.fill();
-    c.fillStyle = 'rgba(190,208,150,0.5)';
-    c.beginPath(); c.arc(1064, 106, 9, 0, 7); c.fill();
-    c.beginPath(); c.arc(1096, 132, 6, 0, 7); c.fill();
+    // Moon + outer atmospheric glow
+    for (const [r, a] of [[150, 0.05], [105, 0.09], [72, 0.14]]) {
+        c.fillStyle = `rgba(226,246,185,${a})`;
+        c.beginPath(); c.arc(1070, 116, r, 0, 7); c.fill();
+    }
+    c.fillStyle = '#eef8cf';
+    c.beginPath(); c.arc(1070, 116, 48, 0, 7); c.fill();
+    c.fillStyle = 'rgba(182,202,140,0.52)';
+    c.beginPath(); c.arc(1052, 102, 10, 0, 7); c.fill();
+    c.beginPath(); c.arc(1088, 128, 7, 0, 7); c.fill();
+    c.beginPath(); c.arc(1066, 136, 5, 0, 7); c.fill();
 
-    // stars
-    c.fillStyle = 'rgba(255,255,255,0.5)';
-    for (let i = 0; i < 70; i++) c.fillRect(rand(0, W), rand(0, 320), 2, 2);
+    // Twinkling stars
+    c.fillStyle = 'rgba(255,255,240,0.58)';
+    for (let i = 0; i < 85; i++) c.fillRect(rand(0, W), rand(0, 330), (i % 3 === 0) ? 2.5 : 1.6, (i % 3 === 0) ? 2.5 : 1.6);
 
-    // far hills
-    c.fillStyle = '#15241d';
-    c.beginPath(); c.moveTo(0, 470);
-    for (let x = 0; x <= W; x += 40) c.lineTo(x, 470 - Math.sin(x * 0.006) * 46 - Math.sin(x * 0.018) * 16);
+    // Drifting eerie moonlit clouds
+    c.fillStyle = 'rgba(180,210,165,0.06)';
+    for (const [cx, cy, rw, rh] of [[240, 130, 150, 26], [620, 95, 190, 30], [980, 150, 160, 24]]) {
+        c.beginPath(); c.ellipse(cx, cy, rw, rh, 0, 0, 7); c.fill();
+    }
+
+    // Far hills & distant cemetery ridge
+    c.fillStyle = '#122019';
+    c.beginPath(); c.moveTo(0, 465);
+    for (let x = 0; x <= W; x += 32) c.lineTo(x, 465 - Math.sin(x * 0.0055) * 48 - Math.sin(x * 0.019) * 16);
     c.lineTo(W, GROUND); c.lineTo(0, GROUND); c.fill();
 
-    // dead trees
-    for (const tx of [120, 300, 980, 1210]) {
-        c.strokeStyle = '#101a12'; c.lineCap = 'round';
-        c.lineWidth = 11; c.beginPath(); c.moveTo(tx, 500); c.lineTo(tx + 6, 400); c.stroke();
-        c.lineWidth = 6;
-        c.beginPath(); c.moveTo(tx + 5, 428); c.lineTo(tx - 30, 392); c.moveTo(tx + 5, 440);
-        c.lineTo(tx + 40, 400); c.stroke();
-    }
+    // Midground rolling hills + mist layer
+    c.fillStyle = '#192b21';
+    c.beginPath(); c.moveTo(0, 515);
+    for (let x = 0; x <= W; x += 32) c.lineTo(x, 515 - Math.cos(x * 0.007) * 26 - Math.sin(x * 0.022) * 10);
+    c.lineTo(W, GROUND); c.lineTo(0, GROUND); c.fill();
 
-    // picket fence
-    c.fillStyle = '#1c2a1a'; c.strokeStyle = '#0e1710'; c.lineWidth = 2;
-    for (let x = -10; x < W + 20; x += 26) {
+    // Gnarled dead oak trees
+    for (const [tx, ts] of [[105, 1.08], [305, 0.88], [975, 0.94], [1205, 1.12]]) {
+        c.save(); c.translate(tx, 540); c.scale(ts, ts);
+        c.strokeStyle = '#0e1710'; c.lineCap = 'round';
+        c.lineWidth = 13; c.beginPath(); c.moveTo(0, 20); c.quadraticCurveTo(8, -45, 4, -125); c.stroke();
+        c.lineWidth = 7;
         c.beginPath();
-        c.moveTo(x, 552); c.lineTo(x + 7, 542); c.lineTo(x + 14, 552);
-        c.lineTo(x + 14, 596); c.lineTo(x, 596); c.closePath();
-        c.fill(); c.stroke();
-    }
-    c.fillStyle = '#182415'; c.fillRect(0, 560, W, 6); c.fillRect(0, 582, W, 6);
-
-    // tombstones
-    for (const [gx, gs] of [[210, 1], [420, .8], [860, .9], [1120, 1.05]]) {
-        c.save(); c.translate(gx, 588); c.scale(gs, gs);
-        c.fillStyle = '#3d4640'; c.strokeStyle = '#171c18'; c.lineWidth = 3;
-        c.beginPath();
-        c.moveTo(-20, 0); c.lineTo(-20, -30); c.arc(0, -30, 20, Math.PI, 0); c.lineTo(20, 0);
-        c.closePath(); c.fill(); c.stroke();
-        c.fillStyle = '#2a322c'; c.fillRect(-6, -40, 12, 4); c.fillRect(-3, -46, 6, 16);
+        c.moveTo(4, -85); c.quadraticCurveTo(-22, -100, -42, -130);
+        c.moveTo(5, -70); c.quadraticCurveTo(28, -90, 48, -118);
+        c.moveTo(-18, -102); c.lineTo(-26, -132);
+        c.moveTo(24, -88); c.lineTo(34, -120);
+        c.stroke();
         c.restore();
     }
 
-    // dirt
+    // Crooked graveyard fence
+    c.fillStyle = '#1b2919'; c.strokeStyle = '#0c140d'; c.lineWidth = 2;
+    for (let x = -10; x < W + 20; x += 26) {
+        c.beginPath();
+        c.moveTo(x, 550); c.lineTo(x + 7, 538); c.lineTo(x + 14, 550);
+        c.lineTo(x + 14, 596); c.lineTo(x, 596); c.closePath();
+        c.fill(); c.stroke();
+    }
+    c.fillStyle = '#162214'; c.fillRect(0, 558, W, 6); c.fillRect(0, 582, W, 6);
+
+    // Tombstones with RIP crosses
+    for (const [gx, gs, tilt] of [[195, 1.02, -0.06], [415, 0.84, 0.05], [865, 0.92, -0.04], [1125, 1.06, 0.07]]) {
+        c.save(); c.translate(gx, 590); c.scale(gs, gs); c.rotate(tilt);
+        c.fillStyle = '#3f4942'; c.strokeStyle = '#141915'; c.lineWidth = 3;
+        c.beginPath();
+        c.moveTo(-20, 0); c.lineTo(-20, -32); c.arc(0, -32, 20, Math.PI, 0); c.lineTo(20, 0);
+        c.closePath(); c.fill(); c.stroke();
+        c.fillStyle = '#29312b'; c.fillRect(-7, -40, 14, 4); c.fillRect(-2.5, -47, 5, 18);
+        c.restore();
+    }
+
+    // Ground mist ribbon
+    const mist = c.createLinearGradient(0, GROUND - 85, 0, GROUND - 25);
+    mist.addColorStop(0, 'rgba(170,210,150,0)');
+    mist.addColorStop(0.5, 'rgba(170,210,150,0.09)');
+    mist.addColorStop(1, 'rgba(170,210,150,0)');
+    c.fillStyle = mist; c.fillRect(0, GROUND - 85, W, 60);
+
+    // Rich layered dirt & turf
     const dirt = c.createLinearGradient(0, GROUND - 6, 0, H);
-    dirt.addColorStop(0, '#5c5030');
-    dirt.addColorStop(0.14, '#463c24');
-    dirt.addColorStop(1, '#221d12');
+    dirt.addColorStop(0, '#5f5130');
+    dirt.addColorStop(0.16, '#483d23');
+    dirt.addColorStop(1, '#1e190f');
     c.fillStyle = dirt; c.fillRect(0, GROUND - 40, W, H - GROUND + 40);
-    c.fillStyle = '#3f5a22';
-    c.fillRect(0, GROUND - 42, W, 8);
-    for (let i = 0; i < 260; i++) {
-        const x = rand(0, W), y = rand(GROUND - 40, H);
-        c.fillStyle = 'rgba(0,0,0,' + rand(0.05, 0.18).toFixed(2) + ')';
+    c.fillStyle = '#436123';
+    c.fillRect(0, GROUND - 43, W, 10);
+    for (let i = 0; i < 280; i++) {
+        const x = rand(0, W), y = rand(GROUND - 38, H);
+        c.fillStyle = 'rgba(0,0,0,' + rand(0.06, 0.20).toFixed(2) + ')';
         c.fillRect(x, y, rand(3, 14), rand(2, 4));
     }
-    c.strokeStyle = 'rgba(90,120,50,0.55)'; c.lineWidth = 2;
-    for (let i = 0; i < 90; i++) {
-        const x = rand(0, W), y = rand(GROUND - 44, GROUND + 30);
-        c.beginPath(); c.moveTo(x, y); c.lineTo(x + rand(-4, 4), y - rand(5, 12)); c.stroke();
+    c.strokeStyle = 'rgba(98,136,52,0.62)'; c.lineWidth = 2;
+    for (let i = 0; i < 110; i++) {
+        const x = rand(0, W), y = rand(GROUND - 44, GROUND + 28);
+        c.beginPath(); c.moveTo(x, y); c.lineTo(x + rand(-4, 4), y - rand(6, 13)); c.stroke();
     }
 }
 paintBg();
 
+// Joey's fortified ZombieSmash! HD country house
 function drawHouse() {
     const f = clamp(game.hp / game.maxHp, 0, 1);
     const x = HOUSE.x, y = HOUSE.y, w = HOUSE.w, h = HOUSE.h;
 
-    ctx.globalAlpha = 0.36;
-    blob(HOUSE.cx, GROUND + 6, w * 0.62, 12, 0, '#000', 0);
+    // Ground shadow
+    ctx.globalAlpha = 0.42;
+    blob(HOUSE.cx, GROUND + 6, w * 0.68, 13, 0, '#000', 0);
     ctx.globalAlpha = 1;
 
-    // walls
-    ctx.fillStyle = '#7b5a34'; ctx.strokeStyle = INK; ctx.lineWidth = 4;
+    // Brick chimney on right roof slope + rising smoke puff
+    ctx.fillStyle = '#6e2e23'; ctx.strokeStyle = INK; ctx.lineWidth = 3.5;
+    ctx.fillRect(x + w - 42, y - 56, 26, 44);
+    ctx.strokeRect(x + w - 42, y - 56, 26, 44);
+    ctx.fillStyle = '#522118';
+    ctx.fillRect(x + w - 46, y - 62, 34, 8);
+    ctx.strokeRect(x + w - 46, y - 62, 34, 8);
+
+    // Timber walls + clapboard siding
+    ctx.fillStyle = '#7e5c35'; ctx.strokeStyle = INK; ctx.lineWidth = 4;
     ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
-    ctx.strokeStyle = 'rgba(50,32,14,0.55)'; ctx.lineWidth = 2;
-    for (let i = 1; i < 7; i++) {
-        ctx.beginPath(); ctx.moveTo(x, y + (h / 7) * i); ctx.lineTo(x + w, y + (h / 7) * i); ctx.stroke();
+
+    // Corner trim pillars
+    ctx.fillStyle = '#5c4122';
+    ctx.fillRect(x, y, 10, h); ctx.fillRect(x + w - 10, y, 10, h);
+
+    ctx.strokeStyle = 'rgba(42,26,10,0.6)'; ctx.lineWidth = 2;
+    for (let i = 1; i < 8; i++) {
+        ctx.beginPath(); ctx.moveTo(x, y + (h / 8) * i); ctx.lineTo(x + w, y + (h / 8) * i); ctx.stroke();
     }
 
-    // roof
+    // Stone foundation base
+    ctx.fillStyle = '#4a4e48'; ctx.strokeStyle = INK; ctx.lineWidth = 3;
+    ctx.fillRect(x - 4, y + h - 16, w + 8, 16);
+    ctx.strokeRect(x - 4, y + h - 16, w + 8, 16);
+
+    // Pitched shingled roof
     ctx.beginPath();
-    ctx.moveTo(x - 26, y + 4); ctx.lineTo(HOUSE.cx, y - 54); ctx.lineTo(x + w + 26, y + 4);
+    ctx.moveTo(x - 28, y + 6); ctx.lineTo(HOUSE.cx, y - 58); ctx.lineTo(x + w + 28, y + 6);
     ctx.closePath();
-    ctx.fillStyle = '#8d3f2c'; ctx.fill();
+    ctx.fillStyle = '#8f3d2a'; ctx.fill();
     ctx.strokeStyle = INK; ctx.lineWidth = 4; ctx.stroke();
+    // Roof shingle ridges
+    ctx.strokeStyle = 'rgba(45,16,10,0.45)'; ctx.lineWidth = 2;
+    for (let r = 1; r <= 3; r++) {
+        const ry = y + 6 - r * 14;
+        const rw = (w * 0.5 + 28) * (1 - r * 0.22);
+        ctx.beginPath(); ctx.moveTo(HOUSE.cx - rw, ry); ctx.lineTo(HOUSE.cx + rw, ry); ctx.stroke();
+    }
 
-    // door + boarded window
-    ctx.fillStyle = '#4d3620'; ctx.strokeStyle = INK; ctx.lineWidth = 3.4;
-    ctx.fillRect(HOUSE.cx - 22, y + h - 60, 44, 60);
-    ctx.strokeRect(HOUSE.cx - 22, y + h - 60, 44, 60);
+    // Reinforced oak door with iron bands
+    const dx = HOUSE.cx - 23, dy = y + h - 68;
+    ctx.fillStyle = '#4a331d'; ctx.strokeStyle = INK; ctx.lineWidth = 3.5;
+    ctx.fillRect(dx, dy, 46, 54); ctx.strokeRect(dx, dy, 46, 54);
+    ctx.fillStyle = '#32383d';
+    ctx.fillRect(dx + 3, dy + 10, 40, 5);
+    ctx.fillRect(dx + 3, dy + 36, 40, 5);
     ctx.fillStyle = '#ffd83d';
-    ctx.beginPath(); ctx.arc(HOUSE.cx + 13, y + h - 30, 3.4, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(dx + 36, dy + 26, 3.5, 0, 7); ctx.fill();
 
-    ctx.fillStyle = '#2b3a44';
-    ctx.fillRect(x + 16, y + 26, 40, 34);
-    ctx.strokeRect(x + 16, y + 26, 40, 34);
-    ctx.fillStyle = '#9b7643';
-    ctx.save(); ctx.translate(x + 36, y + 43); ctx.rotate(0.24);
-    ctx.fillRect(-30, -6, 60, 11); ctx.strokeRect(-30, -6, 60, 11);
-    ctx.restore();
+    // Left & Right Glowing Windows with Barricade Planks + Joey's Shotgun!
+    for (const [wx, wy, hasGun] of [[x + 16, y + 24, true], [x + w - 58, y + 24, false]]) {
+        ctx.fillStyle = f > 0.25 ? '#ffcf5c' : '#6b3820';
+        ctx.strokeStyle = INK; ctx.lineWidth = 3.2;
+        ctx.fillRect(wx, wy, 42, 36); ctx.strokeRect(wx, wy, 42, 36);
+        // Window muntins
+        ctx.beginPath();
+        ctx.moveTo(wx + 21, wy); ctx.lineTo(wx + 21, wy + 36);
+        ctx.moveTo(wx, wy + 18); ctx.lineTo(wx + 42, wy + 18);
+        ctx.stroke();
 
-    // damage
+        if (hasGun) {
+            // Joey's double-barrel shotgun barrel peeking out the left window!
+            ctx.save();
+            ctx.translate(wx + 12, wy + 22);
+            ctx.rotate(-0.18 + Math.sin(perf * 0.004) * 0.08);
+            ctx.fillStyle = '#2d3338'; ctx.strokeStyle = INK; ctx.lineWidth = 2.2;
+            ctx.fillRect(-26, -3, 28, 6); ctx.strokeRect(-26, -3, 28, 6);
+            ctx.restore();
+        }
+
+        // Crossed wooden barricade planks nailed over window
+        ctx.fillStyle = '#a37b45'; ctx.strokeStyle = INK; ctx.lineWidth = 2.6;
+        ctx.save(); ctx.translate(wx + 21, wy + 18); ctx.rotate(0.22);
+        ctx.fillRect(-26, -5, 52, 9); ctx.strokeRect(-26, -5, 52, 9);
+        ctx.rotate(-0.44);
+        ctx.fillRect(-26, -5, 52, 9); ctx.strokeRect(-26, -5, 52, 9);
+        ctx.restore();
+    }
+
+    // Swinging warm porch lantern above door
+    const lx = HOUSE.cx, ly = dy - 10;
+    ctx.fillStyle = 'rgba(255,215,90,0.18)';
+    ctx.beginPath(); ctx.arc(lx, ly, 28 + Math.sin(perf * 0.01) * 3, 0, 7); ctx.fill();
+    ctx.fillStyle = '#ffe678'; ctx.strokeStyle = INK; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.arc(lx, ly, 6, 0, 7); ctx.fill(); ctx.stroke();
+
+    // Structural damage cracks as HP drops
     if (f < 0.98) {
-        ctx.strokeStyle = 'rgba(24,16,8,0.8)';
-        const cracks = Math.round((1 - f) * 9);
+        ctx.strokeStyle = 'rgba(20,12,6,0.85)';
+        const cracks = Math.round((1 - f) * 10);
         for (let i = 0; i < cracks; i++) {
-            const sx = x + ((i * 53) % (w - 12)) + 6;
-            const sy = y + 12 + ((i * 37) % (h - 30));
+            const sx = x + ((i * 53) % (w - 16)) + 8;
+            const sy = y + 12 + ((i * 37) % (h - 32));
             ctx.lineWidth = 2 + (i % 3);
             ctx.beginPath();
             ctx.moveTo(sx, sy);
@@ -2364,19 +2781,19 @@ function drawHouse() {
         }
     }
     if (f < 0.4) {
-        ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        ctx.fillRect(x + w - 46, y + 20, 30, 26);
-        ctx.fillRect(x + 8, y + h - 96, 24, 22);
+        ctx.fillStyle = 'rgba(0,0,0,0.58)';
+        ctx.fillRect(x + w - 48, y + 66, 28, 22);
+        ctx.fillRect(x + 12, y + h - 88, 24, 20);
     }
 
     // HP bar on the roof
-    const bw = w + 40, bx = HOUSE.cx - bw / 2, by = y - 78;
-    ctx.fillStyle = 'rgba(0,0,0,0.68)'; ctx.fillRect(bx - 3, by - 3, bw + 6, 20);
+    const bw = w + 44, bx = HOUSE.cx - bw / 2, by = y - 82;
+    ctx.fillStyle = 'rgba(0,0,0,0.72)'; ctx.fillRect(bx - 3, by - 3, bw + 6, 20);
     ctx.fillStyle = f > 0.5 ? '#8fd63f' : f > 0.25 ? '#ffd83d' : '#ff5b47';
     ctx.fillRect(bx, by, bw * f, 14);
     ctx.strokeStyle = '#0c1206'; ctx.lineWidth = 2; ctx.strokeRect(bx, by, bw, 14);
     ctx.fillStyle = '#eafbd2'; ctx.font = 'bold 12px Trebuchet MS'; ctx.textAlign = 'center';
-    ctx.fillText('SHACK ' + Math.ceil(game.hp) + '/' + game.maxHp, HOUSE.cx, by + 11);
+    ctx.fillText('JOEY\'S SHACK ' + Math.ceil(game.hp) + '/' + game.maxHp, HOUSE.cx, by + 11);
 }
 
 // ============================================================== HUD
@@ -2456,29 +2873,29 @@ function drawHUD() {
         ctx.globalAlpha = 1;
     }
 
-    // Boss bar. Only the biggest live boss gets one.
+    // Boss bar
     let boss = null;
     for (const z of zombies) {
         if (z.t.boss && z.state !== 'dead' && z.fade > 0 && (!boss || z.hp > boss.hp)) boss = z;
     }
     if (boss) {
         const bw = 520, bx = (W - bw) / 2, by = 92;
-        ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        ctx.fillRect(bx - 3, by - 3, bw + 6, 24);
+        ctx.fillStyle = 'rgba(0,0,0,0.62)';
+        ctx.fillRect(bx - 3, by - 3, bw + 6, 26);
         ctx.fillStyle = '#3a1414';
-        ctx.fillRect(bx, by, bw, 18);
+        ctx.fillRect(bx, by, bw, 20);
         ctx.fillStyle = '#d63b2f';
-        ctx.fillRect(bx, by, bw * clamp(boss.hp / boss.maxHp, 0, 1), 18);
+        ctx.fillRect(bx, by, bw * clamp(boss.hp / boss.maxHp, 0, 1), 20);
         if (boss.plateHp > 0) {
-            ctx.fillStyle = 'rgba(157,224,255,0.75)';
+            ctx.fillStyle = 'rgba(157,224,255,0.8)';
             ctx.fillRect(bx, by, bw * clamp(boss.plateHp / (60 + game.wave * 8), 0, 1), 5);
         }
         ctx.strokeStyle = '#eafbd2'; ctx.lineWidth = 2;
-        ctx.strokeRect(bx, by, bw, 18);
+        ctx.strokeRect(bx, by, bw, 20);
         ctx.textAlign = 'center';
-        ctx.font = 'bold 15px Trebuchet MS';
+        ctx.font = 'bold 13px Trebuchet MS';
         ctx.fillStyle = '#eafbd2';
-        ctx.fillText('THE WARDEN', W / 2, by + 14);
+        ctx.fillText('THE WARDEN — BOWL ZOMBIES, TRIP LEGS, OR CATCH ROCKS!', W / 2, by + 15);
     }
 
     // Wave banner
@@ -2509,7 +2926,7 @@ function draw() {
     ctx.drawImage(bg, 0, 0);
     ctx.drawImage(decal, 0, 0);
 
-    // spike traps sit on the dirt
+    // Spike traps on the dirt
     for (const sp of spikes) {
         ctx.fillStyle = '#8f979f'; ctx.strokeStyle = INK; ctx.lineWidth = 3;
         for (let i = -3; i <= 3; i++) {
@@ -2526,9 +2943,36 @@ function draw() {
 
     drawHouse();
 
-    // back lanes first
+    // Back lanes first
     const order = zombies.slice().sort((a, b) => b.lane - a.lane || a.hips.y - b.hips.y);
     for (const z of order) if (z.fade > 0) drawZombie(z);
+
+    // Interactive Boulders (hurled by bosses/titans, catchable with cursor!)
+    for (const b of boulders) {
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(b.rot);
+        ctx.fillStyle = '#6f6554'; ctx.strokeStyle = INK; ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+            const a = (i / 8) * 6.283;
+            const rr = b.r * (i % 2 ? 1.04 : 0.86);
+            ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * rr, Math.sin(a) * rr);
+        }
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+        // Rock facet highlight
+        ctx.fillStyle = '#948872';
+        ctx.beginPath(); ctx.arc(-b.r * 0.25, -b.r * 0.25, b.r * 0.38, 0, 7); ctx.fill();
+        ctx.restore();
+
+        if (b.hostile) {
+            ctx.strokeStyle = 'rgba(255,105,70,0.85)';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.r + 7 + Math.sin(perf * 0.02) * 3, 0, 7);
+            ctx.stroke();
+        }
+    }
 
     for (const g of gibs) {
         ctx.save();
@@ -2574,11 +3018,16 @@ function draw() {
     }
     ctx.globalAlpha = 1;
 
-    // grab tether
+    // Grab tether
     if (grab.z) {
-        ctx.strokeStyle = 'rgba(214,255,150,0.35)';
-        ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+        ctx.strokeStyle = 'rgba(214,255,150,0.38)';
+        ctx.lineWidth = 2.2; ctx.setLineDash([6, 6]);
         ctx.beginPath(); ctx.moveTo(grab.z.chest.x, grab.z.chest.y); ctx.lineTo(grab.x, grab.y); ctx.stroke();
+        ctx.setLineDash([]);
+    } else if (grab.boulder) {
+        ctx.strokeStyle = 'rgba(255,216,61,0.55)';
+        ctx.lineWidth = 2.5; ctx.setLineDash([5, 5]);
+        ctx.beginPath(); ctx.moveTo(grab.boulder.x, grab.boulder.y); ctx.lineTo(grab.x, grab.y); ctx.stroke();
         ctx.setLineDash([]);
     }
 
@@ -2600,7 +3049,7 @@ function draw() {
 // ============================================================== INPUT
 // grip    — remaining hold stamina on the current body, 1 → 0. See tickGrip().
 // escaped — set when a body tears loose, so the HUD can flash it.
-const grab = { z: null, p: null, x: 0, y: 0, lx: 0, ly: 0, sx: 0, sy: 0, drag: 1, held: 0, grip: 1, escaped: 0 };
+const grab = { z: null, p: null, boulder: null, x: 0, y: 0, lx: 0, ly: 0, sx: 0, sy: 0, drag: 1, held: 0, grip: 1, escaped: 0 };
 
 function toWorld(e) {
     const r = canvas.getBoundingClientRect();
@@ -2613,9 +3062,6 @@ function toWorld(e) {
 function onDown(e) {
     if (game.mode !== 'playing') return;
     e.preventDefault();
-    // Browsers refuse to start an AudioContext outside a gesture. The menu
-    // button normally does this, but cover the case where play began some
-    // other way so the field is never silent.
     if (!audio.started) audioInit();
     const m = toWorld(e);
 
@@ -2633,8 +3079,24 @@ function onDown(e) {
         return;
     }
 
-    // grab the closest body point
-    let best = null, bd = 46 * 46;
+    // Check if grabbing a flying or grounded Boulder first!
+    for (const b of boulders) {
+        if (Math.hypot(b.x - m.x, b.y - m.y) <= b.r + 34) {
+            if (b.hostile) popup(b.x, b.y - 28, 'CAUGHT!', '#b6ff4a', 20);
+            b.grabbed = true;
+            b.hostile = false;
+            grab.boulder = b;
+            grab.z = null; grab.p = null;
+            grab.x = m.x; grab.y = m.y; grab.lx = m.x; grab.ly = m.y;
+            grab.sx = 0; grab.sy = 0; grab.held = 0;
+            canvas.classList.add('grabbing');
+            sfx('grab');
+            return;
+        }
+    }
+
+    // Grab the closest zombie body point
+    let best = null, bd = 48 * 48;
     for (const z of zombies) {
         if (z.fade <= 0) continue;
         for (const p of z.pts) {
@@ -2645,71 +3107,58 @@ function onDown(e) {
     }
     if (!best) return;
 
-    // Too heavy for this grip level: your hand slips off. They must NOT ragdoll —
-    // a free knockdown on every failed click would make the gate meaningless and
-    // let you crowd-control a warden with a grip you haven't paid for. All you get
-    // is a shove on the walk anchor, so they visibly rock back and keep coming.
-    const need = best.z.t.grabLvl || 0;
-    if (liftLvl() < need) {
-        const z = best.z;
-        if (!isSim(z)) z.wx -= z.dir * (10 / (z.t.mass || 1));
-        popup(z.chest.x, z.chest.y - 52, 'TOO HEAVY', '#ff6b5e', 20);
-        popup(z.chest.x, z.chest.y - 28, 'NEEDS GRIP Lv' + need, '#ffd83d', 16);
+    const z = best.z;
+
+    // ZOMBIESMASH! HD BOSS & HEAVY MECHANICS:
+    // 1. No hard "NEEDS GRIP Lv4" lockouts! Anyone at any Grip level can fight
+    //    heavies and bosses.
+    // 2. Grounded Behemoths (warden, titan, butcher) CANNOT be re-grabbed while
+    //    already on the ground (ragdoll/rise) or during their post-trip poise
+    //    recovery! That prevents high-Grip players from chain-grabbing and
+    //    tossing bosses around like normal zombies.
+    if (z.t.grounded && (z.state !== 'walk' || z.poiseT > 0)) {
+        if (!isSim(z)) z.wx -= z.dir * (8 / (z.t.mass || 1));
+        popup(z.chest.x, z.chest.y - 52, 'BRACED!', '#ffd83d', 18);
+        popup(z.chest.x, z.chest.y - 30, 'BOWL ZOMBIES INTO IT!', '#9de0ff', 14);
         puff(z.chest.x, z.chest.y, '#cfd6c2', 6, 2.6);
+        game.shake = Math.max(game.shake, 4);
+        sfx('slip');
+        return;
+    }
+
+    // Roll for purchase on standing heavy/boss bodies (guaranteed after 1-2 tries via strain)
+    if (!isSim(z) && !rollLift(z)) {
+        z.wx -= z.dir * (16 / (z.t.mass || 1));
+        popup(z.chest.x, z.chest.y - 50, 'SHOVED BACK!', '#ffd83d', 18);
+        puff(z.chest.x, z.chest.y, '#cfd6c2', 7, 3);
         game.shake = Math.max(game.shake, 5);
         sfx('slip');
         return;
     }
 
-    // Grip is high enough to try — now roll for purchase. A body already on the
-    // floor is always grabbable: it's the standing, braced ones that resist, and
-    // requiring a roll to pick up a ragdoll you just floored would be miserable.
-    if (!isSim(best.z) && !rollLift(best.z)) {
-        const z = best.z;
-        z.wx -= z.dir * (14 / (z.t.mass || 1));
-        popup(z.chest.x, z.chest.y - 52, 'SLIPPED!', '#ffd83d', 19);
-        popup(z.chest.x, z.chest.y - 28,
-              Math.round(liftChance(z) * 100) + '% GRIP', '#9db77a', 14);
-        puff(z.chest.x, z.chest.y, '#cfd6c2', 7, 3);
-        game.shake = Math.max(game.shake, 6);
-        sfx('slip');
-        return;
-    }
-
-    grab.z = best.z; grab.p = best.p;
+    grab.z = z; grab.p = best.p; grab.boulder = null;
     grab.x = m.x; grab.y = m.y; grab.lx = m.x; grab.ly = m.y;
     grab.sx = 0; grab.sy = 0; grab.held = 0;
-    // Heavier bodies lag behind the cursor. Grip levels above the requirement
-    // buy some of that weight back, so over-levelling still feels good.
-    const over = liftLvl() - need;
-    grab.drag = clamp(1 / (best.z.t.mass || 1) + over * 0.12, 0.18, 1);
-    // Stamina for this specific hold. Big bodies thrash and you lose your
-    // purchase over a couple of seconds — you can't just park a warden in the
-    // air and grind it into the floor at your leisure. See tickGrip().
+    // Grounded bosses/heavies stay heavy and anchored even at high Grip levels!
+    const over = liftLvl();
+    grab.drag = z.t.grounded
+        ? clamp(1 / (z.t.mass || 1) + over * 0.025, 0.16, 0.42)
+        : clamp(1 / (z.t.mass || 1) + over * 0.08,  0.24, 1.00);
     grab.grip = 1;
     grab.escaped = 0;
-    best.z.grabbed = true;
-    if (best.z.state === 'walk' || best.z.state === 'rise') best.z.state = 'ragdoll';
-    best.z.settle = -0.6;
+    z.grabbed = true;
+    if (z.state === 'walk' || z.state === 'rise') z.state = 'ragdoll';
+    z.settle = -0.5;
     canvas.classList.add('grabbing');
-    sfx(best.z.t.boss ? 'grabBoss' : 'grab');
+    sfx(z.t.boss ? 'grabBoss' : 'grab');
 }
 
-// How fast a held body wears your hand out, per second. Trash never does, so
-// the moment-to-moment game with the stock zombies is completely unchanged.
-// This is the main thing that stops a levelled player from farming a boss:
-// you get a window, not ownership, and you have to convert it into a throw.
-// fast — runners and screamers are light enough to lift instantly, but they
-// squirm. A short, unpredictable hold means you have to fling them the moment
-// you catch one instead of carrying it around the field.
-// floor — the fastest a body will ever let go, no matter how much grip you buy.
-// This is the ceiling on the whole grip investment: a maxed hand holds a warden
-// about three seconds, never indefinitely, so there is no build that turns a boss
-// into a carryable object.
+// Grounded bosses tear loose quickly even at Lv10 Grip, so you only get a brief
+// window to yank/trip their legs rather than carrying them around the screen.
 const GRIP_DRAIN = {
-    boss:  { base: 0.66, floor: 0.34 },
-    heavy: { base: 0.38, floor: 0.20 },
-    fast:  { base: 0.30, floor: 0.17 }
+    boss:  { base: 1.45, floor: 1.05 },
+    heavy: { base: 0.72, floor: 0.42 },
+    fast:  { base: 0.34, floor: 0.19 }
 };
 
 function gripDrain(z) {
@@ -2717,22 +3166,12 @@ function gripDrain(z) {
             : z.t.heavy ? GRIP_DRAIN.heavy
             : (z.t.fast ? GRIP_DRAIN.fast : null);
     if (!d) return 0;
-    // Every grip level above the requirement buys you a longer hold, and a
-    // late-wave body is stronger, so the same grip holds it for less time.
-    const over = liftLvl() - (z.t.grabLvl || 0);
-    const late = Math.max(0, (z.spawnWave || 1) - 4) * 0.014;
-    // Clamp BEFORE thrash, not after. Clamping last meant a maxed grip drove the
-    // raw figure negative, the floor swallowed it, and every heavy in the wave
-    // then held for the exact same 8.3 seconds — the memorisable timing this was
-    // supposed to remove. z.thrash is rolled once per body at birth, so applying
-    // it to the clamped value keeps two wardens in one wave behaving differently
-    // even at max investment. You read the tell, you don't count frames.
-    return Math.max(d.floor, d.base + late - over * 0.06) * z.thrash;
+    const over = liftLvl();
+    const late = Math.max(0, (z.spawnWave || 1) - 4) * 0.015;
+    const red = z.t.grounded ? over * 0.03 : over * 0.05;
+    return Math.max(d.floor, d.base + late - red) * z.thrash;
 }
 
-// Called every frame while something is held. Drains the hold, and when it runs
-// out the body tears loose — landing on its feet if it was never really airborne,
-// so an escape is a genuine setback rather than a free knockdown.
 function tickGrip(dt) {
     const z = grab.z;
     if (!z) return;
@@ -2740,46 +3179,72 @@ function tickGrip(dt) {
     if (d <= 0) return;
 
     grab.grip -= d * dt;
-    // Thrashing shakes the screen a little as they work loose — the tell that
-    // your window is closing, without needing to read a meter.
-    if (grab.grip < 0.34 && Math.random() < 0.10) {
+    if (grab.grip < 0.38 && Math.random() < 0.14) {
         game.shake = Math.max(game.shake, 3);
         puff(z.chest.x, z.chest.y, '#cfd6c2', 2, 2);
     }
     if (grab.grip > 0) return;
 
-    // Torn loose. They keep whatever momentum you'd built, so flinging them at
-    // the last second still works — that's the skill expression here.
-    popup(z.chest.x, z.chest.y - 54, 'TORE LOOSE!', '#ff6b5e', 21);
+    // When a grounded boss/heavy tears loose after a yank, apply a leg-trip
+    // faceplant if the player yanked hard horizontally or downward!
+    const yank = Math.hypot(grab.sx, grab.sy);
+    if (z.t.grounded && yank > 6) {
+        const tripDmg = (18 + yank * 1.1) * gripMul() * (z.t.boss ? 0.65 : 0.85);
+        z.hurt(tripDmg, 'impact');
+        z.wx -= z.dir * 28;
+        popup(z.chest.x, z.chest.y - 54, 'TRIPPED!', '#ffd83d', 20);
+        sfx('impact', 1.4);
+    } else {
+        popup(z.chest.x, z.chest.y - 54, 'TORE LOOSE!', '#ff6b5e', 21);
+        sfx('slip');
+    }
     puff(z.chest.x, z.chest.y, '#cfd6c2', 12, 4);
     game.shake = Math.max(game.shake, 9);
-    sfx('slip');
     z.grabbed = false;
-    // A body that escapes gets a beat of poise so it can't be instantly
-    // re-grabbed into a lock, and its banked strain is wiped: you start the
-    // wrestle over. Without this you'd just re-click and keep it forever.
     z.strain = 0;
-    z.poiseT = Math.max(z.poiseT, 0.5);
-    z.settle = -0.5;
+    z.poiseT = z.t.grounded ? 2.2 : 0.7;
+    z.settle = -0.35;
     grab.z = null; grab.p = null;
     grab.escaped = 1;
     canvas.classList.remove('grabbing');
 }
 
 function onMove(e) {
-    if (!grab.z) return;
+    if (!grab.z && !grab.boulder) return;
     e.preventDefault();
     const m = toWorld(e);
     grab.x = m.x; grab.y = m.y;
 }
 
 function onUp() {
+    if (grab.boulder) {
+        const b = grab.boulder;
+        b.grabbed = false;
+        b.vx = clamp(grab.sx * 0.95, -36, 36);
+        b.vy = clamp(grab.sy * 0.95, -32, 32);
+        if (Math.hypot(b.vx, b.vy) > 6) sfx('throw');
+        grab.boulder = null;
+        canvas.classList.remove('grabbing');
+        return;
+    }
     if (!grab.z) return;
-    // Only call it a throw if they actually left your hand with pace.
+    const z = grab.z;
     const spd = Math.hypot(grab.sx, grab.sy);
     if (spd > 9) sfx('throw');
-    grab.z.grabbed = false;
-    grab.z.settle = -0.5;
+    // Releasing a grounded boss/heavy after a strong horizontal/downward tug
+    // trips them into the dirt and puts them on poise cooldown.
+    if (z.t.grounded) {
+        if (spd > 7) {
+            const tripDmg = (16 + spd * 1.15) * gripMul() * (z.t.boss ? 0.65 : 0.85);
+            z.hurt(tripDmg, 'impact');
+            z.wx -= z.dir * 26;
+            popup(z.chest.x, z.chest.y - 52, 'LEG SWEEP!', '#ffd83d', 19);
+            sfx('impact', 1.3);
+        }
+        z.poiseT = 2.0;
+    }
+    z.grabbed = false;
+    z.settle = -0.4;
     grab.z = null; grab.p = null;
     canvas.classList.remove('grabbing');
 }
@@ -2939,13 +3404,33 @@ function update(dt) {
         if (game.comboTimer <= 0) game.combo = 0;
     }
 
-    // smoothed cursor velocity, used for the throw
-    if (grab.z) {
+    // Smoothed cursor velocity, used for throwing zombies and caught boulders
+    if (grab.z || grab.boulder) {
         grab.sx = lerp(grab.sx, clamp(grab.x - grab.lx, -46, 46), 0.55);
         grab.sy = lerp(grab.sy, clamp(grab.y - grab.ly, -46, 46), 0.55);
         grab.lx = grab.x; grab.ly = grab.y;
         grab.held += dt;
-        tickGrip(dt);
+        if (grab.z) tickGrip(dt);
+    }
+
+    // Continuous fodder trickle while a Boss or grounded heavy is alive, so a
+    // player with Lv 0 Grip ALWAYS has normal zombies to bowl into the Boss!
+    if (game.pending <= 0 && game.alive > 0) {
+        let hasBehemoth = false, fodderCount = 0;
+        for (const z of zombies) {
+            if (z.state === 'dead') continue;
+            if (z.t.boss || z.t.grounded) hasBehemoth = true;
+            else fodderCount++;
+        }
+        if (hasBehemoth && fodderCount < 2) {
+            game.fodderCd = (game.fodderCd || 0) - dt;
+            if (game.fodderCd <= 0) {
+                game.fodderCd = 3.2;
+                const kind = Math.random() < 0.35 ? 'runner' : 'shambler';
+                zombies.push(new Zombie(kind, game.wave, Math.random() < 0.5 ? 1 : -1, irand(0, 1), false));
+                game.alive++;
+            }
+        }
     }
 
     // <= rather than ===. An exact-equality gate here means a single miscounted
@@ -2976,13 +3461,8 @@ function frame(now) {
         while (acc >= STEP && guard++ < 5) { update(STEP); acc -= STEP; }
     } else {
         acc = 0;
-        // Paused means paused: freezing the particles too makes the menu read as a
-        // still frame. Every other non-playing mode (shop, game over, title) still
-        // wants its smoke and embers drifting behind the panel.
         if (game.mode !== 'paused') stepFX(dt);
     }
-    // The sequencer only *schedules* ahead on the audio clock, so calling it
-    // once per frame is enough and a dropped frame can't stutter the music.
     musicTick();
     draw();
 }
@@ -2991,10 +3471,10 @@ requestAnimationFrame(frame);
 // ============================================================== BOOT
 function resetGame() {
     clearTimers();
-    zombies.length = 0; gibs.length = 0; parts.length = 0;
+    zombies.length = 0; boulders.length = 0; gibs.length = 0; parts.length = 0;
     nades.length = 0; spikes.length = 0; saws.length = 0; popups.length = 0;
     dctx.clearRect(0, 0, W, H);
-    grab.z = null; grab.p = null;
+    grab.z = null; grab.p = null; grab.boulder = null;
     grab.drag = 1; grab.held = 0; grab.sx = 0; grab.sy = 0;
     bannerT = 0;
     canvas.classList.remove('grabbing');
@@ -3005,15 +3485,11 @@ function resetGame() {
     game.combo = 0; game.comboTimer = 0; game.bestSmash = 0;
     game.maxHp = 240; game.hp = 240;
     game.alive = 0; game.pending = 0; game.shake = 0;
-    game.clearT = 0; game.tool = 'hand';
+    game.clearT = 0; game.tool = 'hand'; game.fodderCd = 3.0;
 }
 
 const hide = id => document.getElementById(id).classList.remove('show');
 
-// ---- persistent best run -------------------------------------------------------
-// Wrapped because localStorage throws outright when a file:// page is opened
-// with site data blocked, and a menu that can't render is worse than a menu
-// that can't remember.
 function loadBest() {
     try { return parseInt(localStorage.getItem('zs_best') || '0', 10) || 0; }
     catch (e) { return 0; }
@@ -3027,7 +3503,6 @@ function refreshBest() {
 }
 refreshBest();
 
-// ---- main menu navigation ------------------------------------------------------
 function showPane(name) {
     for (const p of document.querySelectorAll('.pane')) p.classList.remove('on');
     document.getElementById('pane' + name).classList.add('on');
@@ -3056,9 +3531,10 @@ function buildBestiary() {
         info.appendChild(bn);
         info.appendChild(bd);
         const tags = [];
-        if (t.grabLvl > 0) tags.push(`Grip Lv${t.grabLvl} to attempt`);
-        if (t.heavy) tags.push('Resists lift');
-        if (t.boss) tags.push('Boss — very hard to lift');
+        if (t.grounded) tags.push('Too heavy to sky-toss — trip legs or bowl zombies into it');
+        else if (t.heavy) tags.push('Heavy — resists high lifts');
+        if (t.hurler) tags.push('Hurls catchable boulders');
+        if (t.boss) tags.push('Boss (every 4th wave)');
         if (t.armor < 1) tags.push(`${Math.round((1 - t.armor) * 100)}% gadget resistance`);
         if (t.howl) tags.push('Speeds allies');
         if (t.bloat) tags.push('Explodes on death');
